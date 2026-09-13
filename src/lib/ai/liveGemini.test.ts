@@ -17,7 +17,7 @@ describe('Live Gemini Integration & Model Abstraction Suite (Decision 2)', () =>
     const checkResult = await verifyModelAvailability(getGeminiClient);
     expect(checkResult).toBeDefined();
     expect(Array.isArray(checkResult.errors)).toBe(true);
-  });
+  }, 30000);
 
   it('records model name, agent_type, token_usage, and latency_ms to ai_runs execution log', () => {
     const runLog = recordAIRunLog({

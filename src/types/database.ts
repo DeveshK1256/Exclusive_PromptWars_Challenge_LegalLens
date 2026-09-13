@@ -126,6 +126,38 @@ export interface ComparisonFinding {
   created_at: string;
 }
 
+export interface ActionPlan {
+  id: string;
+  user_id: string;
+  document_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActionItem {
+  id: string;
+  action_plan_id: string;
+  title: string;
+  description: string | null;
+  priority: string;
+  status: string;
+  due_date: string | null;
+  related_finding_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LawyerQuestion {
+  id: string;
+  document_id: string;
+  question: string;
+  reason: string;
+  related_finding_id: string | null;
+  priority: string;
+  created_at: string;
+}
+
 export type ComplexityLevel = 'very_simple' | 'student' | 'professional' | 'legal_terminology';
 
 export interface DocumentSummary {

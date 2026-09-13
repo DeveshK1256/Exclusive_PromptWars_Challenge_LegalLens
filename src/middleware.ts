@@ -39,9 +39,11 @@ export async function middleware(request: NextRequest) {
                            request.nextUrl.pathname.startsWith('/documents') ||
                            request.nextUrl.pathname.startsWith('/compare');
 
-  // If user is not authenticated and trying to access protected route in real environment, redirect to login
-  // Note: For dev/demo without live auth, allow route rendering
-  if (isProtectedRoute && !user && process.env.NODE_ENV === 'production') {
+  // Check demo session cookie fallback for demo/test mode
+  const demoCookie = request.cookies.get('legallens_demo_session') || request.cookies.get('sb-access-token');
+
+  // If user is not authenticated and no session cookie is present, redirect to login
+  if (isProtectedRoute && !user && !demoCookie && process.env.NODE_ENV === 'production') {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

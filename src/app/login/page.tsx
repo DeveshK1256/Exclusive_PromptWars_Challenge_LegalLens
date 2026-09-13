@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [failedLoginCount, setFailedLoginCount] = useState(0);
   const [isLockedOut, setIsLockedOut] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginSuccessMsg, setLoginSuccessMsg] = useState<string | null>(null);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
@@ -62,11 +63,17 @@ export default function LoginPage() {
 
   // --- Login Handler ---
   const performLoginRedirect = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/dashboard';
-    } else {
+    setIsLoading(true);
+    try {
       router.push('/dashboard');
+    } catch {
+      // Fallback below
     }
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.location.assign('/dashboard');
+      }
+    }, 150);
   };
 
   const handleLoginSubmit = (e?: React.FormEvent) => {
@@ -78,6 +85,8 @@ export default function LoginPage() {
       return;
     }
 
+    setIsLoading(true);
+
     // Default to demo credentials if empty when clicking Sign In button
     const emailToUse = loginEmail.trim() || 'demo@legallens.ai';
     const passwordToUse = loginPassword || 'Password123!';
@@ -85,6 +94,7 @@ export default function LoginPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailToUse)) {
       setLoginError('Please enter a valid email address.');
+      setIsLoading(false);
       return;
     }
 
@@ -97,6 +107,7 @@ export default function LoginPage() {
       } else {
         setLoginError(`Invalid email or password. Attempt ${nextFailed} of 5 before temporary lock.`);
       }
+      setIsLoading(false);
       return;
     }
 
@@ -306,23 +317,24 @@ export default function LoginPage() {
               </label>
             </div>
 
-            {/* Sign In Buttons */}
+            {/* Sign In Button */}
             <div className="space-y-2 pt-1">
               <button
                 type="submit"
-                disabled={isLockedOut}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                disabled={isLoading || isLockedOut}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:opacity-75 text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
               >
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </button>
-
-              <button
-                type="button"
-                onClick={performLoginRedirect}
-                className="w-full bg-slate-950 hover:bg-slate-800 text-slate-300 font-semibold py-2 rounded-xl text-xs border border-slate-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                Quick Demo Sign In $\rightarrow$
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-4 h-4" />
+                    <span>Sign In</span>
+                  </>
+                )}
               </button>
             </div>
 

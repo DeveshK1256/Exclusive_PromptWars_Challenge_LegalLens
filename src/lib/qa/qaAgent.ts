@@ -78,7 +78,11 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
   let tokenUsage = Math.ceil(promptInput.length / 4);
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (apiKey && apiKey !== 'dummy_gemini_key') {
+  const isVitest = process.env.VITEST === 'true';
+  const isLiveTestMode = process.env.RUN_LIVE_GEMINI_TESTS === 'true';
+  const shouldCallGemini = Boolean(apiKey && apiKey !== 'dummy_gemini_key' && (!isVitest || isLiveTestMode));
+
+  if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
       const response = await ai.models.generateContent({

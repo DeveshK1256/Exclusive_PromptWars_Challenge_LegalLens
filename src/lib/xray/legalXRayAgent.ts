@@ -17,7 +17,7 @@ export async function runLegalXRayAgent(
   jurisdiction?: string | null
 ): Promise<LegalXRayOverview> {
   const start = Date.now();
-  const modelName = AI_CONFIG.reasoningModel;
+  let modelName = AI_CONFIG.reasoningModel;
 
   const promptInput = `${SYSTEM_PROMPT_LEGAL_XRAY}
 Jurisdiction Context: ${jurisdiction || 'Jurisdiction Neutral (Default)'}
@@ -30,15 +30,32 @@ ${UNTRUSTED_DOC_END}`;
 
   let tokenUsage = Math.ceil(rawText.length / 4);
   const apiKey = process.env.GEMINI_API_KEY;
+  const isVitest = process.env.VITEST === 'true';
+  const isLiveTestMode = process.env.RUN_LIVE_GEMINI_TESTS === 'true';
+  const shouldCallGemini = Boolean(apiKey && apiKey !== 'dummy_gemini_key' && (!isVitest || isLiveTestMode));
+
   let aiFindings: XRayFindingCard[] | null = null;
 
-  if (apiKey && apiKey !== 'dummy_gemini_key') {
+  if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: promptInput,
-      });
+      let response;
+      try {
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: promptInput,
+        });
+      } catch (err: any) {
+        if (err?.status === 429 || err?.message?.includes('429')) {
+          modelName = AI_CONFIG.fastModel;
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: promptInput,
+          });
+        } else {
+          throw err;
+        }
+      }
 
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;

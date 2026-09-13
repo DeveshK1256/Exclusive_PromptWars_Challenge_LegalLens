@@ -108,9 +108,13 @@ async function generateLevelSummary(
   modelName: string
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
+  const isVitest = process.env.VITEST === 'true';
+  const isLiveTestMode = process.env.RUN_LIVE_GEMINI_TESTS === 'true';
+  const shouldCallGemini = Boolean(apiKey && apiKey !== 'dummy_gemini_key' && (!isVitest || isLiveTestMode));
+
   const prompt = `${SIMPLIFICATION_PROMPTS[level]}\n\n${UNTRUSTED_DOC_START}\n${rawText.substring(0, 8000)}\n${UNTRUSTED_DOC_END}`;
 
-  if (apiKey && apiKey !== 'dummy_gemini_key') {
+  if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
       const response = await ai.models.generateContent({

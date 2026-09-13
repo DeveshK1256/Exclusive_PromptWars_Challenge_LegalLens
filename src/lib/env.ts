@@ -61,7 +61,7 @@ export const env = (() => {
       NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_anon_key',
       SUPABASE_SERVICE_ROLE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_service_key',
-      GEMINI_API_KEY: 'dummy_gemini_key',
+      GEMINI_API_KEY: process.env['GEMINI_API_KEY'] || 'dummy_gemini_key',
     });
   }
 })();

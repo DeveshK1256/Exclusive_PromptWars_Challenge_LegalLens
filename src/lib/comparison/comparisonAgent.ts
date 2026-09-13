@@ -122,9 +122,25 @@ ${options.rawTextB.substring(0, 8000)}
   }
 
   // Fallback to deterministic heuristic comparison engine if Gemini output unavailable/offline
-  const finalFindings: ComparisonFinding[] = aiFindings || generateHeuristicComparisonFindings(options);
-  const finalQuestions: string[] = aiQuestions || generateHeuristicComparisonQuestions(finalFindings);
-  const finalActionItems: string[] = aiActionItems || generateHeuristicComparisonActionItems(finalFindings);
+  const rawFindings: ComparisonFinding[] = aiFindings || generateHeuristicComparisonFindings(options);
+  const rawQuestions: string[] = aiQuestions || generateHeuristicComparisonQuestions(rawFindings);
+  const rawActionItems: string[] = aiActionItems || generateHeuristicComparisonActionItems(rawFindings);
+
+  // Decision 10 Safety Gate: Enforce Jurisdiction Neutrality across ALL generated arrays
+  const finalFindings = rawFindings.map((f) => ({
+    ...f,
+    difference_summary: sanitizeJurisdictionInference(f.difference_summary, options.jurisdiction),
+    document_a_value: sanitizeJurisdictionInference(f.document_a_value, options.jurisdiction),
+    document_b_value: sanitizeJurisdictionInference(f.document_b_value, options.jurisdiction),
+  }));
+
+  const finalQuestions = rawQuestions.map((q) =>
+    sanitizeJurisdictionInference(q, options.jurisdiction)
+  );
+
+  const finalActionItems = rawActionItems.map((item) =>
+    sanitizeJurisdictionInference(item, options.jurisdiction)
+  );
 
   const latencyMs = Date.now() - start;
 
@@ -263,4 +279,37 @@ function generateHeuristicComparisonActionItems(findings: ComparisonFinding[]): 
   return findings
     .filter((f) => f.severity_level === 'orange' || f.severity_level === 'red' || f.finding_kind === 'action_required')
     .map((f) => `Review ${f.title} (${f.category}) with your legal counsel before signing.`);
+}
+
+/**
+ * Decision 10 Jurisdiction Neutrality Sanitizer
+ * Strips unprompted state statute citations and inferred jurisdiction names
+ * when documents.jurisdiction was not explicitly supplied by the user.
+ */
+export function sanitizeJurisdictionInference(
+  text: string,
+  userJurisdiction?: string | null
+): string {
+  if (!text) return text;
+  if (userJurisdiction && userJurisdiction.trim().length > 0) {
+    return text;
+  }
+
+  let sanitized = text;
+
+  // Replace specific statute / section citations (e.g., Section 16600, B&P 16600)
+  sanitized = sanitized.replace(
+    /(?:California\s+)?(?:Business\s+(?:&|and)\s+Professions\s+Code\s+)?Section\s+16600|B&P\s+16600/gi,
+    'local statutory regulations'
+  );
+
+  // Rephrase explicit state law references
+  sanitized = sanitized.replace(/under\s+(?:California|New\s+York|Texas|Florida|Illinois)\s+law/gi, 'under applicable governing law');
+  sanitized = sanitized.replace(/(?:California|New\s+York|Texas|Florida|Illinois)\s+jurisdiction/gi, 'your local jurisdiction');
+  sanitized = sanitized.replace(/Does\s+California\s+law\s+permit/gi, 'Does applicable governing law permit');
+
+  // Strip standalone inferred state names
+  sanitized = sanitized.replace(/\bCalifornia\b/g, 'local');
+
+  return sanitized;
 }

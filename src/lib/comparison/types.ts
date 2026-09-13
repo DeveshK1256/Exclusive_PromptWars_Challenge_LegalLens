@@ -50,5 +50,6 @@ export interface ComparisonOptions {
   rawTextB: string;
   titleA?: string;
   titleB?: string;
+  jurisdiction?: string | null;
   isLiveTest?: boolean;
 }

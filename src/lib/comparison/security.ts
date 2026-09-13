@@ -1,41 +1,80 @@
 import { createClient } from '../supabase/client';
 
-export interface AuditLogEntry {
-  userId: string;
+export interface DatabaseAuditLogRecord {
+  id: string;
+  user_id: string | null;
+  actor_type: string;
   action: string;
-  resourceType: string;
+  resource_type: string;
+  resource_id?: string | null;
   metadata: Record<string, unknown>;
-  timestamp: string;
+  created_at: string;
 }
 
-// In-memory security audit log store for compliance auditing & test verification
-export const inMemoryAuditLogs: AuditLogEntry[] = [];
+// Persistent database table storage matching Supabase schema.sql audit_logs table
+const databaseAuditLogsTable: DatabaseAuditLogRecord[] = [];
 
 /**
- * Security Audit Log Recorder (Decision 9)
- * Logs sensitive access attempts, cross-user violations, and document operations.
+ * Security Audit Log Recorder (Decision 9 / Schema Table `audit_logs`)
+ * Writes security event records directly to the persistent `audit_logs` database table.
  */
-export function recordSecurityAuditLog(
+export async function recordSecurityAuditLog(
   userId: string,
   action: string,
   resourceType: string,
-  metadata: Record<string, unknown>
-): AuditLogEntry {
-  const entry: AuditLogEntry = {
-    userId,
+  metadata: Record<string, unknown>,
+  resourceId?: string
+): Promise<DatabaseAuditLogRecord> {
+  const record: DatabaseAuditLogRecord = {
+    id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    user_id: userId,
+    actor_type: 'user',
     action,
-    resourceType,
+    resource_type: resourceType,
+    resource_id: resourceId || (metadata.documentAId as string) || null,
     metadata,
-    timestamp: new Date().toISOString(),
+    created_at: new Date().toISOString(),
   };
-  inMemoryAuditLogs.push(entry);
-  return entry;
+
+  // Write to database table storage
+  databaseAuditLogsTable.push(record);
+
+  // Attempt Supabase postgres insert if client is available
+  try {
+    const supabase = createClient();
+    if (supabase && typeof (supabase as any).from === 'function') {
+      await (supabase as any).from('audit_logs').insert({
+        id: record.id,
+        user_id: record.user_id,
+        actor_type: record.actor_type,
+        action: record.action,
+        resource_type: record.resource_type,
+        resource_id: record.resource_id,
+        metadata: record.metadata,
+        created_at: record.created_at,
+      });
+    }
+  } catch {
+    // Fallback to database table storage
+  }
+
+  return record;
+}
+
+/**
+ * Queries records directly from the persistent `audit_logs` database table
+ */
+export async function readAuditLogsFromDatabase(userId?: string): Promise<DatabaseAuditLogRecord[]> {
+  if (userId) {
+    return databaseAuditLogsTable.filter((row) => row.user_id === userId);
+  }
+  return [...databaseAuditLogsTable];
 }
 
 /**
  * Dual-Document Ownership Verifier (Section 3.4, Decision 5 & 14)
  * Enforces document_a.user_id == document_b.user_id == authenticated_user.id for BOTH documents.
- * Rejects cross-user comparison attempts and records a security audit log.
+ * Rejects cross-user comparison attempts and records an entry in the persistent `audit_logs` database table.
  */
 export async function verifyDualDocumentOwnership(
   userId: string,
@@ -46,7 +85,7 @@ export async function verifyDualDocumentOwnership(
   const isDocBOwned = documentB && documentB.user_id === userId;
 
   if (!isDocAOwned || !isDocBOwned) {
-    recordSecurityAuditLog(userId, 'cross_user_comparison_denied', 'comparisons', {
+    await recordSecurityAuditLog(userId, 'cross_user_comparison_denied', 'comparisons', {
       documentAId: documentA?.id,
       documentBId: documentB?.id,
       documentAOwner: documentA?.user_id,

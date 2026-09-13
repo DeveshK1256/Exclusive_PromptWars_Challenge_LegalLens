@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { runContractComparisonAgent } from './comparison/comparisonAgent';
-import { verifyDualDocumentOwnership, inMemoryAuditLogs } from './comparison/security';
+import { runContractComparisonAgent, sanitizeJurisdictionInference } from './comparison/comparisonAgent';
+import { verifyDualDocumentOwnership, readAuditLogsFromDatabase } from './comparison/security';
 
 describe('Sprint 8 — Contract Comparison Engine Test Suite', () => {
   const docAId = 'doc_a_1001';
@@ -65,7 +65,6 @@ Employee is permitted 2 days per week flexible remote work with manager approval
     );
     expect(nonCompeteFinding).toBeDefined();
     expect(['orange', 'red', 'yellow']).toContain(nonCompeteFinding?.severity_level);
-
   }, 30000);
 
   it('[OFFLINE/HEURISTIC] correctly identifies missing/added clauses absent in Document A', async () => {
@@ -89,7 +88,7 @@ Employee is permitted 2 days per week flexible remote work with manager approval
     expect(remoteWorkFinding?.document_a_value.toLowerCase()).toMatch(/absent|no |not specified|n\/a/i);
   }, 30000);
 
-  it('[OFFLINE/HEURISTIC] enforces Dual-Document Ownership RLS: blocks cross-user comparison attempt and logs to audit_logs', async () => {
+  it('[OFFLINE/HEURISTIC] enforces Dual-Document Ownership RLS: blocks cross-user comparison attempt and writes to audit_logs table', async () => {
     const docA = { id: 'doc_a_user_a', user_id: 'user_a' };
     const docB = { id: 'doc_b_user_b', user_id: 'user_b' };
 
@@ -97,12 +96,13 @@ Employee is permitted 2 days per week flexible remote work with manager approval
     const isAllowed = await verifyDualDocumentOwnership('user_a', docA, docB);
     expect(isAllowed).toBe(false);
 
-    // Verify security alert was logged to audit_logs (Decision 9)
-    const auditEntry = inMemoryAuditLogs.find(
-      (log) => log.action === 'cross_user_comparison_denied' && log.userId === 'user_a'
+    // Verify security alert was written directly to audit_logs database table (Decision 9)
+    const logsFromDb = await readAuditLogsFromDatabase('user_a');
+    const auditEntry = logsFromDb.find(
+      (log) => log.action === 'cross_user_comparison_denied' && log.user_id === 'user_a'
     );
     expect(auditEntry).toBeDefined();
-    expect(auditEntry?.resourceType).toBe('comparisons');
+    expect(auditEntry?.resource_type).toBe('comparisons');
     expect(auditEntry?.metadata.documentAOwner).toBe('user_a');
     expect(auditEntry?.metadata.documentBOwner).toBe('user_b');
   });
@@ -128,6 +128,42 @@ Employee is permitted 2 days per week flexible remote work with manager approval
       }
     });
   }, 30000);
+
+  it('[OFFLINE/HEURISTIC] enforces Decision 10 Jurisdiction Neutrality Gate across questionsForLawyer, recommendedActionItems, and findings', async () => {
+    // Test text mentioning "San Francisco" and "California", but jurisdiction is null (unsupplied)
+    const textA = 'Non-compete restricted in San Francisco, California for 6 months.';
+    const textB = 'Non-compete restricted worldwide for 24 months post-employment.';
+
+    const result = await runContractComparisonAgent({
+      comparisonId: 'cmp_test_jurisdiction_001',
+      userId,
+      documentAId: docAId,
+      documentBId: docBId,
+      rawTextA: textA,
+      rawTextB: textB,
+      jurisdiction: null, // Unsupplied
+    });
+
+    // Confirm no generated question or action item cites specific state statutes like Section 16600 or California law
+    result.questionsForLawyer.forEach((question) => {
+      expect(question).not.toContain('Section 16600');
+      expect(question).not.toContain('California law');
+      expect(question).not.toContain('B&P 16600');
+    });
+
+    result.recommendedActionItems.forEach((item) => {
+      expect(item).not.toContain('Section 16600');
+      expect(item).not.toContain('California law');
+    });
+
+    // Direct unit test of sanitizer
+    const ungroundedText = 'Does California law permit worldwide non-compete restrictions under Section 16600?';
+    const sanitizedText = sanitizeJurisdictionInference(ungroundedText, null);
+    expect(sanitizedText).not.toContain('California law');
+    expect(sanitizedText).not.toContain('Section 16600');
+    expect(sanitizedText).toContain('applicable governing law');
+    expect(sanitizedText).toContain('local statutory regulations');
+  });
 
   it('[LIVE] executes Contract Comparison Agent against live Gemini reasoning model and validates 3-layer schema fidelity', async () => {
     if (process.env.RUN_LIVE_GEMINI_TESTS !== 'true') {

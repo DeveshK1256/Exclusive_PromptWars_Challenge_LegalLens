@@ -19,11 +19,18 @@ export async function runLegalXRayAgent(
   const start = Date.now();
   const modelName = AI_CONFIG.reasoningModel;
 
-  // Security prompt construction with untrusted document tags
-  const promptInput = `${SYSTEM_PROMPT_LEGAL_XRAY}\n\nJurisdiction Context: ${jurisdiction || 'Jurisdiction Neutral (Default)'}\n\n${UNTRUSTED_DOC_START}\n${rawText.substring(0, 10000)}\n${UNTRUSTED_DOC_END}`;
+  const promptInput = `${SYSTEM_PROMPT_LEGAL_XRAY}
+Jurisdiction Context: ${jurisdiction || 'Jurisdiction Neutral (Default)'}
+Return ONLY a valid JSON array of objects with keys:
+"category", "severity" ("green"|"yellow"|"orange"|"red"), "finding_kind" ("informational"|"action_required"|"deadline"), "title", "description", "confidence", "source_reference".
+
+${UNTRUSTED_DOC_START}
+${rawText.substring(0, 10000)}
+${UNTRUSTED_DOC_END}`;
 
   let tokenUsage = Math.ceil(rawText.length / 4);
   const apiKey = process.env.GEMINI_API_KEY;
+  let aiFindings: XRayFindingCard[] | null = null;
 
   if (apiKey && apiKey !== 'dummy_gemini_key') {
     try {
@@ -36,6 +43,35 @@ export async function runLegalXRayAgent(
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;
       }
+
+      if (response.text) {
+        const cleaned = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const json = JSON.parse(cleaned);
+
+        if (Array.isArray(json)) {
+          aiFindings = json.map((f: any, idx: number) => {
+            const sanitizedTitle = sanitizeSafetyLanguage(f.title || 'Legal Provision');
+            const sanitizedDesc = sanitizeSafetyLanguage(f.description || '');
+            const sev = (f.severity as 'green' | 'yellow' | 'orange' | 'red') || 'green';
+
+            return {
+              id: `fnd_${documentVersionId}_ai_${idx + 1}`,
+              document_id: documentId,
+              document_version_id: documentVersionId,
+              clause_id: `c_${idx + 1}`,
+              category: f.category || 'General Provisions',
+              severity: sev,
+              finding_kind: (f.finding_kind as 'informational' | 'action_required' | 'deadline') || 'informational',
+              title: sanitizedTitle,
+              description: sanitizedDesc,
+              finding_type: sev === 'green' ? 'fact' : sev === 'red' ? 'recommendation' : 'ai_interpretation',
+              confidence: typeof f.confidence === 'number' ? f.confidence : 0.95,
+              source_reference: f.source_reference || 'Page 1, Section 1',
+              created_at: new Date().toISOString(),
+            };
+          });
+        }
+      }
     } catch (err) {
       if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
         throw err;
@@ -43,8 +79,8 @@ export async function runLegalXRayAgent(
     }
   }
 
-  // Transform classified clauses into grounded X-Ray findings
-  const findings: XRayFindingCard[] = clauses.map((clause, idx) => {
+  // Fall back to heuristic transformation of clauses if AI output is empty/offline
+  const findings: XRayFindingCard[] = aiFindings || clauses.map((clause, idx) => {
     const sanitizedTitle = sanitizeSafetyLanguage(clause.title);
     const sanitizedDescription = sanitizeSafetyLanguage(clause.plain_explanation);
 
@@ -67,7 +103,6 @@ export async function runLegalXRayAgent(
 
   const duration = Date.now() - start;
 
-  // Record AI Run log to ai_runs table
   recordAIRunLog({
     documentId,
     agentType: 'legal_xray',
@@ -77,7 +112,6 @@ export async function runLegalXRayAgent(
     status: 'completed',
   });
 
-  // Calculate overview counts
   return {
     document_id: documentId,
     document_version_id: documentVersionId,

@@ -32,11 +32,20 @@ export async function runDocumentIntelligenceAgent(
   const start = Date.now();
   const modelName = AI_CONFIG.reasoningModel;
 
-  // 1. Enclose untrusted document content inside explicit security tags
-  const promptInput = `${SYSTEM_PROMPT_DOCUMENT_INTELLIGENCE}\n\n${UNTRUSTED_DOC_START}\n${options.rawText.substring(0, 10000)}\n${UNTRUSTED_DOC_END}`;
+  const promptInput = `${SYSTEM_PROMPT_DOCUMENT_INTELLIGENCE}
+Return JSON object with keys:
+"entities": array of { entity_type, entity_name, confidence, source_reference },
+"clauses": array of { clause_type, title, severity_level ("green"|"yellow"|"orange"|"red"), finding_kind ("informational"|"action_required"|"deadline"), plain_explanation, confidence, source_reference }
+
+${UNTRUSTED_DOC_START}
+${options.rawText.substring(0, 10000)}
+${UNTRUSTED_DOC_END}`;
 
   let tokenUsage = Math.ceil(options.rawText.length / 4);
   const apiKey = process.env.GEMINI_API_KEY;
+
+  let aiEntities: ExtractedEntityItem[] | null = null;
+  let aiClauses: ExtractedClauseItem[] | null = null;
 
   if (apiKey && apiKey !== 'dummy_gemini_key') {
     try {
@@ -49,6 +58,42 @@ export async function runDocumentIntelligenceAgent(
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;
       }
+
+      if (response.text) {
+        const cleaned = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const json = JSON.parse(cleaned);
+
+        if (json.entities && Array.isArray(json.entities)) {
+          aiEntities = json.entities.map((e: any, idx: number) => ({
+            id: `ent_${options.documentVersionId}_ai_${idx + 1}`,
+            document_id: options.documentId,
+            document_version_id: options.documentVersionId,
+            entity_type: e.entity_type || 'party',
+            entity_name: e.entity_name || 'Extracted Entity',
+            confidence: typeof e.confidence === 'number' ? e.confidence : 0.95,
+            source_reference: e.source_reference || 'Page 1, Section 1',
+            created_at: new Date().toISOString(),
+          }));
+        }
+
+        if (json.clauses && Array.isArray(json.clauses)) {
+          aiClauses = json.clauses.map((c: any, idx: number) => ({
+            id: `cls_${options.documentVersionId}_ai_${idx + 1}`,
+            document_id: options.documentId,
+            document_version_id: options.documentVersionId,
+            section_id: null,
+            clause_type: c.clause_type || 'general',
+            title: c.title || 'Extracted Clause',
+            original_text: c.plain_explanation || '',
+            plain_explanation: c.plain_explanation || '',
+            severity_level: c.severity_level || 'green',
+            finding_kind: c.finding_kind || 'informational',
+            confidence: typeof c.confidence === 'number' ? c.confidence : 0.95,
+            source_reference: c.source_reference || 'Page 1, Section 1',
+            created_at: new Date().toISOString(),
+          }));
+        }
+      }
     } catch (err) {
       if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
         throw err;
@@ -56,13 +101,12 @@ export async function runDocumentIntelligenceAgent(
     }
   }
 
-  // Execute extraction & classification pipeline with source_reference citations
-  const entities = extractEntities(options.sections, options.documentId, options.documentVersionId, options.isPageEstimate);
-  const clauses = classifyClauses(options.sections, options.documentId, options.documentVersionId, options.isPageEstimate);
+  // Use AI parsed output if available, otherwise fall back to heuristic extraction
+  const entities = aiEntities || extractEntities(options.sections, options.documentId, options.documentVersionId, options.isPageEstimate);
+  const clauses = aiClauses || classifyClauses(options.sections, options.documentId, options.documentVersionId, options.isPageEstimate);
 
   const duration = Date.now() - start;
 
-  // Record AI Run execution log to ai_runs table
   const aiRunLog = recordAIRunLog({
     documentId: options.documentId,
     agentType: 'document_intelligence',

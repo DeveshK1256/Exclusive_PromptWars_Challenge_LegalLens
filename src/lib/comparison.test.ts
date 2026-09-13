@@ -194,4 +194,61 @@ Employee is permitted 2 days per week flexible remote work with manager approval
       expect(finding.source_reference_b).toBeDefined();
     });
   }, 30000);
+
+  it('[LIVE] Decision 10 Jurisdiction Neutrality Gate: sends San Francisco/California text to live Gemini and confirms zero unprompted statute citations', async () => {
+    if (process.env.RUN_LIVE_GEMINI_TESTS !== 'true') {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const result = await runContractComparisonAgent({
+      comparisonId: 'cmp_live_jurisdiction_002',
+      userId,
+      documentAId: docAId,
+      documentBId: docBId,
+      rawTextA: sampleTextA, // Mentions San Francisco
+      rawTextB: sampleTextB,
+      jurisdiction: null, // Unsupplied
+      isLiveTest: true,
+    });
+
+    // Confirm that live Gemini output after post-processor carries zero state statute numbers or state law assertions
+    result.questionsForLawyer.forEach((question) => {
+      expect(question).not.toContain('Section 16600');
+      expect(question).not.toContain('California law');
+      expect(question).not.toContain('B&P 16600');
+    });
+
+    result.recommendedActionItems.forEach((item) => {
+      expect(item).not.toContain('Section 16600');
+      expect(item).not.toContain('California law');
+    });
+  }, 30000);
+
+  it('[LIVE] Missing Clause Detection: sends Document A and Document B to live Gemini and verifies missing clause is identified', async () => {
+    if (process.env.RUN_LIVE_GEMINI_TESTS !== 'true') {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const result = await runContractComparisonAgent({
+      comparisonId: 'cmp_live_missing_003',
+      userId,
+      documentAId: docAId,
+      documentBId: docBId,
+      rawTextA: sampleTextA,
+      rawTextB: sampleTextB, // Contains SECTION 4: FLEXIBLE REMOTE WORK absent in A
+      isLiveTest: true,
+    });
+
+    expect(result.findings.length).toBeGreaterThan(0);
+    const remoteFinding = result.findings.find(
+      (f) =>
+        f.category.toLowerCase().includes('remote') ||
+        f.title.toLowerCase().includes('remote') ||
+        f.document_b_value.toLowerCase().includes('remote') ||
+        f.difference_summary.toLowerCase().includes('remote')
+    );
+    expect(remoteFinding).toBeDefined();
+  }, 30000);
 });

@@ -27,10 +27,16 @@ export async function runLegalTimelineAgent(
   const start = Date.now();
   let modelName = AI_CONFIG.reasoningModel;
 
-  const promptInput = `${SYSTEM_PROMPT_TIMELINE}\n\n${UNTRUSTED_DOC_START}\n${options.rawText.substring(0, 10000)}\n${UNTRUSTED_DOC_END}`;
-  let tokenUsage = Math.ceil(options.rawText.length / 4);
+  const promptInput = `${SYSTEM_PROMPT_TIMELINE}
+Return ONLY a valid JSON array of objects with keys: "title", "event_date" (ISO YYYY-MM-DD or null for relative notice windows without explicit anchor), "event_type" ("effective_date"|"expiration_date"|"renewal_deadline"|"notice_deadline"|"payment_due_date"|"milestone"), "description", "source_reference".
 
+${UNTRUSTED_DOC_START}
+${options.rawText.substring(0, 10000)}
+${UNTRUSTED_DOC_END}`;
+
+  let tokenUsage = Math.ceil(options.rawText.length / 4);
   const apiKey = process.env.GEMINI_API_KEY;
+  let parsedEvents: TimelineEvent[] = [];
 
   if (apiKey && apiKey !== 'dummy_gemini_key') {
     try {
@@ -43,38 +49,46 @@ export async function runLegalTimelineAgent(
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;
       }
+
+      if (response.text) {
+        const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const json = JSON.parse(cleanedText);
+        if (Array.isArray(json)) {
+          parsedEvents = json.map((e: any, idx: number) => ({
+            id: `evt_${options.documentVersionId}_ai_${idx + 1}`,
+            document_id: options.documentId,
+            document_version_id: options.documentVersionId,
+            title: e.title || 'Timeline Milestone',
+            event_date: e.event_date || null,
+            event_type: (e.event_type as TimelineEventType) || 'milestone',
+            description: e.description || '',
+            source_reference: e.source_reference || 'Page 1, Section 1',
+            confidence: e.event_date ? 0.95 : 0.85,
+            created_at: new Date().toISOString(),
+          }));
+        }
+      }
     } catch (err: any) {
-      // If 429 rate limit hit on reasoningModel, fall back to fastModel gracefully
       if (err?.status === 429 || err?.message?.includes('429')) {
         modelName = AI_CONFIG.fastModel;
-        try {
-          const ai = getGeminiClient();
-          await ai.models.generateContent({
-            model: modelName,
-            contents: promptInput,
-          });
-        } catch {
-          // Ignore secondary fallback error in local test runner
-        }
       } else if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
         throw err;
       }
     }
   }
 
-  // Extract timeline events with verbatim citation verification gate
-  const rawEvents = extractTimelineEventsFromText(options);
+  // Fall back to heuristic extraction if AI response was empty or in offline mode
+  const events = parsedEvents.length > 0 ? parsedEvents : extractTimelineEventsFromText(options);
 
-  // Chronological sorting
-  const events = rawEvents.sort((a, b) => {
-    const dateA = a.event_date ? new Date(a.event_date).getTime() : 0;
-    const dateB = b.event_date ? new Date(b.event_date).getTime() : 0;
-    return dateA - dateB;
+  // Chronological sorting (events with event_date first, sorted by timestamp)
+  const sortedEvents = events.sort((a, b) => {
+    if (!a.event_date) return 1;
+    if (!b.event_date) return -1;
+    return new Date(a.event_date).getTime() - new Date(b.event_date).getTime();
   });
 
   const duration = Date.now() - start;
 
-  // Record AI Execution Log
   recordAIRunLog({
     documentId: options.documentId,
     agentType: 'timeline',
@@ -87,8 +101,8 @@ export async function runLegalTimelineAgent(
   return {
     documentId: options.documentId,
     documentVersionId: options.documentVersionId,
-    events,
-    upcomingDeadlinesCount: events.filter(
+    events: sortedEvents,
+    upcomingDeadlinesCount: sortedEvents.filter(
       (e) => e.event_type === 'notice_deadline' || e.event_type === 'renewal_deadline' || e.event_type === 'payment_due_date'
     ).length,
   };
@@ -106,6 +120,7 @@ export function extractTimelineEventsFromText(options: TimelineExtractionOptions
     regex: RegExp;
     title: string;
     description: (match: string) => string;
+    isRelative?: boolean;
   }> = [
     {
       type: 'effective_date',
@@ -124,12 +139,14 @@ export function extractTimelineEventsFromText(options: TimelineExtractionOptions
       regex: /(\d+)\s*days?\s+(?:written\s+)?notice/i,
       title: 'Notice Period Deadline',
       description: (m) => `Requires ${m} prior notification for termination or cancellation.`,
+      isRelative: true,
     },
     {
       type: 'payment_due_date',
       regex: /paid\s+(?:on|by|within)\s+(\d+\s*days?|[A-Z][a-z]+\s+\d{1,2})/i,
       title: 'Payment Due Deadline',
       description: (m) => `Payment obligation due ${m}.`,
+      isRelative: true,
     },
   ];
 
@@ -138,10 +155,30 @@ export function extractTimelineEventsFromText(options: TimelineExtractionOptions
     if (match) {
       const matchText = match[0];
       const matchVal = match[1] || matchText;
-      const normalizedDate = parseToISODate(matchVal);
 
-      // Verbatim Citation Verification Gate: Confirm match snippet exists in raw text
-      const verifiedRef = verifySourceReferenceSnippet(matchText, text);
+      let normalizedDate: string | null = null;
+      let confidence = 0.95;
+      let sourceRef = verifySourceReferenceSnippet(matchText, text);
+
+      if (p.isRelative) {
+        // Relative date window: Do NOT invent false exact ISO dates.
+        // Check if an expiration date exists in text to derive calculation anchor
+        const expMatch = text.match(/(?:terminate|expire|end)s?\s+(?:on|upon)?\s*([A-Z][a-z]+\s+\d{1,2},\s*\d{4}|\d{4}-\d{2}-\d{2})/i);
+        if (expMatch && expMatch[1]) {
+          const expDate = parseToISODate(expMatch[1]);
+          const daysNum = parseInt(matchVal, 10);
+          if (expDate && !isNaN(daysNum)) {
+            const [y, m, d] = expDate.split('-').map(Number);
+            const dt = new Date(Date.UTC(y, m - 1, d));
+            dt.setUTCDate(dt.getUTCDate() - daysNum);
+            normalizedDate = dt.toISOString().split('T')[0];
+            confidence = 0.85; // Discounted confidence for derived date
+            sourceRef += ` | [Derived: ${expDate} minus ${daysNum} days]`;
+          }
+        }
+      } else {
+        normalizedDate = parseToISODate(matchVal);
+      }
 
       events.push({
         id: `evt_${options.documentVersionId}_${idx + 1}`,
@@ -151,8 +188,8 @@ export function extractTimelineEventsFromText(options: TimelineExtractionOptions
         event_date: normalizedDate,
         event_type: p.type,
         description: p.description(matchVal),
-        source_reference: verifiedRef,
-        confidence: 0.95,
+        source_reference: sourceRef,
+        confidence,
         created_at: new Date().toISOString(),
       });
     }
@@ -170,9 +207,15 @@ function verifySourceReferenceSnippet(snippet: string, rawText: string): string 
 
 function parseToISODate(dateStr: string): string | null {
   try {
-    const parsed = new Date(dateStr);
+    const cleanStr = dateStr.trim();
+    const utcStr = /UTC|Z$/i.test(cleanStr) ? cleanStr : `${cleanStr} UTC`;
+    const parsed = new Date(utcStr);
     if (!isNaN(parsed.getTime())) {
       return parsed.toISOString().split('T')[0];
+    }
+    const directParsed = new Date(cleanStr);
+    if (!isNaN(directParsed.getTime())) {
+      return directParsed.toISOString().split('T')[0];
     }
   } catch {
     // Ignore invalid parse

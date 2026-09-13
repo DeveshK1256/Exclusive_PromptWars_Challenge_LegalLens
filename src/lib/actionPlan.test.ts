@@ -3,7 +3,7 @@ import {
   runActionPlanAgent,
   synthesizeBeforeYouSignChecklist,
   synthesizeLawyerQuestions,
-  synthesizeActionTasks,
+  deriveTaskPriority,
 } from './action/actionPlanAgent';
 import { XRayFindingCard } from './xray/types';
 
@@ -59,7 +59,7 @@ describe('Sprint 7 — Stage 2: Action Plan & Lawyer Questions Test Suite', () =
     },
   ];
 
-  it('synthesizes Before You Sign checklist including red, orange, AND yellow findings', () => {
+  it('[OFFLINE/HEURISTIC] synthesizes Before You Sign checklist including red, orange, AND yellow findings', () => {
     const checklist = synthesizeBeforeYouSignChecklist(mockFindings);
 
     expect(checklist.length).toBe(3);
@@ -69,7 +69,7 @@ describe('Sprint 7 — Stage 2: Action Plan & Lawyer Questions Test Suite', () =
     expect(severities).toContain('yellow');
   });
 
-  it('generates Questions for a Legal Professional with 100% traceabilty to findings', () => {
+  it('[OFFLINE/HEURISTIC] generates Questions for a Legal Professional with 100% traceabilty to findings', () => {
     const questions = synthesizeLawyerQuestions(docId, mockFindings);
 
     expect(questions.length).toBeGreaterThan(0);
@@ -80,7 +80,13 @@ describe('Sprint 7 — Stage 2: Action Plan & Lawyer Questions Test Suite', () =
     });
   });
 
-  it('generates Action Plan tasks matching DB ActionItem schema fidelity (1:1 type contract)', async () => {
+  it('[OFFLINE/HEURISTIC] derives ActionTaskCard priority strictly from underlying finding severity (single source of truth)', () => {
+    expect(deriveTaskPriority(mockFindings[0])).toBe('high');   // red -> high
+    expect(deriveTaskPriority(mockFindings[1])).toBe('medium'); // orange -> medium
+    expect(deriveTaskPriority(mockFindings[2])).toBe('low');    // yellow -> low
+  });
+
+  it('[OFFLINE/HEURISTIC] generates Action Plan tasks matching DB ActionItem schema fidelity (1:1 type contract)', async () => {
     const result = await runActionPlanAgent({
       documentId: docId,
       documentVersionId: verId,
@@ -97,5 +103,22 @@ describe('Sprint 7 — Stage 2: Action Plan & Lawyer Questions Test Suite', () =
       expect(task.status).toBe('pending');
       expect(task.source_reference).toBeDefined();
     });
+  });
+
+  it('[LIVE] executes live reasoning API call against Gemini for Action Plan synthesis when RUN_LIVE_GEMINI_TESTS=true', async () => {
+    if (process.env.RUN_LIVE_GEMINI_TESTS !== 'true') {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const result = await runActionPlanAgent({
+      documentId: docId,
+      documentVersionId: verId,
+      rawText: 'Sample employment agreement for live action plan synthesis',
+      findings: mockFindings,
+    });
+
+    expect(result.actionItems.length).toBeGreaterThan(0);
+    expect(result.checklist.length).toBeGreaterThan(0);
   });
 });

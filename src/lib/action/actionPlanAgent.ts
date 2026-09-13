@@ -27,10 +27,23 @@ export async function runActionPlanAgent(
   let modelName = AI_CONFIG.reasoningModel;
   const actionPlanId = `ap_${options.documentVersionId}`;
 
-  const promptInput = `${SYSTEM_PROMPT_ACTION_PLAN}\n\n${UNTRUSTED_DOC_START}\n${options.rawText.substring(0, 10000)}\n${UNTRUSTED_DOC_END}`;
-  let tokenUsage = Math.ceil(options.rawText.length / 4);
+  const promptInput = `${SYSTEM_PROMPT_ACTION_PLAN}
+Return JSON object with keys:
+"checklist": array of { title, recommendation, severity ("yellow"|"orange"|"red"), sourceReference },
+"lawyerQuestions": array of { question, reason, priority ("high"|"medium"|"low"), source_reference },
+"actionItems": array of { title, description, priority ("high"|"medium"|"low"), source_reference }
 
+${UNTRUSTED_DOC_START}
+${options.rawText.substring(0, 10000)}
+${UNTRUSTED_DOC_END}`;
+
+  let tokenUsage = Math.ceil(options.rawText.length / 4);
   const apiKey = process.env.GEMINI_API_KEY;
+
+  let aiChecklist: BeforeYouSignItem[] | null = null;
+  let aiQuestions: LawyerQuestionCard[] | null = null;
+  let aiTasks: ActionTaskCard[] | null = null;
+
   if (apiKey && apiKey !== 'dummy_gemini_key') {
     try {
       const ai = getGeminiClient();
@@ -42,36 +55,71 @@ export async function runActionPlanAgent(
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;
       }
+
+      if (response.text) {
+        const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const json = JSON.parse(cleanedText);
+
+        if (json.checklist && Array.isArray(json.checklist)) {
+          aiChecklist = json.checklist.map((item: any, idx: number) => ({
+            id: `chk_ai_${idx + 1}`,
+            title: item.title || 'Review Clause',
+            recommendation: item.recommendation || '',
+            severity: (item.severity as 'yellow' | 'orange' | 'red') || 'yellow',
+            sourceReference: item.sourceReference || 'Page 1, Section 1',
+            checked: false,
+          }));
+        }
+
+        if (json.lawyerQuestions && Array.isArray(json.lawyerQuestions)) {
+          aiQuestions = json.lawyerQuestions.map((item: any, idx: number) => ({
+            id: `lq_${options.documentId}_ai_${idx + 1}`,
+            document_id: options.documentId,
+            question: item.question || 'Question for attorney',
+            reason: item.reason || '',
+            related_finding_id: null,
+            priority: (item.priority as 'high' | 'medium' | 'low') || 'medium',
+            source_reference: item.source_reference || 'Page 1, Section 1',
+            created_at: new Date().toISOString(),
+          }));
+        }
+
+        if (json.actionItems && Array.isArray(json.actionItems)) {
+          aiTasks = json.actionItems.map((item: any, idx: number) => ({
+            id: `task_${actionPlanId}_ai_${idx + 1}`,
+            action_plan_id: actionPlanId,
+            title: item.title || 'Action Task',
+            description: item.description || '',
+            priority: (item.priority as 'high' | 'medium' | 'low') || 'medium',
+            status: 'pending',
+            due_date: new Date(Date.now() + (idx + 1) * 86400000 * 7).toISOString().split('T')[0],
+            related_finding_id: null,
+            source_reference: item.source_reference || 'Page 1, Section 1',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
+        }
+      }
     } catch (err: any) {
       if (err?.status === 429 || err?.message?.includes('429')) {
         modelName = AI_CONFIG.fastModel;
-        try {
-          const ai = getGeminiClient();
-          await ai.models.generateContent({
-            model: modelName,
-            contents: promptInput,
-          });
-        } catch {
-          // Ignore secondary fallback error in local test runner
-        }
       } else if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
         throw err;
       }
     }
   }
 
-  // 1. Synthesize "Before You Sign" Checklist (inclusive of red, orange, AND yellow findings)
-  const checklist = synthesizeBeforeYouSignChecklist(options.findings, options.rawText);
+  // 1. Synthesize "Before You Sign" Checklist
+  const checklist = aiChecklist || synthesizeBeforeYouSignChecklist(options.findings, options.rawText);
 
   // 2. Synthesize Questions for a Legal Professional
-  const lawyerQuestions = synthesizeLawyerQuestions(options.documentId, options.findings, options.rawText);
+  const lawyerQuestions = aiQuestions || synthesizeLawyerQuestions(options.documentId, options.findings, options.rawText);
 
   // 3. Synthesize Action Plan Tasks (1:1 with ActionItem DB entity)
-  const actionItems = synthesizeActionTasks(actionPlanId, options.findings, options.rawText);
+  const actionItems = aiTasks || synthesizeActionTasks(actionPlanId, options.findings, options.rawText);
 
   const duration = Date.now() - start;
 
-  // Record AI Execution Log
   recordAIRunLog({
     documentId: options.documentId,
     agentType: 'action_plan',
@@ -106,7 +154,6 @@ export function synthesizeBeforeYouSignChecklist(
   const checklist: BeforeYouSignItem[] = [];
 
   if (findings && findings.length > 0) {
-    // Include red (high impact), orange (attention areas), and yellow (important terms)
     const targetFindings = findings.filter(
       (f) => f.severity === 'red' || f.severity === 'orange' || f.severity === 'yellow'
     );
@@ -168,7 +215,7 @@ export function synthesizeLawyerQuestions(
         question: `How does the "${finding.title}" clause impact my liability, and can this be negotiated?`,
         reason: `The document specifies: ${finding.description} (Ref: ${finding.source_reference}).`,
         related_finding_id: finding.id,
-        priority: finding.severity === 'red' ? 'high' : 'medium',
+        priority: deriveTaskPriority(finding),
         source_reference: finding.source_reference,
         created_at: new Date().toISOString(),
       });
@@ -192,6 +239,18 @@ export function synthesizeLawyerQuestions(
 }
 
 /**
+ * Single Source of Truth Task Priority Derivation (Decision 6 & 11)
+ * Derived strictly from already validated severity_level and finding_kind to prevent AI conflicts.
+ */
+
+export function deriveTaskPriority(finding: XRayFindingCard): 'high' | 'medium' | 'low' {
+  if (finding.severity === 'red') return 'high';
+  if (finding.severity === 'orange') return 'medium';
+  if (finding.severity === 'yellow') return 'low';
+  return 'low';
+}
+
+/**
  * Synthesizes Action Tasks (1:1 DB schema fidelity with ActionItem)
  */
 export function synthesizeActionTasks(
@@ -210,7 +269,7 @@ export function synthesizeActionTasks(
         action_plan_id: actionPlanId,
         title: `Address ${finding.title}`,
         description: `Action item: ${finding.description}`,
-        priority: finding.severity === 'red' ? 'high' : 'medium',
+        priority: deriveTaskPriority(finding),
         status: 'pending',
         due_date: new Date(Date.now() + (idx + 1) * 86400000 * 7).toISOString().split('T')[0],
         related_finding_id: finding.id,

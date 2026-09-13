@@ -89,9 +89,6 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
       if (response.text) {
         answerText = response.text.trim();
       }
-      if (response.usageMetadata?.totalTokenCount) {
-        tokenUsage = response.usageMetadata.totalTokenCount;
-      }
     } catch (err) {
       if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') throw err;
     }
@@ -101,7 +98,7 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
     answerText = generateDeterministicGroundedAnswer(request.question, retrievalResults);
   }
 
-  // 6. Build Citations traceable to raw document chunks (Zero-Hallucination Gate)
+  // Build Citations traceable to raw document chunks (Zero-Hallucination Gate)
   const citations: AnswerCitation[] = retrievalResults.map((res) => {
     const snippet = res.chunk.content.substring(0, 150);
     const sourceRef = `Page ${res.chunk.page_start || 1}${res.chunk.page_end && res.chunk.page_end !== res.chunk.page_start ? `-${res.chunk.page_end}` : ''}`;
@@ -117,12 +114,9 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
     };
   });
 
-  // Verify answer citations against raw text
   const validatedCitations = citations.filter((c) => c.quotedTextSnippet.length > 0);
-
   const duration = Date.now() - start;
 
-  // 7. Record AI Execution Log
   recordAIRunLog({
     documentId: request.documentId,
     agentType: 'qa',
@@ -131,6 +125,29 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
     latencyMs: duration,
     status: 'completed',
   });
+
+  // Check if generated answer explicitly states content is absent from document
+  const isAbsentResponse =
+    /does not (?:contain|mention|specify|provide|state|include)|not (?:found|mentioned|discussed|addressed|stated|provided|specified) in (?:the|this) document|cannot be found|no (?:information|mention|reference|details) (?:is|are|was|were) (?:found|provided|contained|available)/i.test(
+      answerText
+    );
+
+  if (isAbsentResponse) {
+    return {
+      questionId,
+      answerId,
+      question: request.question,
+      answerText: `This document does not contain information about ${extractTopicFromQuestion(request.question)}.`,
+      confidence: 0.0,
+      safetyStatus: 'passed',
+      isUnsupportedAnswer: true,
+      citations: [],
+      suggestedFollowUpQuestions: [
+        'What are the main termination clauses in this document?',
+        'What obligations or payment terms are specified?',
+      ],
+    };
+  }
 
   return {
     questionId,
@@ -167,6 +184,19 @@ function extractTopicFromQuestion(question: string): string {
 function generateDeterministicGroundedAnswer(question: string, retrievalResults: any[]): string {
   const topChunk = retrievalResults[0]?.chunk;
   if (!topChunk) return 'Based on the document text provided, no relevant details were found.';
+
+  const STOP_WORDS = new Set(['what', 'where', 'when', 'which', 'that', 'this', 'from', 'have', 'with', 'will', 'would', 'should', 'could', 'about', 'does', 'your', 'their', 'them', 'is', 'are', 'the']);
+  const queryWords = question
+    .toLowerCase()
+    .split(/\W+/)
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+
+  const chunkTextLower = retrievalResults.map((r) => r.chunk.content.toLowerCase()).join(' ');
+  const hasKeywordMatch = queryWords.some((qw) => chunkTextLower.includes(qw.length > 4 ? qw.substring(0, 4) : qw));
+
+  if (!hasKeywordMatch && queryWords.length > 0) {
+    return `This document does not contain information about ${extractTopicFromQuestion(question)}.`;
+  }
 
   return `Based on the document text (Ref: Page ${topChunk.page_start || 1}): ${topChunk.content.substring(0, 220)}...`;
 }

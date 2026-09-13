@@ -1,5 +1,28 @@
 import { z } from 'zod';
 
+// Helper to load .env.local in server/Node environment if not already populated in process.env
+function loadEnvLocal() {
+  if (typeof window === 'undefined' && (!process.env['GEMINI_API_KEY'] || process.env['GEMINI_API_KEY'] === 'dummy_gemini_key')) {
+    try {
+      const req = eval('require');
+      const fs = req('fs');
+      const path = req('path');
+      const envPath = path.resolve(process.cwd(), '.env.local');
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf-8');
+        const matchKey = content.match(/GEMINI_API_KEY=["']?([^"'\r\n]+)["']?/);
+        if (matchKey && matchKey[1]) {
+          process.env['GEMINI_API_KEY'] = matchKey[1];
+        }
+      }
+    } catch {
+      // Ignore reading error
+    }
+  }
+}
+
+loadEnvLocal();
+
 export const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url({ message: 'NEXT_PUBLIC_SUPABASE_URL must be a valid HTTP/HTTPS URL' }),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(10, { message: 'NEXT_PUBLIC_SUPABASE_ANON_KEY must be provided' }),

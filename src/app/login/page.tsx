@@ -62,11 +62,16 @@ export default function LoginPage() {
   };
 
   // --- Login Handler ---
-  const performLoginRedirect = () => {
+  const performLoginRedirect = (userEmail?: string) => {
     setIsLoading(true);
+    const emailToSave = userEmail || loginEmail.trim() || 'demo@legallens.ai';
     if (typeof document !== 'undefined') {
       document.cookie = "legallens_demo_session=active; path=/; max-age=86400; SameSite=Lax";
       document.cookie = "sb-access-token=valid_user_jwt; path=/; max-age=86400; SameSite=Lax";
+      document.cookie = `legallens_user_email=${encodeURIComponent(emailToSave)}; path=/; max-age=86400; SameSite=Lax`;
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('legallens_user_email', emailToSave);
     }
     try {
       router.push('/dashboard');
@@ -117,7 +122,7 @@ export default function LoginPage() {
 
     // Success
     setFailedLoginCount(0);
-    performLoginRedirect();
+    performLoginRedirect(emailToUse);
   };
 
   // --- Registration Handler (Redirects to Login Page after Account Creation) ---

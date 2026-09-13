@@ -12,21 +12,42 @@ export const Navbar: React.FC = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      // Check document cookies first
-      if (typeof document !== 'undefined') {
-        const hasDemoCookie = document.cookie.includes('legallens_demo_session') || document.cookie.includes('sb-access-token');
-        if (hasDemoCookie) {
-          setUserEmail('demo@legallens.ai');
+      // 1. Check localStorage first for dynamic logged in email
+      if (typeof localStorage !== 'undefined') {
+        const storedEmail = localStorage.getItem('legallens_user_email');
+        if (storedEmail) {
+          setUserEmail(storedEmail);
+          return;
         }
       }
 
+      // 2. Check cookies for legallens_user_email
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+          const [key, value] = cookie.trim().split('=');
+          if (key && value) acc[key] = decodeURIComponent(value);
+          return acc;
+        }, {} as Record<string, string>);
+
+        if (cookies['legallens_user_email']) {
+          setUserEmail(cookies['legallens_user_email']);
+          return;
+        }
+
+        if (cookies['legallens_demo_session'] || cookies['sb-access-token']) {
+          setUserEmail('demo@legallens.ai');
+          return;
+        }
+      }
+
+      // 3. Supabase Auth session fallback
       try {
         const session = await getCurrentSession();
         if (session?.user?.email) {
           setUserEmail(session.user.email);
         }
       } catch {
-        // Fallback to cookie check if Supabase is offline
+        // Fallback
       }
     };
 
@@ -34,9 +55,13 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const handleSignOut = async () => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('legallens_user_email');
+    }
     if (typeof document !== 'undefined') {
       document.cookie = "legallens_demo_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "legallens_user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
     try {
       await signOutUser();

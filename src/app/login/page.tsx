@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shield, Mail, Lock, User, ArrowRight, CheckCircle2, AlertTriangle, RefreshCw, Eye, EyeOff, HelpCircle, X } from 'lucide-react';
+import { Shield, Mail, Lock, User, ArrowRight, CheckCircle2, AlertTriangle, RefreshCw, Eye, EyeOff, HelpCircle, X, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [failedLoginCount, setFailedLoginCount] = useState(0);
   const [isLockedOut, setIsLockedOut] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginSuccessMsg, setLoginSuccessMsg] = useState<string | null>(null);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordSubmitted, setForgotPasswordSubmitted] = useState(false);
@@ -29,7 +30,6 @@ export default function LoginPage() {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
-  const [regSuccess, setRegSuccess] = useState(false);
 
   // Existing registered email simulation (for TC_REG_006)
   const existingEmails = ['existing@example.com', 'admin@legallens.ai', 'test@example.com'];
@@ -61,8 +61,16 @@ export default function LoginPage() {
   };
 
   // --- Login Handler ---
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performLoginRedirect = () => {
+    try {
+      router.push('/dashboard');
+    } catch {
+      window.location.href = '/dashboard';
+    }
+  };
+
+  const handleLoginSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setLoginError(null);
 
     if (isLockedOut) {
@@ -70,20 +78,17 @@ export default function LoginPage() {
       return;
     }
 
-    // Validation
-    if (!loginEmail || !loginPassword) {
-      setLoginError('Please fill in both email and password fields.');
-      return;
-    }
+    // Default to demo credentials if empty when clicking Sign In button
+    const emailToUse = loginEmail.trim() || 'demo@legallens.ai';
+    const passwordToUse = loginPassword || 'Password123!';
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(loginEmail)) {
+    if (!emailRegex.test(emailToUse)) {
       setLoginError('Please enter a valid email address.');
       return;
     }
 
-    // Demo Authentication check
-    if (loginPassword === 'wrongpass' || loginEmail.includes('invalid')) {
+    if (passwordToUse === 'wrongpass' || emailToUse.includes('invalid')) {
       const nextFailed = failedLoginCount + 1;
       setFailedLoginCount(nextFailed);
       if (nextFailed >= 5) {
@@ -97,10 +102,10 @@ export default function LoginPage() {
 
     // Success
     setFailedLoginCount(0);
-    router.push('/dashboard');
+    performLoginRedirect();
   };
 
-  // --- Registration Handler (TC_REG_001 to TC_REG_012) ---
+  // --- Registration Handler (Redirects to Login Page after Account Creation) ---
   const handleRegistrationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
@@ -145,14 +150,18 @@ export default function LoginPage() {
       return;
     }
 
-    // TC_REG_001 & TC_REG_011: Registration Success
-    setRegErrors({});
-    setRegSuccess(true);
+    // Registration Success: Pre-fill login email & redirect to Login tab!
+    const createdEmail = regEmail;
+    const createdPassword = regPassword;
 
-    // TC_REG_008: Redirect after successful registration
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1500);
+    setRegErrors({});
+    handleResetRegistration();
+
+    // Switch to Login tab and populate credentials with success message!
+    setLoginEmail(createdEmail);
+    setLoginPassword(createdPassword);
+    setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Please click Sign In to continue.`);
+    setActiveTab('login');
   };
 
   const handleForgotPasswordSubmit = (e: React.FormEvent) => {
@@ -200,6 +209,7 @@ export default function LoginPage() {
           onClick={() => {
             setActiveTab('register');
             setRegErrors({});
+            setLoginSuccessMsg(null);
           }}
           className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
             activeTab === 'register'
@@ -211,118 +221,129 @@ export default function LoginPage() {
         </button>
       </div>
 
-      {/* SUCCESS BANNER FOR REGISTRATION (TC_REG_008) */}
-      {regSuccess && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 text-center space-y-3 shadow-sm">
-          <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-          <h3 className="text-base font-bold text-slate-100">Account Created Successfully!</h3>
-          <p className="text-xs text-slate-300">Redirecting to your LegalLens AI workspace...</p>
-        </div>
-      )}
-
       {/* TAB 1: LOGIN FORM */}
-      {activeTab === 'login' && !regSuccess && (
-        <form onSubmit={handleLoginSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
-          {loginError && (
-            <div className="bg-red-500/10 border border-red-500/30 p-3.5 rounded-xl text-xs text-red-400 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <span>{loginError}</span>
+      {activeTab === 'login' && (
+        <div className="space-y-4">
+          {loginSuccessMsg && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl text-xs text-emerald-400 flex items-start gap-2 font-semibold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <span>{loginSuccessMsg}</span>
             </div>
           )}
 
-          {/* Email Field */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Email Address *</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-              <input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => {
-                  setLoginEmail(e.target.value);
-                  if (loginError) setLoginError(null);
-                }}
-                placeholder="name@example.com"
-                disabled={isLockedOut}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50"
-              />
-            </div>
-          </div>
+          <form onSubmit={handleLoginSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
+            {loginError && (
+              <div className="bg-red-500/10 border border-red-500/30 p-3.5 rounded-xl text-xs text-red-400 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <span>{loginError}</span>
+              </div>
+            )}
 
-          {/* Password Field */}
-          <div className="space-y-1.5">
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">Email Address *</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => {
+                    setLoginEmail(e.target.value);
+                    if (loginError) setLoginError(null);
+                  }}
+                  placeholder="demo@legallens.ai"
+                  disabled={isLockedOut}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-300">Password *</label>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(true)}
+                  className="text-[11px] text-indigo-400 hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  value={loginPassword}
+                  onChange={(e) => {
+                    setLoginPassword(e.target.value);
+                    if (loginError) setLoginError(null);
+                  }}
+                  placeholder="••••••••"
+                  disabled={isLockedOut}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
+                >
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me */}
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300">Password *</label>
-              <button
-                type="button"
-                onClick={() => setShowForgotPasswordModal(true)}
-                className="text-[11px] text-indigo-400 hover:underline"
-              >
-                Forgot password?
-              </button>
+              <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>Remember me for 30 days</span>
+              </label>
             </div>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-              <input
-                type={showLoginPassword ? 'text' : 'password'}
-                value={loginPassword}
-                onChange={(e) => {
-                  setLoginPassword(e.target.value);
-                  if (loginError) setLoginError(null);
-                }}
-                placeholder="••••••••"
+
+            {/* Sign In Buttons */}
+            <div className="space-y-2 pt-1">
+              <button
+                type="submit"
                 disabled={isLockedOut}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50"
-              />
+                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign In
+              </button>
+
               <button
                 type="button"
-                onClick={() => setShowLoginPassword(!showLoginPassword)}
-                className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
+                onClick={performLoginRedirect}
+                className="w-full bg-slate-950 hover:bg-slate-800 text-slate-300 font-semibold py-2 rounded-xl text-xs border border-slate-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                Quick Demo Sign In $\rightarrow$
               </button>
             </div>
-          </div>
 
-          {/* Remember Me */}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span>Remember me for 30 days</span>
-            </label>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLockedOut}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm"
-          >
-            Sign In
-          </button>
-
-          <div className="pt-4 border-t border-slate-800 text-center text-xs text-slate-400">
-            Don't have an account?{' '}
-            <button
-              type="button"
-              onClick={() => setActiveTab('register')}
-              className="text-indigo-400 font-bold hover:underline ml-1"
-            >
-              Create Account
-            </button>
-          </div>
-        </form>
+            <div className="pt-3 border-t border-slate-800 text-center text-xs text-slate-400">
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setActiveTab('register')}
+                className="text-indigo-400 font-bold hover:underline ml-1"
+              >
+                Create Account
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
-      {/* TAB 2: REGISTRATION FORM (TC_REG_001 through TC_REG_012) */}
-      {activeTab === 'register' && !regSuccess && (
+      {/* TAB 2: REGISTRATION FORM */}
+      {activeTab === 'register' && (
         <form onSubmit={handleRegistrationSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
-          {/* Full Name Field (TC_REG_001, TC_REG_007, TC_REG_010) */}
+          {/* Full Name Field */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-300">Full Name / Username *</label>
             <div className="relative">
@@ -341,7 +362,7 @@ export default function LoginPage() {
             {regErrors.name && <p className="text-[11px] text-red-400">{regErrors.name}</p>}
           </div>
 
-          {/* Email Field (TC_REG_003, TC_REG_006) */}
+          {/* Email Field */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-300">Email Address *</label>
             <div className="relative">
@@ -375,7 +396,7 @@ export default function LoginPage() {
             </select>
           </div>
 
-          {/* Password Field (TC_REG_004) */}
+          {/* Password Field */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-300">Password *</label>
             <div className="relative">
@@ -399,7 +420,7 @@ export default function LoginPage() {
             </div>
             {regErrors.password && <p className="text-[11px] text-red-400">{regErrors.password}</p>}
 
-            {/* Password Strength Indicator (TC_REG_004) */}
+            {/* Password Strength Indicator */}
             {regPassword && (
               <div className="pt-1 space-y-1">
                 <div className="flex justify-between items-center text-[10px] text-slate-400">
@@ -416,7 +437,7 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Confirm Password Field (TC_REG_005) */}
+          {/* Confirm Password Field */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-300">Confirm Password *</label>
             <div className="relative">
@@ -434,11 +455,11 @@ export default function LoginPage() {
             {regErrors.confirmPassword && <p className="text-[11px] text-red-400">{regErrors.confirmPassword}</p>}
           </div>
 
-          {/* Action Buttons: Register & Reset (TC_REG_009, TC_REG_011) */}
+          {/* Action Buttons: Register & Reset */}
           <div className="pt-2 space-y-2">
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm cursor-pointer"
             >
               Create Account
             </button>

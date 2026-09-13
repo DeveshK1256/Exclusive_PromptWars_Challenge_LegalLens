@@ -62,10 +62,10 @@ export default function LoginPage() {
 
   // --- Login Handler ---
   const performLoginRedirect = () => {
-    try {
-      router.push('/dashboard');
-    } catch {
+    if (typeof window !== 'undefined') {
       window.location.href = '/dashboard';
+    } else {
+      router.push('/dashboard');
     }
   };
 

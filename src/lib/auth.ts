@@ -2,6 +2,19 @@ import { createClient } from '@/lib/supabase/client';
 import { ContextRole } from '@/types/database';
 
 export async function signUpUser(email: string, password: string, contextRole?: ContextRole) {
+  if (!email || !password) {
+    throw new Error('Email and password are required for registration.');
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new Error('Invalid email address format.');
+  }
+
+  if (password.length < 8) {
+    throw new Error('Password must be at least 8 characters long.');
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -18,6 +31,10 @@ export async function signUpUser(email: string, password: string, contextRole?: 
 }
 
 export async function signInUser(email: string, password: string) {
+  if (!email || !password) {
+    throw new Error('Email and password are required for sign in.');
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,

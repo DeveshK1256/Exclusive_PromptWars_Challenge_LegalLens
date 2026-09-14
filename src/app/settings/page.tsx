@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings, User, Shield, Key, Bell, CheckCircle } from 'lucide-react';
+import { Settings, User, Shield, Key, Bell, CheckCircle, Sun } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export default function SettingsPage() {
+  const { theme } = useTheme();
   const [contextRole, setContextRole] = useState('Employee');
   const [complexity, setComplexity] = useState('very_simple');
   const [saved, setSaved] = useState(false);
@@ -100,6 +103,22 @@ export default function SettingsPage() {
                 <p className="text-xs text-slate-400 mt-1">{level.desc}</p>
               </label>
             ))}
+          </div>
+        </div>
+
+        {/* Theme Preference */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <Sun className="w-5 h-5 text-indigo-400" />
+            Appearance & Visual Theme
+          </h3>
+          <p className="text-xs text-slate-400">
+            Switch between Dark Mode and Light Mode for LegalLens AI.
+          </p>
+
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <span className="text-xs text-slate-400">Currently active theme: <strong className="text-slate-200 capitalize">{theme} Mode</strong></span>
           </div>
         </div>
 

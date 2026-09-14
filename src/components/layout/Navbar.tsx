@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, FileText, GitCompare, ListCheck, Settings, User, LogOut } from 'lucide-react';
 import { getCurrentSession, signOutUser } from '@/lib/auth';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
@@ -77,7 +78,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center space-x-3">
@@ -85,8 +86,8 @@ export const Navbar: React.FC = () => {
               <div className="bg-brand-600 text-white p-2 rounded-lg shadow-sm">
                 <Shield className="w-5 h-5" />
               </div>
-              <span className="font-bold text-xl tracking-tight text-slate-900">
-                Legal<span className="text-brand-600">Lens</span> AI
+              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-slate-100">
+                Legal<span className="text-brand-600 dark:text-brand-500">Lens</span> AI
               </span>
             </Link>
           </div>
@@ -94,35 +95,35 @@ export const Navbar: React.FC = () => {
           <nav className="hidden md:flex items-center space-x-6">
             <Link
               href="/dashboard"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors"
+              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               <FileText className="w-4 h-4" />
               <span>Dashboard</span>
             </Link>
             <Link
               href="/documents"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors"
+              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               <FileText className="w-4 h-4" />
               <span>My Documents</span>
             </Link>
             <Link
               href="/compare"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors"
+              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               <GitCompare className="w-4 h-4" />
               <span>Compare</span>
             </Link>
             <Link
               href="/action-plans"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors"
+              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               <ListCheck className="w-4 h-4" />
               <span>Action Plans</span>
             </Link>
             <Link
               href="/settings"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors"
+              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               <Settings className="w-4 h-4" />
               <span>Settings</span>
@@ -130,16 +131,18 @@ export const Navbar: React.FC = () => {
           </nav>
 
           <div className="flex items-center space-x-3">
+            <ThemeToggle />
+
             {userEmail ? (
               <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                  <User className="w-4 h-4 text-brand-600" />
-                  <span className="text-xs font-semibold text-slate-700">{userEmail}</span>
+                <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <User className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{userEmail}</span>
                 </div>
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 rounded-lg border border-slate-200 hover:border-red-200 transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-200 dark:hover:border-red-900 transition-colors cursor-pointer"
                   title="Sign Out"
                 >
                   <LogOut className="w-3.5 h-3.5 mr-1" />
@@ -149,7 +152,7 @@ export const Navbar: React.FC = () => {
             ) : (
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 <User className="w-4 h-4 mr-1.5" />
                 Sign In

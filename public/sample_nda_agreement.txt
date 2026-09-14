@@ -1,0 +1,29 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Non-Disclosure Agreement ("Agreement") is entered into as of March 15, 2026 ("Effective Date"), by and between Innovate Solutions LLC ("Party A") and Global Enterprises Co. ("Party B").
+
+1. PURPOSE
+The parties wish to explore a potential business relationship ("Purpose") and in connection with this Purpose, each party may disclose confidential technical, financial, and business information to the other.
+
+2. CONFIDENTIAL INFORMATION
+"Confidential Information" refers to any non-public information disclosed by one party ("Disclosing Party") to the other ("Receiving Party"), whether orally, visually, or in writing, including proprietary code, product roadmaps, trade secrets, and customer lists.
+
+3. OBLIGATIONS OF RECEIVING PARTY
+The Receiving Party agrees to hold Confidential Information in strict confidence and take reasonable precautions to prevent unauthorized disclosure. Receiving Party shall not use Confidential Information for any purpose other than the business Purpose defined herein.
+
+4. EXCLUSIONS
+Confidential Information does not include information that:
+(a) is or becomes publicly known through no breach of Receiving Party;
+(b) was already known to Receiving Party prior to disclosure;
+(c) is independently developed by Receiving Party without reference to Confidential Information.
+
+5. DURATION AND TERMINATION
+The obligations under this Agreement shall remain in effect for a period of three (3) years from the Effective Date. Either party may terminate discussions at any time upon 14 days written notice.
+
+6. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of New York.
+
+IN WITNESS WHEREOF, the parties have executed this Mutual Non-Disclosure Agreement.
+
+Party A: Innovate Solutions LLC
+Party B: Global Enterprises Co.

@@ -1,0 +1,23 @@
+STANDARD EMPLOYMENT AGREEMENT
+
+This Employment Agreement ("Agreement") is entered into effective as of February 1, 2026, by and between TechCorp Inc. ("Employer"), a California corporation, and John Doe ("Employee").
+
+1. POSITION AND DUTIES
+Employee shall serve in the position of Senior Software Engineer. Employee agrees to perform technical software engineering duties assigned by Employer. Employee is permitted up to 2 days per week of flexible remote work, subject to manager approval.
+
+2. COMPENSATION AND BENEFITS
+Employer agrees to pay Employee an annual base compensation of $120,000, payable in monthly installments of $10,000. Employee shall be eligible for standard medical, dental, and vision insurance benefits effective on the first day of employment. Annual performance and compensation review will occur on February 1, 2027.
+
+3. RESTRICTIVE COVENANTS AND NON-COMPETE
+Employee agrees that during employment and for a period of 12 months following termination of employment for any reason, Employee shall not directly or indirectly engage in, perform services for, or operate any business competing with Employer within a 25-mile radius of San Francisco, California.
+
+4. TERMINATION AND NOTICE PERIOD
+Either Employer or Employee may terminate this employment relationship at any time, with or without cause, by providing at least 30 days written notice to the other party prior to the intended termination date.
+
+5. GOVERNING LAW AND DISPUTES
+This Agreement shall be governed by, construed, and enforced in accordance with the laws of the State of California, without giving effect to conflicts of law principles. Any legal action arising hereunder shall be brought exclusively in the state or federal courts located in San Francisco County, California.
+
+IN WITNESS WHEREOF, the parties hereto have executed this Agreement as of the date first above written.
+
+Employer: TechCorp Inc.
+Employee: John Doe

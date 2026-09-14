@@ -1,34 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DocumentList } from '@/components/documents/DocumentList';
 import { Document } from '@/types/database';
+import { getStoredDocuments, deleteStoredDocument, DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: 'doc_sample_1',
-      user_id: 'user_demo',
-      title: 'Sample Employment Agreement',
-      original_filename: 'Standard_Employment_Agreement_2026.pdf',
-      mime_type: 'application/pdf',
-      file_size: 2450000,
-      file_hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-      storage_path: 'documents/user_demo/sample.pdf',
-      document_type: 'employment_contract',
-      jurisdiction: 'California, US',
-      status: 'completed',
-      deleted_at: null,
-      retention_expires_at: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]);
+  const router = useRouter();
+  const [documents, setDocuments] = useState<Document[]>([DEFAULT_SAMPLE_DOC]);
+
+  useEffect(() => {
+    setDocuments(getStoredDocuments());
+  }, []);
 
   const handleDeleteDocument = (id: string) => {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
+    const updated = deleteStoredDocument(id);
+    setDocuments(updated);
+  };
+
+  const handleSelectTab = (tab: 'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action') => {
+    router.push(`/dashboard?tab=${tab}`);
   };
 
   return (
@@ -50,7 +44,7 @@ export default function DocumentsPage() {
         </Link>
       </div>
 
-      <DocumentList documents={documents} onDeleteDocument={handleDeleteDocument} />
+      <DocumentList documents={documents} onDeleteDocument={handleDeleteDocument} onSelectTab={handleSelectTab} />
     </div>
   );
 }

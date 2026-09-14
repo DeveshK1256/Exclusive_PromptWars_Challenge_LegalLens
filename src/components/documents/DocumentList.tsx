@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, Shield, Hash, Calendar, Trash2, AlertTriangle, X } from 'lucide-react';
+import { FileText, Shield, Hash, Calendar, Trash2, AlertTriangle, X, BookOpen, MessageSquare } from 'lucide-react';
 import { Document } from '@/types/database';
 
 interface DocumentListProps {
   documents: Document[];
   onDeleteDocument?: (id: string) => void;
+  onSelectTab?: (tab: 'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action') => void;
 }
 
-export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteDocument }) => {
+export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteDocument, onSelectTab }) => {
   const [pendingDeleteDoc, setPendingDeleteDoc] = useState<Document | null>(null);
 
   if (documents.length === 0) {
@@ -38,7 +39,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {documents.map((doc) => (
           <div key={doc.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-2">
                   <div className="p-2 bg-brand-50 text-brand-600 rounded-lg">
@@ -68,6 +69,35 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
                   {(doc.file_size / (1024 * 1024)).toFixed(2)} MB
                 </span>
               </div>
+
+              {onSelectTab && (
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab('xray')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-sm cursor-pointer"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>View Analysis Report</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab('simplification')}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Simplification</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab('qa')}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Ask Q&A</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">

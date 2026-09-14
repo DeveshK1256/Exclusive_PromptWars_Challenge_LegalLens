@@ -7,12 +7,14 @@ import { SimplificationViewer } from '@/components/simplification/Simplification
 import { DocumentQAChat } from '@/components/qa/DocumentQAChat';
 import { LegalTimelineViewer } from '@/components/timeline/LegalTimelineViewer';
 import { ActionPlanViewer } from '@/components/action/ActionPlanViewer';
+import { LegalXRayDashboard } from '@/components/xray/LegalXRayDashboard';
+import { LegalXRayOverview } from '@/lib/xray/types';
 import { Document, DocumentSummary, GlossaryTerm, TimelineEvent } from '@/types/database';
 import { ActionPlanResult } from '@/lib/action/types';
-import { FileText, BookOpen, MessageSquare, Calendar, CheckSquare } from 'lucide-react';
+import { FileText, Shield, BookOpen, MessageSquare, Calendar, CheckSquare } from 'lucide-react';
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'upload' | 'simplification' | 'qa' | 'timeline' | 'action'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action'>('upload');
   const [documents, setDocuments] = useState<Document[]>([
     {
       id: 'doc_sample_1',
@@ -32,6 +34,79 @@ export default function DashboardPage() {
       updated_at: new Date().toISOString(),
     },
   ]);
+
+  const sampleXRayOverview: LegalXRayOverview = {
+    document_id: 'doc_sample_1',
+    document_version_id: 'ver_doc_sample_1_v1',
+    high_impact_count: 1,
+    attention_area_count: 1,
+    important_count: 1,
+    general_count: 1,
+    deadlines_count: 1,
+    action_items_count: 1,
+    findings: [
+      {
+        id: 'fnd_xray_001',
+        document_id: 'doc_sample_1',
+        document_version_id: 'ver_doc_sample_1_v1',
+        clause_id: 'c_1',
+        category: 'Restrictive Covenants',
+        severity: 'red',
+        finding_kind: 'action_required',
+        finding_type: 'recommendation',
+        title: 'Post-Employment Non-Compete Scope',
+        description: 'Employee restricted from engaging in competing business within 25 miles for 12 months post-employment.',
+        source_reference: 'Section 3: "Employee agrees not to engage in competing business within 25 miles of San Francisco for 12 months post-employment."',
+        confidence: 0.96,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'fnd_xray_002',
+        document_id: 'doc_sample_1',
+        document_version_id: 'ver_doc_sample_1_v1',
+        clause_id: 'c_2',
+        category: 'Termination Notice',
+        severity: 'orange',
+        finding_kind: 'deadline',
+        finding_type: 'ai_interpretation',
+        title: '30-Day Resignation Notice Window',
+        description: 'Either party must provide 30 days written notice prior to agreement termination.',
+        source_reference: 'Section 2: "Either party may terminate employment upon 30 days written notice."',
+        confidence: 0.92,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'fnd_xray_003',
+        document_id: 'doc_sample_1',
+        document_version_id: 'ver_doc_sample_1_v1',
+        clause_id: 'c_3',
+        category: 'Compensation & Salary',
+        severity: 'yellow',
+        finding_kind: 'informational',
+        finding_type: 'fact',
+        title: 'Annual Compensation Rate',
+        description: 'Base salary set at $120,000 annually payable in monthly installments.',
+        source_reference: 'Section 1: "Annual base compensation of $120,000 payable monthly."',
+        confidence: 0.98,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'fnd_xray_004',
+        document_id: 'doc_sample_1',
+        document_version_id: 'ver_doc_sample_1_v1',
+        clause_id: 'c_4',
+        category: 'Flexible Work Policy',
+        severity: 'green',
+        finding_kind: 'informational',
+        finding_type: 'fact',
+        title: 'Remote Work Allowance',
+        description: 'Employee permitted 2 days per week flexible remote work with manager approval.',
+        source_reference: 'Section 4: "Employee permitted 2 days per week flexible remote work with approval."',
+        confidence: 0.95,
+        created_at: new Date().toISOString(),
+      },
+    ],
+  };
 
   const sampleSummary: DocumentSummary = {
     id: 'sum_demo_1',
@@ -205,7 +280,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-100">LegalLens AI Workspace</h1>
           <p className="text-slate-400 text-sm mt-1">
-            Navigate, simplify, examine timelines, and execute action plans for your legal documents.
+            Navigate, examine Legal X-Ray analysis reports, simplify clauses, inspect timelines, and execute action plans.
           </p>
         </div>
 
@@ -219,6 +294,15 @@ export default function DashboardPage() {
           >
             <FileText className="w-3.5 h-3.5" />
             Documents
+          </button>
+          <button
+            onClick={() => setActiveTab('xray')}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
+              activeTab === 'xray' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            Analysis Report
           </button>
           <button
             onClick={() => setActiveTab('simplification')}
@@ -261,8 +345,28 @@ export default function DashboardPage() {
 
       {activeTab === 'upload' && (
         <div className="space-y-8">
-          <DocumentUploadZone onUploadSuccess={handleUploadSuccess} />
-          <DocumentList documents={documents} onDeleteDocument={handleDeleteDocument} />
+          <DocumentUploadZone onUploadSuccess={handleUploadSuccess} onViewReport={() => setActiveTab('xray')} />
+          <DocumentList documents={documents} onDeleteDocument={handleDeleteDocument} onSelectTab={setActiveTab} />
+        </div>
+      )}
+
+      {activeTab === 'xray' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-slate-900 p-5 rounded-2xl border border-slate-800">
+            <div>
+              <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                <Shield className="w-6 h-6 text-indigo-400" />
+                Legal X-Ray Analysis Report
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Detailed AI-assisted document classification by severity level (🔴 🟠 🟡 🟢) and finding kind with verbatim source citations.
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-brand-500/20 text-brand-300 border border-brand-500/30 rounded-full text-xs font-bold">
+              Doc: Standard_Employment_Agreement_2026.pdf
+            </span>
+          </div>
+          <LegalXRayDashboard overview={sampleXRayOverview} />
         </div>
       )}
 

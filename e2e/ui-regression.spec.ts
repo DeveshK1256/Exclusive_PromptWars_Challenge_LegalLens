@@ -143,11 +143,15 @@ test.describe('LegalLens AI - Full UI Regression Suite', () => {
   // -------------------------------------------------------------
   // 4. Dashboard Workspace Tabs & Controls (/dashboard)
   // -------------------------------------------------------------
-  test('DashboardPage: Tab switching between Documents, Simplification, Q&A, Timeline, and Action Plan', async ({ page }) => {
+  test('DashboardPage: Tab switching between Documents, Analysis Report, Simplification, Q&A, Timeline, and Action Plan', async ({ page }) => {
     await page.goto('/dashboard');
 
     // Default tab: Documents
     await expect(page.getByRole('heading', { name: 'Upload Legal Document' })).toBeVisible();
+
+    // Switch to Analysis Report Tab
+    await page.getByRole('button', { name: 'Analysis Report' }).click();
+    await expect(page.getByRole('heading', { name: 'Legal X-Ray Analysis Report' })).toBeVisible();
 
     // Switch to Simplification Tab
     await page.getByRole('button', { name: 'Simplification' }).click();

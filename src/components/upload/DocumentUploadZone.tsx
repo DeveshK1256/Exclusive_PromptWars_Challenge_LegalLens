@@ -7,9 +7,10 @@ import { DocumentType, ContextRole } from '@/types/database';
 
 interface DocumentUploadZoneProps {
   onUploadSuccess?: (document: Record<string, unknown>) => void;
+  onViewReport?: () => void;
 }
 
-export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUploadSuccess }) => {
+export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUploadSuccess, onViewReport }) => {
   const [file, setFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>('other');
   const [jurisdiction, setJurisdiction] = useState<string>('');
@@ -117,9 +118,20 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
       )}
 
       {successMsg && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-sm flex items-center space-x-3" role="status" aria-live="polite">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" aria-hidden="true" />
-          <span>{successMsg}</span>
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-sm flex items-center justify-between" role="status" aria-live="polite">
+          <div className="flex items-center space-x-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" aria-hidden="true" />
+            <span>{successMsg}</span>
+          </div>
+          {onViewReport && (
+            <button
+              type="button"
+              onClick={onViewReport}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm cursor-pointer ml-3"
+            >
+              View Analysis Report →
+            </button>
+          )}
         </div>
       )}
 

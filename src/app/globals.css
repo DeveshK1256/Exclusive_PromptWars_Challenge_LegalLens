@@ -4,6 +4,25 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col;
+    @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased min-h-screen flex flex-col;
   }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(20%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 22s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

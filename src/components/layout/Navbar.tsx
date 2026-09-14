@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Shield, FileText, GitCompare, ListCheck, Settings, User, LogOut } from 'lucide-react';
 import { getCurrentSession, signOutUser } from '@/lib/auth';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,6 +78,14 @@ export const Navbar: React.FC = () => {
     }
   };
 
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: FileText },
+    { href: '/documents', label: 'My Documents', icon: FileText },
+    { href: '/compare', label: 'Compare', icon: GitCompare },
+    { href: '/action-plans', label: 'Action Plans', icon: ListCheck },
+    { href: '/settings', label: 'Settings', icon: Settings },
+  ];
+
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -93,41 +102,25 @@ export const Navbar: React.FC = () => {
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/dashboard"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Dashboard</span>
-            </Link>
-            <Link
-              href="/documents"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span>My Documents</span>
-            </Link>
-            <Link
-              href="/compare"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-            >
-              <GitCompare className="w-4 h-4" />
-              <span>Compare</span>
-            </Link>
-            <Link
-              href="/action-plans"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-            >
-              <ListCheck className="w-4 h-4" />
-              <span>Action Plans</span>
-            </Link>
-            <Link
-              href="/settings"
-              className="flex items-center space-x-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </Link>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center space-x-1.5 text-sm font-medium py-1 transition-colors border-b-2 ${
+                    isActive
+                      ? 'text-brand-600 dark:text-brand-400 font-semibold border-brand-600 dark:border-brand-500'
+                      : 'text-slate-600 dark:text-slate-300 border-transparent hover:text-brand-600 dark:hover:text-brand-400'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="flex items-center space-x-3">

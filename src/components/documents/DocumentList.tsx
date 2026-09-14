@@ -8,9 +8,10 @@ interface DocumentListProps {
   documents: Document[];
   onDeleteDocument?: (id: string) => void;
   onSelectTab?: (tab: 'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action') => void;
+  onSelectDocument?: (doc: Document) => void;
 }
 
-export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteDocument, onSelectTab }) => {
+export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteDocument, onSelectTab, onSelectDocument }) => {
   const [pendingDeleteDoc, setPendingDeleteDoc] = useState<Document | null>(null);
 
   if (documents.length === 0) {
@@ -30,6 +31,15 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
       onDeleteDocument(pendingDeleteDoc.id);
     }
     setPendingDeleteDoc(null);
+  };
+
+  const handleCardTabClick = (doc: Document, tab: 'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action') => {
+    if (onSelectDocument) {
+      onSelectDocument(doc);
+    }
+    if (onSelectTab) {
+      onSelectTab(tab);
+    }
   };
 
   return (
@@ -74,7 +84,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => onSelectTab('xray')}
+                    onClick={() => handleCardTabClick(doc, 'xray')}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-sm cursor-pointer"
                   >
                     <Shield className="w-3.5 h-3.5" />
@@ -82,7 +92,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
                   </button>
                   <button
                     type="button"
-                    onClick={() => onSelectTab('simplification')}
+                    onClick={() => handleCardTabClick(doc, 'simplification')}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
                   >
                     <BookOpen className="w-3.5 h-3.5" />
@@ -90,7 +100,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
                   </button>
                   <button
                     type="button"
-                    onClick={() => onSelectTab('qa')}
+                    onClick={() => handleCardTabClick(doc, 'qa')}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />

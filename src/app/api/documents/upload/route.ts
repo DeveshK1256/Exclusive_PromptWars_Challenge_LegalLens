@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateFileMetadata, sanitizeFilename } from '@/lib/config';
 import { calculateFileHash } from '@/lib/crypto';
 import { checkRateLimit } from '@/lib/security/rateLimit';
+import { extractDocument } from '@/lib/extraction/extractor';
 import { DocumentType, ContextRole } from '@/types/database';
 
 export async function POST(request: NextRequest) {
@@ -50,6 +51,23 @@ export async function POST(request: NextRequest) {
     const safeFilename = sanitizeFilename(file.name);
     const storagePath = `documents/${userId}/${Date.now()}_${safeFilename}`;
 
+    // 2. Text Extraction Execution
+    let rawText = '';
+    let sections: any[] = [];
+    let extractionStatus: 'completed' | 'uploaded' = 'uploaded';
+
+    try {
+      const extractionResult = await extractDocument(buffer, file.type || 'application/pdf', safeFilename);
+      if (extractionResult.status === 'completed') {
+        rawText = extractionResult.rawText || '';
+        sections = extractionResult.sections || [];
+        extractionStatus = 'completed';
+      }
+    } catch {
+      // Fallback to text string if binary buffer extraction fails
+      rawText = buffer.toString('utf-8');
+    }
+
     // 3. Document Record Construction matching Section 9.1
     const documentRecord = {
       id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -62,7 +80,9 @@ export async function POST(request: NextRequest) {
       storage_path: storagePath,
       document_type: documentType,
       jurisdiction: jurisdiction, // optional, user-supplied, never inferred
-      status: 'uploaded' as const,
+      status: extractionStatus,
+      raw_text: rawText,
+      sections: sections,
       deleted_at: null,
       retention_expires_at: null,
       created_at: new Date().toISOString(),

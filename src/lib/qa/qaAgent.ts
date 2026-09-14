@@ -137,11 +137,10 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
     status: 'completed',
   });
 
-  // Check if generated answer explicitly states content is absent from document
+  // Check if generated answer explicitly states content is absent from document (only when answer is entirely statement of absence)
   const isAbsentResponse =
-    /does not (?:contain|mention|specify|provide|state|include)|not (?:found|mentioned|discussed|addressed|stated|provided|specified) in (?:the|this) document|cannot be found|no (?:information|mention|reference|details) (?:is|are|was|were) (?:found|provided|contained|available)/i.test(
-      answerText
-    );
+    /^this document does not (?:contain|mention|specify|provide|state|include)/i.test(answerText) ||
+    /^no (?:information|mention|reference|details) (?:is|are|was|were) (?:found|provided|contained|available)/i.test(answerText);
 
   if (isAbsentResponse) {
     return {
@@ -213,9 +212,10 @@ function generateDeterministicGroundedAnswer(question: string, retrievalResults:
 }
 
 function generateSuggestedFollowUps(question: string, retrievalResults: any[]): string[] {
+  const topSection = retrievalResults[0]?.chunk?.section_id || 'this provision';
   return [
-    'What notice period is required for this provision?',
-    'What are the penalties or exceptions associated with this term?',
+    `What notice period or timeline applies to ${topSection.toLowerCase()}?`,
+    'What are the key obligations or penalties associated with this?',
     'Can you explain this in simpler terms?',
   ];
 }
@@ -229,21 +229,50 @@ const DEFAULT_DOCUMENT_TEXT = `STANDARD EMPLOYMENT AGREEMENT
 
 function buildChunksFromText(text: string, documentId: string, documentVersionId: string): any[] {
   if (!text || !text.trim()) return [];
-  const paragraphs = text
-    .split(/\r?\n\s*\r?\n|\n(?=[0-9]+\.)/)
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0);
 
-  return paragraphs.map((para, idx) => ({
+  // Split by double newlines, line breaks, or section headers
+  const rawBlocks = text
+    .split(/\r?\n\s*\r?\n|\n(?=[0-9]+\.|\bSECTION\b|\bARTICLE\b|\bCLAUSE\b)/i)
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0);
+
+  const chunkContents: string[] = [];
+
+  for (const block of rawBlocks) {
+    if (block.length <= 600) {
+      chunkContents.push(block);
+    } else {
+      // Split large blocks into ~500 char sliding window chunks with 100 char overlap
+      let start = 0;
+      while (start < block.length) {
+        let end = Math.min(start + 500, block.length);
+        if (end < block.length) {
+          const lastPeriod = block.lastIndexOf('.', end);
+          const lastNewline = block.lastIndexOf('\n', end);
+          const breakPoint = Math.max(lastPeriod, lastNewline);
+          if (breakPoint > start + 200) {
+            end = breakPoint + 1;
+          }
+        }
+        const snippet = block.substring(start, end).trim();
+        if (snippet.length > 0) {
+          chunkContents.push(snippet);
+        }
+        start = end - 100 > start ? end - 100 : end;
+      }
+    }
+  }
+
+  return chunkContents.map((content, idx) => ({
     id: `chunk_${documentVersionId}_${idx + 1}`,
     document_id: documentId,
     document_version_id: documentVersionId,
     section_id: `Section ${idx + 1}`,
-    content: para,
+    content,
     chunk_index: idx + 1,
     embedding_reference: `emb_${documentVersionId}_${idx + 1}`,
     page_start: 1,
     page_end: 1,
-    token_count: Math.ceil(para.length / 4),
+    token_count: Math.ceil(content.length / 4),
   }));
 }

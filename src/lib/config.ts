@@ -17,7 +17,7 @@ export const DOCUMENT_CONFIG = {
   retentionWindowDays: Number(process.env.RETENTION_WINDOW_DAYS || 30),
 
   // Minimum cosine similarity relevance threshold for Grounded Q&A retrieval
-  qaRelevanceThreshold: Number(process.env.QA_RELEVANCE_THRESHOLD || 0.50),
+  qaRelevanceThreshold: Number(process.env.QA_RELEVANCE_THRESHOLD || 0.25),
 
   // Supported MIME types and file extensions
   allowedMimeTypes: [

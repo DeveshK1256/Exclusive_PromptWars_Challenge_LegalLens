@@ -1,7 +1,7 @@
 import { TimelineEvent } from '../../types/database';
 import { TimelineExtractionOptions, TimelineResult, TimelineEventType } from './types';
 import { AI_CONFIG } from '../ai/config';
-import { getGeminiClient, recordAIRunLog } from '../ai/gemini';
+import { getGeminiClient, recordAIRunLog, callGeminiWithRetry } from '../ai/gemini';
 import { UNTRUSTED_DOC_START, UNTRUSTED_DOC_END } from '../ai/prompts';
 
 const SYSTEM_PROMPT_TIMELINE = `
@@ -45,7 +45,7 @@ ${UNTRUSTED_DOC_END}`;
   if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry(ai, {
         model: modelName,
         contents: promptInput,
       });
@@ -73,9 +73,7 @@ ${UNTRUSTED_DOC_END}`;
         }
       }
     } catch (err: any) {
-      if (err?.status === 429 || err?.message?.includes('429')) {
-        modelName = AI_CONFIG.fastModel;
-      } else if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
+      if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
         throw err;
       }
     }

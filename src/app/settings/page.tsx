@@ -27,8 +27,8 @@ export default function SettingsPage() {
       </div>
 
       {saved && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-emerald-400 text-sm flex items-center gap-2 font-semibold">
-          <CheckCircle className="w-5 h-5" />
+        <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-emerald-400 text-sm flex items-center gap-2 font-semibold" role="status" aria-live="polite">
+          <CheckCircle className="w-5 h-5" aria-hidden="true" />
           Settings successfully updated!
         </div>
       )}
@@ -36,17 +36,20 @@ export default function SettingsPage() {
       <form onSubmit={handleSave} className="space-y-6">
         {/* Context Role Preference */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <User className="w-5 h-5 text-indigo-400" />
+          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <User className="w-5 h-5 text-indigo-400" aria-hidden="true" />
             Personal Impact Role (`context_role`)
-          </h3>
+          </h2>
           <p className="text-xs text-slate-400">
             LegalLens AI tailors personal impact explanations to your specific perspective in documents.
           </p>
 
+          <label htmlFor="settings-role-select" className="sr-only">Personal Impact Role Context</label>
           <select
+            id="settings-role-select"
             value={contextRole}
             onChange={(e) => setContextRole(e.target.value)}
+            aria-label="Personal Impact Role Context"
             className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
             <option value="Employee">Employee / Job Applicant</option>
@@ -88,6 +91,7 @@ export default function SettingsPage() {
                   <input
                     type="radio"
                     name="complexity"
+                    value={level.id}
                     checked={complexity === level.id}
                     onChange={() => setComplexity(level.id)}
                     className="text-indigo-600 focus:ring-indigo-500"

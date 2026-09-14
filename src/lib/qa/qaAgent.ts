@@ -1,7 +1,7 @@
 import { QARequest, QAResponse, AnswerCitation } from './types';
 import { DOCUMENT_CONFIG } from '../config';
 import { AI_CONFIG } from '../ai/config';
-import { getGeminiClient, recordAIRunLog } from '../ai/gemini';
+import { getGeminiClient, recordAIRunLog, callGeminiWithRetry } from '../ai/gemini';
 import { SYSTEM_PROMPT_QA, UNTRUSTED_DOC_START, UNTRUSTED_DOC_END } from '../ai/prompts';
 import { retrieveRelevantChunks } from '../intelligence/retrieval';
 
@@ -85,7 +85,7 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
   if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry(ai, {
         model: modelName,
         contents: promptInput,
       });
@@ -93,7 +93,7 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
       if (response.text) {
         answerText = response.text.trim();
       }
-    } catch (err) {
+    } catch (err: any) {
       if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') throw err;
     }
   }

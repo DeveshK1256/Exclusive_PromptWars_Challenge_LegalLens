@@ -3,7 +3,9 @@
 
 export const AI_CONFIG = {
   // Reasoning & Classification Model (Document Intelligence, Legal X-Ray, Simplification, Q&A)
-  reasoningModel: process.env.GEMINI_REASONING_MODEL || 'gemini-3.1-pro-preview',
+  // Free Tier API keys have limit: 0 on gemini-3.1-pro; default to gemini-3.6-flash (limit: 20/day).
+  // Paid production deployments override via GEMINI_REASONING_MODEL=gemini-2.5-pro.
+  reasoningModel: process.env.GEMINI_REASONING_MODEL || 'gemini-3.6-flash',
 
   // Fast Classification Model for lightweight checks
   fastModel: process.env.GEMINI_FAST_MODEL || 'gemini-3.6-flash',

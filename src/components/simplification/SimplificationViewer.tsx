@@ -72,12 +72,16 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
         </div>
 
         {/* Complexity Buttons */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-800">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-800" role="tablist" aria-label="Explanation Complexity Controls">
           {(Object.keys(LEVEL_LABELS) as ComplexityLevel[]).map((lvl) => (
             <button
               key={lvl}
+              type="button"
+              role="tab"
+              aria-selected={activeLevel === lvl}
+              aria-label={`Select ${LEVEL_LABELS[lvl].label} complexity: ${LEVEL_LABELS[lvl].desc}`}
               onClick={() => handleLevelSelect(lvl)}
-              className={`px-3 py-2 text-xs font-medium rounded-lg transition-all text-left border ${
+              className={`px-3 py-2 text-xs font-medium rounded-lg transition-all text-left border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                 activeLevel === lvl
                   ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-sm'
                   : 'bg-slate-800/50 border-slate-700/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200'

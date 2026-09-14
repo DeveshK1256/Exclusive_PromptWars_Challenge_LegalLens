@@ -1,0 +1,57 @@
+name: LegalLens AI CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, "**" ]
+  pull_request:
+    branches: [ main, master, "**" ]
+  schedule:
+    # Nightly cron run at 00:00 UTC to catch live Gemini API model drift
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    name: Zero-Hallucination Benchmark & Build Gate (Offline)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Test Suite & Benchmark Regression Gate
+        run: npm test
+
+      - name: Build Production Next.js Application
+        run: npm run build
+
+  live-model-benchmark:
+    name: Live Gemini Model Zero-Hallucination Gate (Nightly/Scheduled)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Live Gemini Benchmark Suite
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          RUN_LIVE_GEMINI_TESTS: 'true'
+        run: npm run test:live

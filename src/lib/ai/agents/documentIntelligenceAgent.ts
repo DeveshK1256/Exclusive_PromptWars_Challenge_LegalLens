@@ -1,4 +1,4 @@
-import { getGeminiClient, recordAIRunLog } from '../gemini';
+import { getGeminiClient, recordAIRunLog, callGeminiWithRetry } from '../gemini';
 import { AI_CONFIG } from '../config';
 import { SYSTEM_PROMPT_DOCUMENT_INTELLIGENCE, UNTRUSTED_DOC_START, UNTRUSTED_DOC_END } from '../prompts';
 import { ExtractedSection } from '../../extraction/types';
@@ -53,23 +53,10 @@ ${UNTRUSTED_DOC_END}`;
   if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      let response;
-      try {
-        response = await ai.models.generateContent({
-          model: modelName,
-          contents: promptInput,
-        });
-      } catch (err: any) {
-        if (err?.status === 429 || err?.message?.includes('429')) {
-          modelName = AI_CONFIG.fastModel;
-          response = await ai.models.generateContent({
-            model: modelName,
-            contents: promptInput,
-          });
-        } else {
-          throw err;
-        }
-      }
+      const response = await callGeminiWithRetry(ai, {
+        model: modelName,
+        contents: promptInput,
+      });
 
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;

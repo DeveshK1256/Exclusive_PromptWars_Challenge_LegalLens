@@ -22,6 +22,8 @@ yarn-error.log*
 .vercel
 .netlify
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# test outputs
+/test-results/
+/playwright-report/
+scratch_*.ts
+

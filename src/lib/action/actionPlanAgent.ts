@@ -1,6 +1,6 @@
 import { ActionPlanOptions, ActionPlanResult, BeforeYouSignItem, LawyerQuestionCard, ActionTaskCard } from './types';
 import { AI_CONFIG } from '../ai/config';
-import { getGeminiClient, recordAIRunLog } from '../ai/gemini';
+import { getGeminiClient, recordAIRunLog, callGeminiWithRetry } from '../ai/gemini';
 import { UNTRUSTED_DOC_START, UNTRUSTED_DOC_END } from '../ai/prompts';
 import { XRayFindingCard } from '../xray/types';
 
@@ -50,7 +50,7 @@ ${UNTRUSTED_DOC_END}`;
   if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry(ai, {
         model: modelName,
         contents: promptInput,
       });

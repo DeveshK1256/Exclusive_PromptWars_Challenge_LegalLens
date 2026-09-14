@@ -198,20 +198,24 @@ export const DocumentQAChat: React.FC<DocumentQAChatProps> = ({
           }}
           className="flex items-center gap-2"
         >
+          <label htmlFor="qa-input" className="sr-only">Ask a question about this document</label>
           <input
+            id="qa-input"
             type="text"
             value={questionInput}
             onChange={(e) => setQuestionInput(e.target.value)}
             placeholder="Ask a question about this document..."
+            aria-label="Ask a question about this document"
             disabled={loading}
-            className="flex-1 bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 rounded-lg px-3.5 py-2.5 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="flex-1 bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
           />
           <button
             type="submit"
             disabled={loading || !questionInput.trim()}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white p-2.5 rounded-lg transition-colors flex items-center justify-center shrink-0"
+            aria-label="Send question"
+            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white p-2.5 rounded-lg transition-colors flex items-center justify-center shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4" aria-hidden="true" />
           </button>
         </form>
       </div>

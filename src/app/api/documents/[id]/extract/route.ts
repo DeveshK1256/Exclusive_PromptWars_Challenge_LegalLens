@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractDocument } from '@/lib/extraction/extractor';
+import { checkRateLimit } from '@/lib/security/rateLimit';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = request.headers.get('x-user-id') || 'demo_user_id';
+    const rateLimit = await checkRateLimit(userId, 'ai_route');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'AI Request rate limit exceeded. Cap is 20 requests per minute.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     const documentId = params.id;
     const body = await request.json().catch(() => ({}));
     const { sampleText, mimeType = 'text/plain', filename = 'document.txt' } = body;

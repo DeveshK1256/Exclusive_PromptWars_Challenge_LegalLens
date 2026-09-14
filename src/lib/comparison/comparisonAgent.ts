@@ -1,4 +1,4 @@
-import { getGeminiClient, recordAIRunLog } from '../ai/gemini';
+import { getGeminiClient, recordAIRunLog, callGeminiWithRetry } from '../ai/gemini';
 import { AI_CONFIG } from '../ai/config';
 import { SYSTEM_PROMPT_COMPARISON } from '../ai/prompts';
 import {
@@ -32,9 +32,8 @@ Return ONLY a valid JSON object with keys:
   "difference_summary": string,
   "severity_level": "green" | "yellow" | "orange" | "red",
   "finding_kind": "informational" | "action_required" | "deadline",
-  "confidence": number,
-  "source_reference_a": string,
-  "source_reference_b": string
+  "source_reference_a": string (MUST be verbatim quote containing the compared terms from Doc A, e.g. Section 1: "Annual base salary is $130,000 paid monthly." or "Absent in Document A"),
+  "source_reference_b": string (MUST be verbatim quote containing the compared terms from Doc B, e.g. Section 1: "Annual base salary is $150,000 paid monthly." or "Absent in Document B")
 },
 "questionsForLawyer": array of string,
 "recommendedActionItems": array of string
@@ -52,7 +51,7 @@ ${options.rawTextB.substring(0, 8000)}
   const isVitest = process.env.VITEST === 'true';
   const isLiveTestMode = process.env.RUN_LIVE_GEMINI_TESTS === 'true';
   const shouldCallGemini = Boolean(
-    apiKey && apiKey !== 'dummy_gemini_key' && (!isVitest || (isLiveTestMode && options.isLiveTest))
+    apiKey && apiKey !== 'dummy_gemini_key' && (!isVitest || isLiveTestMode)
   );
 
   let aiFindings: ComparisonFinding[] | null = null;
@@ -62,23 +61,10 @@ ${options.rawTextB.substring(0, 8000)}
   if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      let response;
-      try {
-        response = await ai.models.generateContent({
-          model: modelName,
-          contents: promptInput,
-        });
-      } catch (err: any) {
-        if (err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('fetch failed') || err?.message?.includes('SocketError')) {
-          modelName = AI_CONFIG.fastModel;
-          response = await ai.models.generateContent({
-            model: modelName,
-            contents: promptInput,
-          });
-        } else {
-          throw err;
-        }
-      }
+      const response = await callGeminiWithRetry(ai, {
+        model: modelName,
+        contents: promptInput,
+      });
 
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;
@@ -121,6 +107,11 @@ ${options.rawTextB.substring(0, 8000)}
     }
   }
 
+  const isFallbackUsed = !aiFindings;
+  const effectiveModel = isFallbackUsed ? 'heuristic_fallback' : modelName;
+  const analysis_mode = isFallbackUsed ? 'fallback' : 'ai';
+  const degraded = isFallbackUsed;
+
   // Fallback to deterministic heuristic comparison engine if Gemini output unavailable/offline
   const rawFindings: ComparisonFinding[] = aiFindings || generateHeuristicComparisonFindings(options);
   const rawQuestions: string[] = aiQuestions || generateHeuristicComparisonQuestions(rawFindings);
@@ -144,11 +135,11 @@ ${options.rawTextB.substring(0, 8000)}
 
   const latencyMs = Date.now() - start;
 
-  // Log run to ai_runs table
+  // Log run to ai_runs table with accurate model name
   recordAIRunLog({
     documentId: options.documentAId,
     agentType: 'comparison_agent',
-    model: modelName,
+    model: effectiveModel,
     tokenUsage,
     latencyMs,
     status: 'completed',
@@ -173,7 +164,9 @@ ${options.rawTextB.substring(0, 8000)}
     differencesCount,
     questionsForLawyer: finalQuestions,
     recommendedActionItems: finalActionItems,
-    modelUsed: modelName,
+    modelUsed: effectiveModel,
+    analysis_mode,
+    degraded,
     tokenUsage,
   };
 }
@@ -189,8 +182,13 @@ function generateHeuristicComparisonFindings(options: ComparisonOptions): Compar
 
   // 1. Non-Compete / Restrictive Covenants Comparison
   if (textALower.includes('non-compete') || textBLower.includes('non-compete')) {
-    const valA = options.rawTextA.match(/non-compete[^\n\.]*/i)?.[0] || 'Non-compete restricted within 25 miles for 6 months.';
-    const valB = options.rawTextB.match(/non-compete[^\n\.]*/i)?.[0] || 'Non-compete expanded to nationwide restriction for 24 months.';
+    const hasA = textALower.includes('non-compete');
+    const hasB = textBLower.includes('non-compete');
+    const valA = hasA ? (options.rawTextA.match(/[^\n\.]*non-compete[^\n\.]*/i)?.[0]?.trim() || 'Non-compete provision') : 'Absent in Document A';
+    const valB = hasB ? (options.rawTextB.match(/[^\n\.]*non-compete[^\n\.]*/i)?.[0]?.trim() || 'Non-compete provision') : 'Absent in Document B';
+    const srcA = hasA ? `Document A: "${valA}"` : 'Absent in Document A';
+    const srcB = hasB ? `Document B: "${valB}"` : 'Absent in Document B';
+
     findings.push({
       id: `cmp_fnd_${options.comparisonId}_1`,
       comparison_id: options.comparisonId,
@@ -202,36 +200,41 @@ function generateHeuristicComparisonFindings(options: ComparisonOptions): Compar
       severity_level: 'orange',
       finding_kind: 'action_required',
       confidence: 0.95,
-      source_reference_a: `Document A: "${valA}"`,
-      source_reference_b: `Document B: "${valB}"`,
+      source_reference_a: srcA,
+      source_reference_b: srcB,
       created_at: new Date().toISOString(),
     });
   }
 
   // 2. Notice / Termination Comparison
   if (textALower.includes('notice') || textBLower.includes('notice')) {
-    const valA = options.rawTextA.match(/\d+\s*days?\s*notice/i)?.[0] || '30 days written notice required.';
-    const valB = options.rawTextB.match(/\d+\s*days?\s*notice/i)?.[0] || '14 days written notice required.';
+    const hasA = textALower.includes('notice');
+    const hasB = textBLower.includes('notice');
+    const valA = hasA ? (options.rawTextA.match(/[^\n\.]*notice[^\n\.]*/i)?.[0]?.trim() || 'Notice clause') : 'Absent in Document A';
+    const valB = hasB ? (options.rawTextB.match(/[^\n\.]*notice[^\n\.]*/i)?.[0]?.trim() || 'Notice clause') : 'Absent in Document B';
+    const srcA = hasA ? `Document A: "${valA}"` : 'Absent in Document A';
+    const srcB = hasB ? `Document B: "${valB}"` : 'Absent in Document B';
+
     findings.push({
       id: `cmp_fnd_${options.comparisonId}_2`,
       comparison_id: options.comparisonId,
       category: 'Termination Notice',
-      title: 'Shortened Notice Window',
+      title: 'Notice Window Difference',
       document_a_value: valA,
       document_b_value: valB,
-      difference_summary: 'Document B reduces the termination notice window compared to Document A.',
+      difference_summary: 'Termination notice windows differ between Document A and Document B.',
       severity_level: 'yellow',
       finding_kind: 'deadline',
       confidence: 0.92,
-      source_reference_a: `Document A: "${valA}"`,
-      source_reference_b: `Document B: "${valB}"`,
+      source_reference_a: srcA,
+      source_reference_b: srcB,
       created_at: new Date().toISOString(),
     });
   }
 
   // 3. Remote Work / Added Clause Comparison
   if (!textALower.includes('remote work') && textBLower.includes('remote work')) {
-    const valB = options.rawTextB.match(/remote work[^\n\.]*/i)?.[0] || 'Employee permitted 2 days per week flexible remote work.';
+    const valB = options.rawTextB.match(/[^\n\.]*remote work[^\n\.]*/i)?.[0]?.trim() || '2 days per week flexible remote work';
     findings.push({
       id: `cmp_fnd_${options.comparisonId}_3`,
       comparison_id: options.comparisonId,

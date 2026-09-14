@@ -38,6 +38,8 @@ export interface ContractComparisonResult {
   questionsForLawyer: string[];
   recommendedActionItems: string[];
   modelUsed: string;
+  analysis_mode: 'ai' | 'fallback';
+  degraded: boolean;
   tokenUsage: number;
 }
 

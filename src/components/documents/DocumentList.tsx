@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { FileText, Shield, Hash, Calendar, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Shield, Hash, Calendar, Trash2, AlertTriangle, X } from 'lucide-react';
 import { Document } from '@/types/database';
 
 interface DocumentListProps {
@@ -10,6 +10,8 @@ interface DocumentListProps {
 }
 
 export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteDocument }) => {
+  const [pendingDeleteDoc, setPendingDeleteDoc] = useState<Document | null>(null);
+
   if (documents.length === 0) {
     return (
       <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-3">
@@ -21,6 +23,13 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
       </div>
     );
   }
+
+  const handleConfirmDelete = () => {
+    if (pendingDeleteDoc && onDeleteDocument) {
+      onDeleteDocument(pendingDeleteDoc.id);
+    }
+    setPendingDeleteDoc(null);
+  };
 
   return (
     <div className="space-y-4">
@@ -75,11 +84,13 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
 
                 {onDeleteDocument && (
                   <button
-                    onClick={() => onDeleteDocument(doc.id)}
-                    className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                    type="button"
+                    onClick={() => setPendingDeleteDoc(doc)}
+                    aria-label={`Delete document ${doc.title}`}
+                    className="text-slate-400 hover:text-red-600 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-red-500 rounded cursor-pointer"
                     title="Soft delete document"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -87,6 +98,52 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
           </div>
         ))}
       </div>
+
+      {/* Soft Delete Confirmation Modal */}
+      {pendingDeleteDoc && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 relative">
+            <button
+              onClick={() => setPendingDeleteDoc(null)}
+              aria-label="Close delete confirmation dialog"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-400 rounded"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-3 bg-red-50 rounded-xl">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 id="delete-modal-title" className="text-lg font-bold text-slate-900">Confirm Soft Delete</h3>
+                <p className="text-xs text-slate-500">Document soft-deletion confirmation step</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to delete <strong className="text-slate-900">{pendingDeleteDoc.title}</strong>? The document record will be soft-deleted (`deleted_at` timestamp set) and removed from your active workspace.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteDoc(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400"
+              >
+                Cancel Delete
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

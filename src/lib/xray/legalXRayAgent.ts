@@ -1,6 +1,6 @@
 import { ExtractedClauseItem } from '../intelligence/types';
 import { XRayFindingCard, LegalXRayOverview } from './types';
-import { getGeminiClient, recordAIRunLog } from '../ai/gemini';
+import { getGeminiClient, recordAIRunLog, callGeminiWithRetry } from '../ai/gemini';
 import { AI_CONFIG } from '../ai/config';
 import { SYSTEM_PROMPT_LEGAL_XRAY, UNTRUSTED_DOC_START, UNTRUSTED_DOC_END } from '../ai/prompts';
 
@@ -39,23 +39,10 @@ ${UNTRUSTED_DOC_END}`;
   if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      let response;
-      try {
-        response = await ai.models.generateContent({
-          model: modelName,
-          contents: promptInput,
-        });
-      } catch (err: any) {
-        if (err?.status === 429 || err?.message?.includes('429')) {
-          modelName = AI_CONFIG.fastModel;
-          response = await ai.models.generateContent({
-            model: modelName,
-            contents: promptInput,
-          });
-        } else {
-          throw err;
-        }
-      }
+      const response = await callGeminiWithRetry(ai, {
+        model: modelName,
+        contents: promptInput,
+      });
 
       if (response.usageMetadata?.totalTokenCount) {
         tokenUsage = response.usageMetadata.totalTokenCount;

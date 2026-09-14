@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateFileMetadata, sanitizeFilename } from '@/lib/config';
 import { calculateFileHash } from '@/lib/crypto';
+import { checkRateLimit } from '@/lib/security/rateLimit';
 import { DocumentType, ContextRole } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = request.headers.get('x-user-id') || 'demo_user_id';
+
+    // 0. Rate Limiting Check (Upload cap per hour)
+    const rateLimit = await checkRateLimit(userId, 'upload');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Upload rate limit exceeded. Limit is 10 uploads per hour.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const documentType = (formData.get('document_type') as DocumentType) || 'other';
@@ -31,9 +46,6 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const fileHash = calculateFileHash(buffer);
-
-    // Mock/Simulated User ID for local dev/demo API handling
-    const userId = request.headers.get('x-user-id') || 'demo_user_id';
 
     const safeFilename = sanitizeFilename(file.name);
     const storagePath = `documents/${userId}/${Date.now()}_${safeFilename}`;

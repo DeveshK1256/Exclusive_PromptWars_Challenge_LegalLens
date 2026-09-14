@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runSimplificationAgent } from '../../../../../lib/simplification/simplificationAgent';
+import { checkRateLimit } from '../../../../../lib/security/rateLimit';
 import { ComplexityLevel } from '../../../../../types/database';
 
 export async function GET(
@@ -7,6 +8,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = request.headers.get('x-user-id') || 'demo_user_id';
+    const rateLimit = await checkRateLimit(userId, 'ai_route');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'AI Request rate limit exceeded. Cap is 20 requests per minute.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     const documentId = params.id;
     const documentVersionId = `ver_${documentId}_v1`;
     const searchParams = request.nextUrl.searchParams;
@@ -46,6 +56,15 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = request.headers.get('x-user-id') || 'demo_user_id';
+    const rateLimit = await checkRateLimit(userId, 'ai_route');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'AI Request rate limit exceeded. Cap is 20 requests per minute.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     const documentId = params.id;
     const documentVersionId = `ver_${documentId}_v1`;
     const body = await request.json();

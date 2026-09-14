@@ -1,7 +1,7 @@
 import { ComplexityLevel, DocumentSummary, GlossaryTerm } from '../../types/database';
 import { SimplificationOptions, SimplificationResult } from './types';
 import { AI_CONFIG } from '../ai/config';
-import { getGeminiClient, recordAIRunLog } from '../ai/gemini';
+import { getGeminiClient, recordAIRunLog, callGeminiWithRetry } from '../ai/gemini';
 import { UNTRUSTED_DOC_START, UNTRUSTED_DOC_END } from '../ai/prompts';
 import { ExtractedClauseItem } from '../intelligence/types';
 import { XRayFindingCard } from '../xray/types';
@@ -117,7 +117,7 @@ async function generateLevelSummary(
   if (shouldCallGemini) {
     try {
       const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry(ai, {
         model: modelName,
         contents: prompt,
       });

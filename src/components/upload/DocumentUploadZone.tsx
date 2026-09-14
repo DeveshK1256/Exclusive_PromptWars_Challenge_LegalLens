@@ -107,8 +107,8 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
       </div>
 
       {errorMsg && (
-        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-sm flex items-start space-x-3" role="alert">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-sm flex items-start space-x-3" role="alert" aria-live="assertive">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
           <div className="space-y-1">
             <p className="font-semibold">Upload Rejected</p>
             <p>{errorMsg}</p>
@@ -117,30 +117,42 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
       )}
 
       {successMsg && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-sm flex items-center space-x-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-sm flex items-center space-x-3" role="status" aria-live="polite">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" aria-hidden="true" />
           <span>{successMsg}</span>
         </div>
       )}
 
       <form onSubmit={handleUploadSubmit} className="space-y-6">
+        <label htmlFor="file-upload-input" className="sr-only">Choose a document file to upload</label>
+        <input
+          ref={fileInputRef}
+          id="file-upload-input"
+          type="file"
+          aria-label="Choose a document file to upload"
+          accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+          onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+          className="hidden"
+        />
+
         {/* Dropzone */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Upload document dropzone. Press Enter or Space to select a document file."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
             file ? 'border-brand-500 bg-brand-50/30' : 'border-slate-300 hover:border-brand-400 bg-slate-50'
           }`}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
-            onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-            className="hidden"
-          />
-
           <div className="flex flex-col items-center justify-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
               <UploadCloud className="w-6 h-6 text-brand-600" />
@@ -170,10 +182,11 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
         {/* Options */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+            <label htmlFor="doc-type-select" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
               Document Type
             </label>
             <select
+              id="doc-type-select"
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentType)}
               className="w-full text-sm bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-brand-500 focus:outline-none"
@@ -190,10 +203,11 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+            <label htmlFor="context-role-select" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
               Context Role (Optional)
             </label>
             <select
+              id="context-role-select"
               value={contextRole}
               onChange={(e) => setContextRole(e.target.value as ContextRole)}
               className="w-full text-sm bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-brand-500 focus:outline-none"
@@ -209,10 +223,11 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+            <label htmlFor="jurisdiction-input" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
               Jurisdiction (Optional)
             </label>
             <input
+              id="jurisdiction-input"
               type="text"
               placeholder="e.g. California, US"
               value={jurisdiction}
@@ -236,7 +251,8 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
           <button
             type="submit"
             disabled={!file || isUploading}
-            className={`w-full sm:w-auto px-6 py-2.5 text-sm font-semibold rounded-xl text-white transition-colors ${
+            aria-label="Upload and Analyze Document"
+            className={`w-full sm:w-auto px-6 py-2.5 text-sm font-semibold rounded-xl text-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
               !file || isUploading
                 ? 'bg-slate-300 cursor-not-allowed'
                 : 'bg-brand-600 hover:bg-brand-700 shadow-sm'

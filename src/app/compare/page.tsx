@@ -76,25 +76,33 @@ export default function ComparePage() {
       case 'red':
         return (
           <span className="px-2.5 py-0.5 text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20 rounded-full flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" /> HIGH IMPACT • {kind.toUpperCase()}
+            <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+            <span className="sr-only">Red High Severity: </span>
+            [RED: High Severity] HIGH IMPACT • {kind.toUpperCase()}
           </span>
         );
       case 'orange':
         return (
           <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" /> MODIFIED CLAUSE • {kind.toUpperCase()}
+            <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+            <span className="sr-only">Orange Attention Area: </span>
+            [ORANGE: Attention Area] MODIFIED CLAUSE • {kind.toUpperCase()}
           </span>
         );
       case 'yellow':
         return (
           <span className="px-2.5 py-0.5 text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-full flex items-center gap-1">
-            <HelpCircle className="w-3 h-3" /> ATTENTION AREA • {kind.toUpperCase()}
+            <HelpCircle className="w-3 h-3" aria-hidden="true" />
+            <span className="sr-only">Yellow Review Needed: </span>
+            [YELLOW: Review Needed] ATTENTION AREA • {kind.toUpperCase()}
           </span>
         );
       default:
         return (
           <span className="px-2.5 py-0.5 text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> ADDED / STANDARD • {kind.toUpperCase()}
+            <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
+            <span className="sr-only">Green Standard Provision: </span>
+            [GREEN: Standard Provision] ADDED / STANDARD • {kind.toUpperCase()}
           </span>
         );
     }
@@ -106,7 +114,7 @@ export default function ComparePage() {
       <div className="border-b border-slate-800 pb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-100 flex items-center gap-3">
-            <GitCompare className="w-8 h-8 text-indigo-400" />
+            <GitCompare className="w-8 h-8 text-indigo-400" aria-hidden="true" />
             Contract Comparison Engine
           </h1>
           <p className="text-slate-400 text-sm mt-1">
@@ -114,18 +122,20 @@ export default function ComparePage() {
           </p>
         </div>
         <button
+          type="button"
           onClick={handleRunComparison}
           disabled={isLoading}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50"
+          aria-label="Run side-by-side contract comparison"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
           {isLoading ? (
             <>
-              <RefreshCw className="w-4 h-4 animate-spin" />
+              <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
               Comparing Contracts...
             </>
           ) : (
             <>
-              <GitCompare className="w-4 h-4" />
+              <GitCompare className="w-4 h-4" aria-hidden="true" />
               Run Side-by-Side Comparison
             </>
           )}
@@ -133,8 +143,8 @@ export default function ComparePage() {
       </div>
 
       {errorMsg && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300 text-sm flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-300 text-sm flex items-center gap-3" role="alert" aria-live="assertive">
+          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" aria-hidden="true" />
           <span>{errorMsg}</span>
         </div>
       )}
@@ -148,18 +158,24 @@ export default function ComparePage() {
             <span className="text-xs text-slate-500 flex items-center gap-1"><Lock className="w-3 h-3" /> RLS Owned</span>
           </div>
           <div className="space-y-2">
+            <label htmlFor="doc-a-title" className="sr-only">Document A Title</label>
             <input
+              id="doc-a-title"
               type="text"
               value={docATitle}
               onChange={(e) => setDocATitle(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-indigo-500"
+              aria-label="Document A Title"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+            <label htmlFor="doc-a-text" className="sr-only">Document A Raw Content</label>
             <textarea
+              id="doc-a-text"
               rows={4}
               value={rawTextA}
               onChange={(e) => setRawTextA(e.target.value)}
               placeholder="Paste raw text for Document A..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 font-mono focus:outline-none focus:border-indigo-500"
+              aria-label="Document A Raw Content"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
@@ -168,21 +184,27 @@ export default function ComparePage() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-400">Document Version B (Target / Revision)</span>
-            <span className="text-xs text-slate-500 flex items-center gap-1"><Lock className="w-3 h-3" /> RLS Owned</span>
+            <span className="text-xs text-slate-500 flex items-center gap-1"><Lock className="w-3 h-3" aria-hidden="true" /> RLS Owned</span>
           </div>
           <div className="space-y-2">
+            <label htmlFor="doc-b-title" className="sr-only">Document B Title</label>
             <input
+              id="doc-b-title"
               type="text"
               value={docBTitle}
               onChange={(e) => setDocBTitle(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:border-purple-500"
+              aria-label="Document B Title"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
+            <label htmlFor="doc-b-text" className="sr-only">Document B Raw Content</label>
             <textarea
+              id="doc-b-text"
               rows={4}
               value={rawTextB}
               onChange={(e) => setRawTextB(e.target.value)}
               placeholder="Paste raw text for Document B..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 font-mono focus:outline-none focus:border-purple-500"
+              aria-label="Document B Raw Content"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 font-mono focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
         </div>
@@ -191,6 +213,19 @@ export default function ComparePage() {
       {/* Comparison Results */}
       {comparisonResult ? (
         <div className="space-y-6">
+          {/* Degraded / Fallback Mode Warning Banner */}
+          {comparisonResult.degraded && (
+            <div className="bg-amber-500/10 border border-amber-500/40 rounded-xl p-4 text-amber-200 text-xs flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+              <div>
+                <strong className="block font-bold text-amber-300 text-sm">
+                  AI-Powered Comparison Temporarily Unavailable
+                </strong>
+                Showing a basic keyword comparison (fallback mode). Please try again shortly for full Gemini AI reasoning.
+              </div>
+            </div>
+          )}
+
           {/* Summary Overview Card */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
@@ -198,8 +233,18 @@ export default function ComparePage() {
                 <Shield className="w-5 h-5 text-indigo-400" />
                 Comparison Summary
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Model: <span className="text-slate-200 font-mono">{comparisonResult.modelUsed}</span> • Token Usage: {comparisonResult.tokenUsage}
+              <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                <span>Model: <span className="text-slate-200 font-mono">{comparisonResult.modelUsed}</span></span>
+                <span>•</span>
+                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                  comparisonResult.analysis_mode === 'ai'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                }`}>
+                  {comparisonResult.analysis_mode === 'ai' ? 'LIVE AI MODE' : 'HEURISTIC FALLBACK MODE'}
+                </span>
+                <span>•</span>
+                <span>Token Usage: {comparisonResult.tokenUsage}</span>
               </p>
             </div>
 
@@ -301,8 +346,8 @@ export default function ComparePage() {
         </div>
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center space-y-3">
-          <GitCompare className="w-12 h-12 text-indigo-400/50 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-200">Ready to Compare Contracts</h3>
+          <GitCompare className="w-12 h-12 text-indigo-400/50 mx-auto" aria-hidden="true" />
+          <h2 className="text-lg font-bold text-slate-200">Ready to Compare Contracts</h2>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
             Click &quot;Run Side-by-Side Comparison&quot; to execute semantic clause matching, risk alteration detection, and missing section analysis using the Gemini reasoning model.
           </p>

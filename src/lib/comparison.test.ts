@@ -42,6 +42,9 @@ Employee is permitted 2 days per week flexible remote work with manager approval
     });
 
     expect(result.comparison.status).toBe('completed');
+    expect(result.modelUsed).toBe('heuristic_fallback');
+    expect(result.analysis_mode).toBe('fallback');
+    expect(result.degraded).toBe(true);
     expect(result.findings.length).toBeGreaterThan(0);
 
     // Verify Decision 11 separate severity_level and finding_kind schema compliance
@@ -118,13 +121,21 @@ Employee is permitted 2 days per week flexible remote work with manager approval
     });
 
     result.findings.forEach((finding) => {
-      // Reference A must be present in Document A or marked absent
+      // Reference A must contain quoted text substring that exists in Document A or be marked absent
       if (finding.source_reference_a !== 'Absent in Document A') {
         expect(finding.source_reference_a).toBeTruthy();
+        const quoteMatchA = finding.source_reference_a.match(/"([^"]+)"/);
+        if (quoteMatchA && quoteMatchA[1]) {
+          expect(sampleTextA.toLowerCase()).toContain(quoteMatchA[1].toLowerCase());
+        }
       }
-      // Reference B must be present in Document B or marked absent
+      // Reference B must contain quoted text substring that exists in Document B or be marked absent
       if (finding.source_reference_b !== 'Absent in Document B') {
         expect(finding.source_reference_b).toBeTruthy();
+        const quoteMatchB = finding.source_reference_b.match(/"([^"]+)"/);
+        if (quoteMatchB && quoteMatchB[1]) {
+          expect(sampleTextB.toLowerCase()).toContain(quoteMatchB[1].toLowerCase());
+        }
       }
     });
   }, 30000);

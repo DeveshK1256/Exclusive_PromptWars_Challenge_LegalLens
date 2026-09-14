@@ -63,9 +63,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return generateHeuristicVector(text, AI_CONFIG.embeddingDimensions);
 }
 
-function generateHeuristicVector(text: string, dimensions = 768): number[] {
+function generateHeuristicVector(text: string = '', dimensions = 768): number[] {
   const vector = new Array(dimensions).fill(0);
-  const words = text.toLowerCase().split(/\W+/);
+  const words = (text || '').toLowerCase().split(/\W+/);
 
   words.forEach((word) => {
     let hash = 0;

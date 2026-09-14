@@ -34,3 +34,38 @@ export function recordAIRunLog(log: AIRunLog) {
     created_at: new Date().toISOString(),
   };
 }
+
+/**
+ * Resilient helper to call Gemini generateContent with 429 rate limit backoff
+ */
+export async function callGeminiWithRetry(
+  ai: ReturnType<typeof getGeminiClient>,
+  options: { model: string; contents: string },
+  maxRetries = 3
+) {
+  let model = options.model;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await ai.models.generateContent({
+        model,
+        contents: options.contents,
+      });
+    } catch (err: any) {
+      const is429 =
+        err?.status === 429 ||
+        err?.message?.includes('429') ||
+        err?.message?.includes('RESOURCE_EXHAUSTED') ||
+        err?.message?.includes('Quota exceeded');
+
+      if (is429 && attempt < maxRetries) {
+        const delay = (attempt + 1) * 3000;
+        await new Promise((res) => setTimeout(res, delay));
+        model = AI_CONFIG.fastModel;
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw new Error('Exceeded max retries calling Gemini API');
+}
+

@@ -73,7 +73,7 @@ export interface DatabaseAuditLogRecord {
 > **Known MVP Storage Architecture Note & Serverless Risk:**
 > The current rate limiter uses an in-memory sliding window store (`uploadWindows` / `aiRouteWindows`). In single-instance Node.js environments (local dev, single container deployments), this correctly enforces limits and passes in-process route handler probes (`rateLimitProbe.test.ts`).
 > 
-> However, on multi-instance serverless deployments (e.g. Vercel Edge / Serverless Functions), function instances do not share memory states. Before multi-instance production deployment, this in-memory store MUST be migrated to a distributed store (e.g. Upstash Redis `@upstash/ratelimit` or Supabase Postgres rate limit table) so request counters persist globally across all isolates.
+> However, on multi-instance serverless deployments (e.g. Vercel Edge / Serverless Functions), function instances do not share memory states. On this free-tier Vercel deployment specifically, combining free-tier Vercel with in-memory rate limiting means concurrent-instance rate-limit bypass is a live, not just theoretical, risk. Before multi-instance high-concurrency production deployment, this in-memory store MUST be migrated to a distributed store (e.g. Upstash Redis `@upstash/ratelimit` or Supabase Postgres rate limit table) so request counters persist globally across all isolates.
 
 ---
 

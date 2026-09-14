@@ -6,6 +6,7 @@ export interface QARequest {
   documentVersionId: string;
   question: string;
   chunks: ChunkItem[];
+  rawText?: string;
   userId?: string;
 }
 

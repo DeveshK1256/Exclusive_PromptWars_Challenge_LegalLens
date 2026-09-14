@@ -19,7 +19,7 @@ export async function POST(
     const documentId = params.id;
     const documentVersionId = `ver_${documentId}_v1`;
     const body = await request.json();
-    const { question, chunks = [] } = body;
+    const { question, chunks = [], rawText } = body;
 
     if (!question || typeof question !== 'string') {
       return NextResponse.json(
@@ -33,6 +33,7 @@ export async function POST(
       documentVersionId,
       question: question.trim(),
       chunks,
+      rawText,
     });
 
     return NextResponse.json({

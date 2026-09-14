@@ -162,7 +162,7 @@ export default function DashboardPage() {
       )}
 
       {activeTab === 'qa' && (
-        <DocumentQAChat documentId={activeDoc.id} documentTitle={activeDoc.title} />
+        <DocumentQAChat documentId={activeDoc.id} documentTitle={activeDoc.title} rawText={activeDoc.raw_text} />
       )}
 
       {activeTab === 'timeline' && (

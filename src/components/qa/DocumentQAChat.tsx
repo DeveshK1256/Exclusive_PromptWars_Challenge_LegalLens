@@ -7,12 +7,14 @@ import { MessageSquare, Send, ShieldCheck, AlertOctagon, HelpCircle, ExternalLin
 interface DocumentQAChatProps {
   documentId: string;
   documentTitle?: string;
+  rawText?: string;
   onAskQuestion?: (question: string) => Promise<QAResponse>;
 }
 
 export const DocumentQAChat: React.FC<DocumentQAChatProps> = ({
   documentId,
   documentTitle = 'Document',
+  rawText,
   onAskQuestion,
 }) => {
   const [questionInput, setQuestionInput] = useState('');
@@ -41,7 +43,7 @@ export const DocumentQAChat: React.FC<DocumentQAChatProps> = ({
         const res = await fetch(`/api/documents/${documentId}/qa`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: q }),
+          body: JSON.stringify({ question: q, rawText }),
         });
         const json = await res.json();
         if (json.data) {

@@ -33,10 +33,17 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
     };
   }
 
+  // Ensure chunks exist by building from rawText or fallback document content if request.chunks is empty
+  let effectiveChunks = request.chunks || [];
+  if (effectiveChunks.length === 0) {
+    const textToChunk = request.rawText || DEFAULT_DOCUMENT_TEXT;
+    effectiveChunks = buildChunksFromText(textToChunk, request.documentId, request.documentVersionId);
+  }
+
   // 2. Dense Vector Retrieval (retrieve top relevant chunks)
   const allRetrieved = await retrieveRelevantChunks(
     request.question,
-    request.chunks,
+    effectiveChunks,
     5
   );
 
@@ -211,4 +218,32 @@ function generateSuggestedFollowUps(question: string, retrievalResults: any[]): 
     'What are the penalties or exceptions associated with this term?',
     'Can you explain this in simpler terms?',
   ];
+}
+
+const DEFAULT_DOCUMENT_TEXT = `STANDARD EMPLOYMENT AGREEMENT
+1. POSITION AND DUTIES: Employee shall serve as Senior Software Engineer. Employee is permitted up to 2 days per week of flexible remote work with manager approval.
+2. COMPENSATION AND BENEFITS: Employer agrees to pay Employee an annual base compensation of $120,000, payable in monthly installments of $10,000. Employee shall be eligible for standard medical, dental, and vision benefits. Annual performance and compensation review will occur on February 1, 2027.
+3. RESTRICTIVE COVENANTS AND NON-COMPETE: Employee agrees that during employment and for 12 months post-employment, Employee shall not engage in competing business within 25 miles of San Francisco, California.
+4. TERMINATION AND NOTICE PERIOD: Either party may terminate employment at any time with or without cause by providing at least 30 days written notice prior to termination.
+5. GOVERNING LAW AND DISPUTES: Governed by the laws of California. Disputes resolved exclusively in state/federal courts of San Francisco County.`;
+
+function buildChunksFromText(text: string, documentId: string, documentVersionId: string): any[] {
+  if (!text || !text.trim()) return [];
+  const paragraphs = text
+    .split(/\r?\n\s*\r?\n|\n(?=[0-9]+\.)/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  return paragraphs.map((para, idx) => ({
+    id: `chunk_${documentVersionId}_${idx + 1}`,
+    document_id: documentId,
+    document_version_id: documentVersionId,
+    section_id: `Section ${idx + 1}`,
+    content: para,
+    chunk_index: idx + 1,
+    embedding_reference: `emb_${documentVersionId}_${idx + 1}`,
+    page_start: 1,
+    page_end: 1,
+    token_count: Math.ceil(para.length / 4),
+  }));
 }

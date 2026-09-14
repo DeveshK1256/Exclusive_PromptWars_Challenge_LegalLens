@@ -50,6 +50,7 @@ export interface Document {
   retention_expires_at: string | null;
   created_at: string;
   updated_at: string;
+  raw_text?: string;
 }
 
 export interface DocumentVersion {

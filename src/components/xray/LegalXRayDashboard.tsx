@@ -9,6 +9,7 @@ import { RentalAndLoanScorecard } from '@/components/xray/RentalAndLoanScorecard
 import { EmploymentHeatmap } from '@/components/xray/EmploymentHeatmap';
 import { EmailCounterOfferModal } from '@/components/action/EmailCounterOfferModal';
 import { AttorneyPrepSheet } from '@/components/action/AttorneyPrepSheet';
+import { DocumentSpatial3DMap } from '@/components/3d/DocumentSpatial3DMap';
 
 interface LegalXRayDashboardProps {
   overview: LegalXRayOverview;
@@ -57,6 +58,13 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
       {(documentType === 'employment_contract' || documentType === 'nda') && (
         <EmploymentHeatmap documentTitle={documentTitle} />
       )}
+
+      {/* 3D Spatial Document Layer Map Visualizer */}
+      <DocumentSpatial3DMap
+        documentTitle={documentTitle}
+        documentType={documentType}
+        findings={overview.findings}
+      />
 
       {/* Overview Cards Header */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4" role="region" aria-label="Finding Severity Breakdown">

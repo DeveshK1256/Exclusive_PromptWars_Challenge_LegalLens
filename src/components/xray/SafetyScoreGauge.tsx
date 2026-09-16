@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ShieldCheck, AlertTriangle, ShieldAlert, Info } from 'lucide-react';
+import { SafetyScore3DOrb } from '@/components/3d/SafetyScore3DOrb';
 
 interface SafetyScoreGaugeProps {
   score?: number; // 1 - 100 score
@@ -50,10 +51,15 @@ export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-5">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        {/* 3D Animated Interactive Particle Orb */}
+        <div className="shrink-0">
+          <SafetyScore3DOrb score={calculatedScore} size={90} />
+        </div>
+
         {/* Semi-circle Gauge SVG */}
-        <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
-          <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+        <div className="relative w-20 h-20 flex items-center justify-center shrink-0 hidden sm:flex">
+          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 100 100">
             {/* Background Arc */}
             <circle
               cx="50"

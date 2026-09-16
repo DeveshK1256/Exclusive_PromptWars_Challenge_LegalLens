@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Shield, Eye, Compass, HelpCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Card3DPerspective } from '@/components/ui/Card3DPerspective';
 
 export default function HomePage() {
   return (
@@ -79,45 +80,49 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Legal X-Ray */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
                 <Eye className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Legal X-Ray</h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Scans and classifies findings by severity level and category (informational, action required, deadline) into actionable risk insights.
+                Classifies key findings by severity (green, yellow, orange, red) and finding kind (informational, action required, deadline).
               </p>
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                <span className="text-emerald-500">🟢 Standard</span>
+                <span className="text-yellow-500">🟡 Important</span>
+                <span className="text-orange-500">🟠 Attention</span>
+                <span className="text-red-500">🔴 High-Impact</span>
+              </div>
             </div>
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              <span className="text-emerald-500">🟢 Standard</span>
-              <span className="text-yellow-500">🟡 Important</span>
-              <span className="text-orange-500">🟠 Attention</span>
-              <span className="text-red-500">🔴 High-Impact</span>
-            </div>
-          </div>
+          </Card3DPerspective>
 
           {/* Card 2: Personal Impact */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Compass className="w-5 h-5" />
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <Compass className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Personal Impact</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Select your role (Employee, Tenant, Freelancer, Business owner) to understand how specific obligations and clauses affect your position.
+              </p>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Personal Impact</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Select your role (Employee, Tenant, Freelancer, Business owner) to understand how specific obligations and clauses affect your position.
-            </p>
-          </div>
+          </Card3DPerspective>
 
           {/* Card 3: Grounded Q&A */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-              <HelpCircle className="w-5 h-5" />
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Grounded Q&amp;A</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Ask questions directly against uploaded documents with traceable chunk citations, verified accuracy, and safety checks.
+              </p>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Grounded Q&amp;A</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Ask questions directly against uploaded documents with traceable chunk citations, verified accuracy, and safety checks.
-            </p>
-          </div>
+          </Card3DPerspective>
         </div>
       </section>
 

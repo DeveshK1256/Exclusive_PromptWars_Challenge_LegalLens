@@ -30,41 +30,13 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
   const getSeverityGlow = (severity: string) => {
     switch (severity) {
       case 'red':
-        return {
-          border: 'border-rose-500/80 dark:border-rose-500',
-          bg: 'bg-white dark:bg-slate-900',
-          badgeBg: 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700',
-          text: 'text-rose-600 dark:text-rose-400',
-          shadow: 'shadow-[0_4px_20px_rgba(244,63,94,0.2)]',
-          badge: 'High Risk',
-        };
+        return { border: 'border-rose-500/60', bg: 'bg-rose-950/40', text: 'text-rose-400', shadow: 'shadow-[0_0_25px_rgba(244,63,94,0.3)]', badge: 'High Risk' };
       case 'orange':
-        return {
-          border: 'border-amber-500/80 dark:border-amber-500',
-          bg: 'bg-white dark:bg-slate-900',
-          badgeBg: 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',
-          text: 'text-amber-600 dark:text-amber-400',
-          shadow: 'shadow-[0_4px_20px_rgba(245,158,11,0.2)]',
-          badge: 'Review',
-        };
+        return { border: 'border-amber-500/60', bg: 'bg-amber-950/40', text: 'text-amber-400', shadow: 'shadow-[0_0_20px_rgba(245,158,11,0.25)]', badge: 'Review' };
       case 'yellow':
-        return {
-          border: 'border-yellow-500/80 dark:border-yellow-500',
-          bg: 'bg-white dark:bg-slate-900',
-          badgeBg: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
-          text: 'text-yellow-600 dark:text-yellow-400',
-          shadow: 'shadow-[0_4px_15px_rgba(234,179,8,0.2)]',
-          badge: 'Key Term',
-        };
+        return { border: 'border-yellow-500/50', bg: 'bg-yellow-950/30', text: 'text-yellow-400', shadow: 'shadow-[0_0_15px_rgba(234,179,8,0.2)]', badge: 'Key Term' };
       default:
-        return {
-          border: 'border-emerald-500/80 dark:border-emerald-500',
-          bg: 'bg-white dark:bg-slate-900',
-          badgeBg: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700',
-          text: 'text-emerald-600 dark:text-emerald-400',
-          shadow: 'shadow-[0_4px_15px_rgba(16,185,129,0.2)]',
-          badge: 'Standard',
-        };
+        return { border: 'border-emerald-500/50', bg: 'bg-emerald-950/30', text: 'text-emerald-400', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.2)]', badge: 'Standard' };
     }
   };
 
@@ -135,7 +107,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
 
         {/* 3D Stack Container */}
         <div
-          className="relative transition-transform duration-300 ease-out transform-gpu flex flex-col items-center justify-center py-4 space-y-3"
+          className="relative transition-transform duration-300 ease-out transform-gpu flex flex-col items-center justify-center py-4"
           style={{
             transform: `scale(${zoom}) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg)`,
             transformStyle: 'preserve-3d',
@@ -144,44 +116,28 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
         >
           {findings.map((finding, idx) => {
             const style = getSeverityGlow(finding.severity);
-            const isSelected = selectedFinding?.id === finding.id;
-            const hasSelection = selectedFinding !== null;
-
-            // When a card is selected, render ONLY the selected card in the 3D stack view
-            if (hasSelection && !isSelected) {
-              return null;
-            }
-
-            const zOffset = isSelected
-              ? 120
-              : (findings.length - idx) * 20;
-            const scale = isSelected ? 1.08 : 1;
+            const zOffset = (findings.length - idx) * 20;
 
             return (
               <div
                 key={finding.id}
-                onClick={() => setSelectedFinding(isSelected ? null : finding)}
-                className={`w-72 sm:w-80 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
-                  isSelected
-                    ? 'ring-4 ring-indigo-500/50 dark:ring-indigo-400/50 bg-indigo-50 dark:bg-slate-900 border-indigo-500 dark:border-indigo-400 shadow-[0_10px_35px_rgba(99,102,241,0.5)] my-auto'
-                    : `${style.border} ${style.bg} ${style.shadow} hover:scale-[1.03]`
-                }`}
+                onClick={() => setSelectedFinding(finding)}
+                className={`w-72 sm:w-80 p-3.5 rounded-2xl border ${style.border} ${style.bg} ${style.shadow} backdrop-blur-md transition-all duration-300 cursor-pointer hover:-translate-y-2 hover:scale-105 group mb-[-40px]`}
                 style={{
-                  transform: `translateZ(${zOffset}px) scale(${scale})`,
+                  transform: `translateZ(${zOffset}px)`,
                   transformStyle: 'preserve-3d',
-                  zIndex: isSelected ? 50 : findings.length - idx,
                 }}
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border ${isSelected ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700' : style.badgeBg}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 ${style.text}`}>
                     Layer #{idx + 1} — {style.badge}
                   </span>
-                  <span className={`text-[10px] font-mono ${isSelected ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'}`}>Kind: {finding.finding_kind}</span>
+                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">Kind: {finding.finding_kind}</span>
                 </div>
-                <h4 className={`text-xs font-bold transition-colors line-clamp-1 ${isSelected ? 'text-indigo-950 dark:text-indigo-100' : 'text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300'}`}>
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors line-clamp-1">
                   {finding.title}
                 </h4>
-                <p className={`text-[11px] line-clamp-2 mt-1 leading-relaxed ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-600 dark:text-slate-300'}`}>
+                <p className="text-[11px] text-slate-700 dark:text-slate-300 line-clamp-2 mt-0.5 leading-relaxed">
                   {finding.description}
                 </p>
               </div>

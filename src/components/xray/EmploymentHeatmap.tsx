@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, MapPin, Clock, Lightbulb, Briefcase } from 'lucide-react';
+import { ShieldAlert, MapPin, Clock, Lightbulb, Briefcase, Navigation } from 'lucide-react';
 import { HoverGlossaryText } from '@/components/ui/HoverGlossaryText';
 
 interface EmploymentHeatmapProps {
@@ -24,7 +24,7 @@ export const EmploymentHeatmap: React.FC<EmploymentHeatmapProps> = ({
       category: 'Geographic Boundary',
       icon: MapPin,
       severity: 'orange',
-      levelText: '25-Mile Radius (San Francisco)',
+      levelText: '25-Mile Radius (San Francisco HQ)',
       desc: 'Applies within a 25-mile radius of company headquarters or active service territories.',
       impact: 'Attention Area',
     },
@@ -47,8 +47,8 @@ export const EmploymentHeatmap: React.FC<EmploymentHeatmapProps> = ({
   ];
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800 pb-4 gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
             <ShieldAlert className="w-5 h-5" />
@@ -57,14 +57,94 @@ export const EmploymentHeatmap: React.FC<EmploymentHeatmapProps> = ({
             <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
               Employment &amp; NDA Restriction Heatmap
               <span className="text-[10px] font-mono bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20">
-                Employment &amp; NDA Tailored
+                Cartographic Mapping
               </span>
             </h3>
-            <p className="text-xs text-slate-400">Visual mapping of non-compete, geographic, IP, and moonlighting boundaries in {documentTitle}</p>
+            <p className="text-xs text-slate-400">Visual geographic boundary and restriction radius breakdown for {documentTitle}</p>
           </div>
         </div>
       </div>
 
+      {/* Cartographic Visual Radius Map Widget */}
+      <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 flex flex-col md:flex-row items-center gap-6 overflow-hidden relative">
+        {/* SVG Cartographic Geographic Radial Map */}
+        <div className="relative w-52 h-52 flex items-center justify-center shrink-0">
+          {/* Subtle Grid Backdrop */}
+          <div className="absolute inset-0 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:12px_12px] opacity-30 rounded-full" />
+
+          <svg className="w-52 h-52 text-slate-700 transform -rotate-45" viewBox="0 0 200 200">
+            {/* Concentric Cartographic Distance Rings */}
+            <circle cx="100" cy="100" r="90" fill="none" stroke="#334155" strokeWidth="1" strokeDasharray="4 4" />
+            <circle cx="100" cy="100" r="65" fill="none" stroke="#475569" strokeWidth="1" strokeDasharray="3 3" />
+            <circle cx="100" cy="100" r="40" fill="none" stroke="#64748b" strokeWidth="1" />
+
+            {/* 25-Mile Restriction Radius Fill Zone */}
+            <circle cx="100" cy="100" r="65" fill="rgba(244, 63, 94, 0.12)" stroke="#f43f5e" strokeWidth="1.5" />
+
+            {/* Crosshair Axes */}
+            <line x1="10" y1="100" x2="190" y2="100" stroke="#334155" strokeWidth="0.8" />
+            <line x1="100" y1="10" x2="100" y2="190" stroke="#334155" strokeWidth="0.8" />
+          </svg>
+
+          {/* Map Center Origin Marker (HQ) */}
+          <div className="absolute flex flex-col items-center justify-center text-center">
+            <div className="w-4 h-4 rounded-full bg-rose-500 border-2 border-slate-900 shadow-[0_0_12px_rgba(244,63,94,0.8)] animate-pulse" />
+            <span className="text-[10px] font-bold font-mono text-rose-300 mt-1 bg-slate-900/90 px-1.5 py-0.5 rounded border border-rose-500/30">
+              SF HQ (Origin)
+            </span>
+          </div>
+
+          {/* Cartographic Scale Bar & North Indicator */}
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800 text-[9px] font-mono text-slate-400">
+            <Navigation className="w-3 h-3 text-indigo-400 transform rotate-45" />
+            <span>N</span>
+          </div>
+          <div className="absolute bottom-2 left-2 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800 text-[9px] font-mono text-slate-400">
+            <span>Scale: 1 in = 10 mi</span>
+          </div>
+        </div>
+
+        {/* Cartographic Legend & Boundary Breakdown */}
+        <div className="space-y-3 flex-1">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-rose-400" />
+              Cartographic Legend &amp; Restriction Zones
+            </h4>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              CVD-Safe Colorblind Palette
+            </span>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between p-2 rounded-lg bg-rose-950/30 border border-rose-500/30">
+              <span className="flex items-center gap-2 text-rose-300 font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+                🔴 Restricted 25-Mile Zone
+              </span>
+              <span className="font-mono text-[11px] text-slate-300">San Francisco Bay Area</span>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-lg bg-amber-950/30 border border-amber-500/30">
+              <span className="flex items-center gap-2 text-amber-300 font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                🟠 12-Month Non-Compete Window
+              </span>
+              <span className="font-mono text-[11px] text-slate-300">Post-Termination</span>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-950/30 border border-emerald-500/30">
+              <span className="flex items-center gap-2 text-emerald-300 font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                🟢 Unrestricted Exterior Zone
+              </span>
+              <span className="font-mono text-[11px] text-slate-300">&gt; 25 Miles Distance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Restrictions Detail Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {restrictions.map((item, idx) => {
           const Icon = item.icon;

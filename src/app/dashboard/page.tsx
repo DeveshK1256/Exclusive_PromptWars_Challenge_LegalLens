@@ -88,6 +88,29 @@ const SAMPLE_DOCS: Record<string, Document> = {
 3. CLASS ACTION WAIVER: You waive any right to initiate, join, or participate in class action lawsuits against the provider.
 4. CONTENT LICENSE: You grant provider a worldwide, royalty-free, perpetual license to host, display, and distribute user content uploaded to the service.`,
   },
+  loan_document: {
+    id: 'doc_sample_loan',
+    user_id: 'user_demo',
+    title: 'Sample Personal Loan & Credit Agreement',
+    original_filename: 'Personal_Loan_Agreement_2026.pdf',
+    mime_type: 'application/pdf',
+    file_size: 1950000,
+    file_hash: 'hash_loan',
+    storage_path: 'documents/demo/loan.pdf',
+    document_type: 'loan_document',
+    jurisdiction: 'New York, US',
+    status: 'completed',
+    deleted_at: null,
+    retention_expires_at: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    raw_text: `PERSONAL LOAN & CREDIT AGREEMENT
+1. LOAN AMOUNT & INTEREST RATE: Borrower receives principal sum of $15,000 at 8.5% fixed annual interest rate.
+2. PAYMENT SCHEDULE & DUE DATES: Monthly installment of $370 is due on the 15th of each calendar month starting November 15, 2026. Final payoff maturity date is October 15, 2030.
+3. GRACE PERIOD & LATE CHARGES: A 10-day grace period is provided. Payments received after the 25th of the month incur a $35 late charge.
+4. NOTICE WINDOW & PREPAYMENT: Borrower may prepay principal at any time without penalty. Written 30-day notice is required before changing payment accounts.
+5. DEFAULT & CURE DEADLINE: Overdue balance past 30 days triggers formal Notice of Default. Borrower must cure default within 15 calendar days to prevent acceleration.`,
+  },
 };
 
 export default function DashboardPage() {
@@ -131,6 +154,10 @@ export default function DashboardPage() {
       detectedType = 'employment_contract';
     } else if (text.includes('terms of service') || text.includes('privacy policy') || text.includes('arbitration') || text.includes('data broker')) {
       detectedType = 'terms_of_service';
+    } else if (text.includes('loan') || text.includes('borrower') || text.includes('interest rate') || text.includes('installment')) {
+      detectedType = 'loan_document';
+    } else if (text.includes('service agreement') || text.includes('contractor') || text.includes('statement of work')) {
+      detectedType = 'service_agreement';
     }
 
     if (detectedType && detectedType !== activeDoc.document_type) {

@@ -23,26 +23,78 @@ export const RentalAndLoanScorecard: React.FC<RentalAndLoanScorecardProps> = ({
   const [rentAmount, setRentAmount] = useState(2500);
   const [daysLate, setDaysLate] = useState(5);
 
-  const sampleDeadlines: DeadlineItem[] = [
-    {
-      title: 'Monthly Payment Due Date',
-      dateStr: '1st of every month',
-      description: 'Rent or payment due in full. 5-day grace period applies.',
-      noticeWindow: '5 Days Grace',
-    },
-    {
-      title: 'Lease Renewal Written Notice Window',
-      dateStr: '60 Days Prior to Expiration',
-      description: 'Must send formal written notice to landlord if renewing or vacating.',
-      noticeWindow: '60 Days Required',
-    },
-    {
-      title: 'Security Deposit Refund Cutoff',
-      dateStr: 'Within 21 Days Post Move-Out',
-      description: 'Landlord must provide itemized accounting and deposit check.',
-      noticeWindow: '21 Days Post Move-Out',
-    },
-  ];
+  const isLoan = documentType?.includes('loan');
+  const isService = documentType?.includes('service');
+  const isPolicy = documentType?.includes('policy');
+
+  const sampleDeadlines: DeadlineItem[] = isLoan
+    ? [
+        {
+          title: 'Monthly Installment Payment Due Date',
+          dateStr: '15th of every month',
+          description: 'Monthly loan principal & interest payment of $370 due on 15th.',
+          noticeWindow: '10 Days Grace Period',
+        },
+        {
+          title: 'Grace Period Cutoff & Late Fee Trigger',
+          dateStr: '25th of every month',
+          description: 'Payments received after the 25th incur a $35 late charge.',
+          noticeWindow: 'Late Fee Cutoff Date',
+        },
+        {
+          title: 'Default Cure Deadline',
+          dateStr: '15 Calendar Days Post Notice',
+          description: 'Borrower must cure overdue balance within 15 days of default notice.',
+          noticeWindow: '15 Days Cure Window',
+        },
+        {
+          title: 'Final Maturity & Full Payoff Date',
+          dateStr: 'October 15, 2030 (Final Last Date)',
+          description: 'Final payoff date for remaining principal balance and interest.',
+          noticeWindow: 'Contract Expiration Date',
+        },
+      ]
+    : isService
+    ? [
+        {
+          title: 'Service Fee Payment Due Date',
+          dateStr: '30 Days Net Invoice',
+          description: 'Invoices payable within 30 days of billing issuance.',
+          noticeWindow: 'Net 30 Days',
+        },
+        {
+          title: 'Contract Termination Notice Window',
+          dateStr: '30 Days Prior Written Notice',
+          description: 'Required advance written notice prior to service cancellation.',
+          noticeWindow: '30 Days Notice Window',
+        },
+        {
+          title: 'Service Agreement End Date / Last Date',
+          dateStr: '1 Year From Effective Date',
+          description: 'Contract expiration and SLA review date.',
+          noticeWindow: 'Expiration Last Date',
+        },
+      ]
+    : [
+        {
+          title: 'Monthly Rent Payment Due Date',
+          dateStr: '1st of every month',
+          description: 'Rent payment due in full on 1st of calendar month.',
+          noticeWindow: '5 Days Grace Period',
+        },
+        {
+          title: 'Lease Renewal Written Notice Window',
+          dateStr: '60 Days Prior to Lease Expiration',
+          description: 'Must send formal written notice to landlord if renewing or vacating.',
+          noticeWindow: '60 Days Required Notice',
+        },
+        {
+          title: 'Security Deposit Refund Cutoff Date',
+          dateStr: 'Within 21 Days Post Move-Out',
+          description: 'Landlord must return deposit check with itemized repair statement.',
+          noticeWindow: '21 Days Post Move-Out',
+        },
+      ];
 
   // Calculate late fee estimate
   const graceDays = 3;

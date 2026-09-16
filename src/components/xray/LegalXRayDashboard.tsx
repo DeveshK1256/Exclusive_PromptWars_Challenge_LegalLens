@@ -47,11 +47,11 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
       />
 
       {/* 2. Dynamic Domain Scorecard / Heatmap based on documentType */}
-      {documentType === 'tos_privacy_policy' && (
+      {(documentType === 'tos_privacy_policy' || documentType === 'terms_of_service' || documentType === 'privacy_policy' || documentType === 'policy_document' || documentType.includes('terms') || documentType.includes('privacy')) && (
         <TermsOfServiceScorecard documentTitle={documentTitle} />
       )}
 
-      {(documentType === 'rental_lease' || documentType === 'loan_agreement' || documentType === 'service_contract') && (
+      {(documentType === 'rental_lease' || documentType === 'rental_agreement' || documentType === 'loan_document' || documentType === 'loan_agreement' || documentType === 'service_agreement' || documentType === 'service_contract') && (
         <RentalAndLoanScorecard documentTitle={documentTitle} documentType={documentType} />
       )}
 

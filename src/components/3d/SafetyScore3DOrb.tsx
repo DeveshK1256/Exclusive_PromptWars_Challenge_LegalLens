@@ -45,13 +45,17 @@ export const SafetyScore3DOrb: React.FC<SafetyScore3DOrbProps> = ({ score, size 
       });
     }
 
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     const render = () => {
       ctx.clearRect(0, 0, size, size);
       const centerX = size / 2;
       const centerY = size / 2;
 
-      rotationX += 0.008;
-      rotationY += 0.012;
+      if (!prefersReducedMotion) {
+        rotationX += 0.008;
+        rotationY += 0.012;
+      }
 
       // Draw ambient 3D radial glow
       const glowGrad = ctx.createRadialGradient(centerX, centerY, radius * 0.2, centerX, centerY, radius * 1.3);

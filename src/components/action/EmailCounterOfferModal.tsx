@@ -100,7 +100,7 @@ Best regards,
           <button
             type="button"
             onClick={handleCopy}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-colors shadow-sm"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.97] text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-all shadow-sm cursor-pointer"
           >
             {copied ? (
               <>
@@ -119,7 +119,7 @@ Best regards,
             href={mailtoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs py-2.5 px-4 rounded-xl border border-slate-700 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-[0.97] text-slate-200 font-semibold text-xs py-2.5 px-4 rounded-xl border border-slate-700 transition-all cursor-pointer"
           >
             <Send className="w-4 h-4" />
             Open Email App

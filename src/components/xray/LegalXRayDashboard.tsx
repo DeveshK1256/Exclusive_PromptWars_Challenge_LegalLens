@@ -72,7 +72,7 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           type="button"
           onClick={() => setSelectedFilter('red')}
           aria-label={`Filter by Red High-Impact Areas: ${overview.high_impact_count} items`}
-          className={`p-4 rounded-2xl border text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
+          className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
             selectedFilter === 'red' ? 'ring-2 ring-red-500 bg-red-950/40 border-red-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
           }`}
         >
@@ -88,7 +88,7 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           type="button"
           onClick={() => setSelectedFilter('orange')}
           aria-label={`Filter by Orange Attention Areas: ${overview.attention_area_count} items`}
-          className={`p-4 rounded-2xl border text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ${
+          className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ${
             selectedFilter === 'orange' ? 'ring-2 ring-orange-500 bg-amber-950/40 border-amber-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
           }`}
         >
@@ -104,7 +104,7 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           type="button"
           onClick={() => setSelectedFilter('yellow')}
           aria-label={`Filter by Yellow Important Clauses: ${overview.important_count} items`}
-          className={`p-4 rounded-2xl border text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 ${
+          className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 ${
             selectedFilter === 'yellow' ? 'ring-2 ring-amber-500 bg-amber-950/40 border-amber-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
           }`}
         >
@@ -120,7 +120,7 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           type="button"
           onClick={() => setSelectedFilter('green')}
           aria-label={`Filter by Green General Terms: ${overview.general_count} items`}
-          className={`p-4 rounded-2xl border text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${
+          className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${
             selectedFilter === 'green' ? 'ring-2 ring-emerald-500 bg-emerald-950/40 border-emerald-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
           }`}
         >

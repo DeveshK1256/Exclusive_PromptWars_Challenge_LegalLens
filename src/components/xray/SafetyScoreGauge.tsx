@@ -82,7 +82,7 @@ export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              className="transition-all duration-1000 ease-out"
+              className="transition-[stroke-dashoffset] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">

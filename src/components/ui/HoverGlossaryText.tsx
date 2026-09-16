@@ -118,7 +118,7 @@ export const HoverGlossaryText: React.FC<HoverGlossaryTextProps> = ({ text, clas
 
             {/* Hover Tooltip Popover */}
             {isHovered && (
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950 text-slate-100 text-xs rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none space-y-1 text-left">
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950 text-slate-100 text-xs rounded-xl shadow-xl border border-slate-700 z-50 pointer-events-none space-y-1 text-left origin-bottom animate-in fade-in zoom-in-95 duration-150">
                 <span className="font-bold text-indigo-400 block flex items-center justify-between">
                   <span>📖 {entry.term}</span>
                   <span className="text-[10px] text-slate-400 uppercase font-mono">Plain Language</span>

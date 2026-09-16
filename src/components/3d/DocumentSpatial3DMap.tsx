@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layers, RotateCcw, ZoomIn, ZoomOut, AlertOctagon, AlertTriangle, CheckCircle2, Shield } from 'lucide-react';
+import { Layers, RotateCcw, ZoomIn, ZoomOut, ChevronUp, ChevronDown, Shield } from 'lucide-react';
 import { XRayFindingCard } from '@/lib/xray/types';
 
 interface DocumentSpatial3DMapProps {
@@ -15,15 +15,15 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
   documentType,
   findings,
 }) => {
-  const [rotateX, setRotateX] = useState(35);
-  const [rotateZ, setRotateZ] = useState(-20);
-  const [zoom, setZoom] = useState(1);
+  const [rotateX, setRotateX] = useState(24);
+  const [rotateZ, setRotateZ] = useState(-15);
+  const [zoom, setZoom] = useState(0.95);
   const [selectedFinding, setSelectedFinding] = useState<XRayFindingCard | null>(null);
 
   const handleReset = () => {
-    setRotateX(35);
-    setRotateZ(-20);
-    setZoom(1);
+    setRotateX(24);
+    setRotateZ(-15);
+    setZoom(0.95);
     setSelectedFinding(null);
   };
 
@@ -59,7 +59,23 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setZoom((z) => Math.min(z + 0.15, 1.4))}
+            onClick={() => setRotateX((rx) => Math.min(rx + 5, 45))}
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
+            title="Tilt Up"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setRotateX((rx) => Math.max(rx - 5, 5))}
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
+            title="Tilt Down"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.min(z + 0.1, 1.3))}
             className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
             title="Zoom In"
           >
@@ -67,7 +83,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setZoom((z) => Math.max(z - 0.15, 0.7))}
+            onClick={() => setZoom((z) => Math.max(z - 0.1, 0.6))}
             className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
             title="Zoom Out"
           >
@@ -85,22 +101,22 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
       </div>
 
       {/* 3D Scene Viewport Canvas */}
-      <div className="relative h-80 sm:h-96 w-full bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden flex items-center justify-center p-6 cursor-grab active:cursor-grabbing">
+      <div className="relative h-96 sm:h-[420px] w-full bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden flex items-center justify-center p-6">
         {/* Subtle Background Grid Lines */}
         <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
 
         {/* 3D Stack Container */}
         <div
-          className="relative transition-transform duration-300 ease-out transform-gpu flex flex-col items-center justify-center"
+          className="relative transition-transform duration-300 ease-out transform-gpu flex flex-col items-center justify-center pt-8"
           style={{
-            transform: `scale(${zoom}) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg)`,
+            transform: `translateY(15px) scale(${zoom}) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg)`,
             transformStyle: 'preserve-3d',
             perspective: '1200px',
           }}
         >
           {findings.map((finding, idx) => {
             const style = getSeverityGlow(finding.severity);
-            const zOffset = (findings.length - idx) * 45;
+            const zOffset = (findings.length - idx) * 28;
 
             return (
               <div

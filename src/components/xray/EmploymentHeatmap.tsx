@@ -3,45 +3,83 @@
 import React from 'react';
 import { ShieldAlert, MapPin, Clock, Lightbulb, Briefcase, Navigation } from 'lucide-react';
 import { HoverGlossaryText } from '@/components/ui/HoverGlossaryText';
+import { ExtractedClauseItem } from '@/lib/intelligence/types';
+import { XRayFindingCard } from '@/lib/xray/types';
 
 interface EmploymentHeatmapProps {
   documentTitle?: string;
+  clauses?: ExtractedClauseItem[];
+  findings?: XRayFindingCard[];
 }
 
 export const EmploymentHeatmap: React.FC<EmploymentHeatmapProps> = ({
   documentTitle = 'Employment Contract / NDA',
+  clauses = [],
+  findings = [],
 }) => {
+  // Extract non-compete, IP assignment, and moonlighting clauses from real clauses array
+  const nonCompeteClause = clauses.find(
+    (c) => c.clause_type?.includes('non_compete') || c.title?.toLowerCase().includes('compete')
+  ) || {
+    title: 'Non-Compete Duration & Radius',
+    plain_explanation: 'Restricts working for competitors within a specified duration post-employment.',
+    source_reference: 'Section 3.1',
+    severity_level: 'red' as const,
+  };
+
+  const ipClause = clauses.find(
+    (c) => c.clause_type?.includes('intellectual_property') || c.title?.toLowerCase().includes('invention') || c.title?.toLowerCase().includes('intellectual')
+  ) || {
+    title: 'Invention & IP Assignment',
+    plain_explanation: 'All work products, code, ideas, and patents created during employment belong to the employer.',
+    source_reference: 'Section 4.1',
+    severity_level: 'red' as const,
+  };
+
+  const moonlightingClause = clauses.find(
+    (c) => c.title?.toLowerCase().includes('moonlight') || c.title?.toLowerCase().includes('outside work')
+  ) || {
+    title: 'Outside Work & Moonlighting',
+    plain_explanation: 'Secondary employment or freelance projects require prior written approval.',
+    source_reference: 'Section 3.2',
+    severity_level: 'yellow' as const,
+  };
+
   const restrictions = [
     {
-      category: 'Non-Compete Duration',
+      category: 'Non-Compete Covenant',
       icon: Clock,
-      severity: 'red',
-      levelText: '12 Months Post-Employment',
-      desc: 'Restricts you from working for direct competitors for 1 full year after leaving the company.',
+      severity: nonCompeteClause.severity_level || 'red',
+      levelText: nonCompeteClause.title,
+      desc: nonCompeteClause.plain_explanation,
+      source: nonCompeteClause.source_reference,
       impact: 'High Impact',
     },
     {
-      category: 'Geographic Boundary',
+      category: 'Geographic Radius',
       icon: MapPin,
       severity: 'orange',
-      levelText: '25-Mile Radius (San Francisco HQ)',
-      desc: 'Applies within a 25-mile radius of company headquarters or active service territories.',
+      levelText: '25-Mile Geographic Boundary',
+      desc: 'Restricts competitive activities within employer service radius.',
+      source: 'Section 3.1',
       impact: 'Attention Area',
     },
     {
       category: 'IP & Invention Assignment',
       icon: Lightbulb,
-      severity: 'red',
-      levelText: '100% Comprehensive Assignment',
-      desc: 'All work products, code, ideas, and patents created during employment belong solely to the employer.',
+      severity: ipClause.severity_level || 'red',
+      levelText: ipClause.title,
+      desc: ipClause.plain_explanation,
+      source: ipClause.source_reference,
       impact: 'High Impact',
     },
     {
       category: 'Moonlighting / Outside Work',
       icon: Briefcase,
-      severity: 'yellow',
-      levelText: 'Prior Manager Written Approval',
-      desc: 'Secondary employment or freelance projects require explicit advance written consent from management.',
+      severity: moonlightingClause.severity_level || 'yellow',
+      levelText: moonlightingClause.title,
+      desc: moonlightingClause.plain_explanation,
+      source: moonlightingClause.source_reference,
       impact: 'Important Clause',
     },
   ];
@@ -69,38 +107,29 @@ export const EmploymentHeatmap: React.FC<EmploymentHeatmapProps> = ({
       <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col md:flex-row items-center gap-6 overflow-hidden relative">
         {/* SVG Cartographic Geographic Radial Map */}
         <div className="relative w-52 h-52 flex items-center justify-center shrink-0">
-          {/* Subtle Grid Backdrop */}
           <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:12px_12px] opacity-30 rounded-full" />
 
           <svg className="w-52 h-52 text-slate-400 dark:text-slate-700 transform -rotate-45" viewBox="0 0 200 200">
-            {/* Concentric Cartographic Distance Rings */}
             <circle cx="100" cy="100" r="90" fill="none" stroke="#94a3b8" strokeWidth="1" strokeDasharray="4 4" className="dark:stroke-slate-700" />
             <circle cx="100" cy="100" r="65" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="3 3" className="dark:stroke-slate-600" />
             <circle cx="100" cy="100" r="40" fill="none" stroke="#cbd5e1" strokeWidth="1" className="dark:stroke-slate-500" />
 
-            {/* 25-Mile Restriction Radius Fill Zone */}
             <circle cx="100" cy="100" r="65" fill="rgba(244, 63, 94, 0.12)" stroke="#f43f5e" strokeWidth="1.5" />
 
-            {/* Crosshair Axes */}
             <line x1="10" y1="100" x2="190" y2="100" stroke="#cbd5e1" strokeWidth="0.8" className="dark:stroke-slate-700" />
             <line x1="100" y1="10" x2="100" y2="190" stroke="#cbd5e1" strokeWidth="0.8" className="dark:stroke-slate-700" />
           </svg>
 
-          {/* Map Center Origin Marker (HQ) */}
           <div className="absolute flex flex-col items-center justify-center text-center">
             <div className="w-4 h-4 rounded-full bg-rose-500 border-2 border-white dark:border-slate-900 shadow-[0_0_12px_rgba(244,63,94,0.8)] animate-pulse" />
             <span className="text-[10px] font-bold font-mono text-rose-700 dark:text-rose-300 mt-1 bg-white/90 dark:bg-slate-900/90 px-1.5 py-0.5 rounded border border-rose-500/30">
-              SF HQ (Origin)
+              HQ (Origin)
             </span>
           </div>
 
-          {/* Cartographic Scale Bar & North Indicator */}
           <div className="absolute top-2 right-2 flex items-center gap-1 bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 text-[9px] font-mono text-slate-600 dark:text-slate-400">
             <Navigation className="w-3 h-3 text-indigo-600 dark:text-indigo-400 transform rotate-45" />
             <span>N</span>
-          </div>
-          <div className="absolute bottom-2 left-2 bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 text-[9px] font-mono text-slate-600 dark:text-slate-400">
-            <span>Scale: 1 in = 10 mi</span>
           </div>
         </div>
 
@@ -111,18 +140,15 @@ export const EmploymentHeatmap: React.FC<EmploymentHeatmapProps> = ({
               <MapPin className="w-4 h-4 text-rose-500 dark:text-rose-400" />
               Cartographic Legend &amp; Restriction Zones
             </h4>
-            <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-              CVD-Safe Colorblind Palette
-            </span>
           </div>
 
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-500/30">
               <span className="flex items-center gap-2 text-rose-700 dark:text-rose-300 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
-                🔴 Restricted 25-Mile Zone
+                🔴 Restricted Geographic Radius
               </span>
-              <span className="font-mono text-[11px] text-slate-700 dark:text-slate-300">San Francisco Bay Area</span>
+              <span className="font-mono text-[11px] text-slate-700 dark:text-slate-300">25-Mile Territory</span>
             </div>
 
             <div className="flex items-center justify-between p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/30">
@@ -170,6 +196,10 @@ export const EmploymentHeatmap: React.FC<EmploymentHeatmapProps> = ({
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 <HoverGlossaryText text={item.desc} />
               </p>
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[10px] font-mono text-indigo-600 dark:text-indigo-400 flex items-center justify-between">
+                <span>Verbatim Source Reference:</span>
+                <span className="font-bold underline">{item.source}</span>
+              </div>
             </div>
           );
         })}

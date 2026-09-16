@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { HelpCircle } from 'lucide-react';
+import { GlossaryTerm } from '@/types/database';
 
-export const LEGAL_GLOSSARY_DICTIONARY: Record<string, { term: string; definition: string }> = {
+export const LEGAL_GLOSSARY_DICTIONARY: Record<string, { term: string; definition: string; source?: string }> = {
   indemnification: {
     term: 'Indemnification',
     definition: 'An agreement where you promise to pay for losses or legal fees if the other party gets sued.',
@@ -77,16 +78,37 @@ export const LEGAL_GLOSSARY_DICTIONARY: Record<string, { term: string; definitio
 interface HoverGlossaryTextProps {
   text: string;
   className?: string;
+  customGlossary?: GlossaryTerm[];
 }
 
-export const HoverGlossaryText: React.FC<HoverGlossaryTextProps> = ({ text, className = '' }) => {
+export const HoverGlossaryText: React.FC<HoverGlossaryTextProps> = ({ text, className = '', customGlossary = [] }) => {
   const [activeTermKey, setActiveTermKey] = useState<string | null>(null);
 
   if (!text) return null;
 
-  // Search for dictionary terms inside the text string
-  const termKeys = Object.keys(LEGAL_GLOSSARY_DICTIONARY);
-  const regexPattern = new RegExp(`\\b(${termKeys.join('|')})\\b`, 'gi');
+  // Build merged dictionary combining static terms + database glossary_terms
+  const activeDict: Record<string, { term: string; definition: string; source?: string }> = {
+    ...LEGAL_GLOSSARY_DICTIONARY,
+  };
+
+  for (const g of customGlossary) {
+    if (g.term) {
+      activeDict[g.term.toLowerCase()] = {
+        term: g.term,
+        definition: g.plain_language_definition,
+        source: g.source_reference,
+      };
+    }
+  }
+
+  const termKeys = Object.keys(activeDict);
+  if (termKeys.length === 0) return <span className={className}>{text}</span>;
+
+  // Sort keys by length descending to match multi-word phrases first
+  termKeys.sort((a, b) => b.length - a.length);
+
+  const escapedKeys = termKeys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const regexPattern = new RegExp(`\\b(${escapedKeys.join('|')})\\b`, 'gi');
 
   const parts = text.split(regexPattern);
 
@@ -94,7 +116,7 @@ export const HoverGlossaryText: React.FC<HoverGlossaryTextProps> = ({ text, clas
     <span className={`inline ${className}`}>
       {parts.map((part, idx) => {
         const lowerPart = part.toLowerCase();
-        const entry = LEGAL_GLOSSARY_DICTIONARY[lowerPart];
+        const entry = activeDict[lowerPart];
 
         if (!entry) {
           return <span key={idx}>{part}</span>;
@@ -124,6 +146,11 @@ export const HoverGlossaryText: React.FC<HoverGlossaryTextProps> = ({ text, clas
                   <span className="text-[10px] text-slate-400 uppercase font-mono">Plain Language</span>
                 </span>
                 <span className="block text-slate-300 leading-normal">{entry.definition}</span>
+                {entry.source && (
+                  <span className="block text-[10px] font-mono text-indigo-300 pt-1 border-t border-slate-800">
+                    Source: {entry.source}
+                  </span>
+                )}
               </span>
             )}
           </span>

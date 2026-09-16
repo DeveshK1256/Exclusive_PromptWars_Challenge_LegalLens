@@ -82,3 +82,6 @@ export function validateFileMetadata(filename: string, mimeType: string, fileSiz
 
   return { valid: true };
 }
+
+export { sanitizeJurisdictionInference } from './comparison/comparisonAgent';
+

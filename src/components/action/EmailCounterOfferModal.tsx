@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Mail, Copy, Check, X, Sparkles, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Copy, Check, X, Send, AlertTriangle } from 'lucide-react';
 import { XRayFindingCard } from '@/lib/xray/types';
+import { sanitizeJurisdictionInference } from '@/lib/config';
 
 interface EmailCounterOfferModalProps {
   isOpen: boolean;
   onClose: () => void;
   finding?: XRayFindingCard | null;
   documentTitle?: string;
+  userJurisdiction?: string;
 }
 
 export const EmailCounterOfferModal: React.FC<EmailCounterOfferModalProps> = ({
@@ -16,17 +18,17 @@ export const EmailCounterOfferModal: React.FC<EmailCounterOfferModalProps> = ({
   onClose,
   finding,
   documentTitle = 'Document',
+  userJurisdiction,
 }) => {
   const [copied, setCopied] = useState(false);
-
-  if (!isOpen) return null;
+  const [editedBody, setEditedBody] = useState('');
 
   const findingTitle = finding?.title || 'High-Impact Clause';
   const quoteSnippet = finding?.source_reference || 'Clause provisions';
 
-  // Construct polite, professional counter-offer email
-  const emailSubject = `Question regarding ${documentTitle} - ${findingTitle}`;
-  const emailBody = `Hi [Name / Landlord / Hiring Manager],
+  useEffect(() => {
+    if (finding) {
+      const rawDraft = `Hi [Name / Landlord / Hiring Manager],
 
 Thank you for sending over ${documentTitle}. I am looking forward to working together!
 
@@ -42,13 +44,23 @@ Would you be open to this minor adjustment before we finalize and sign?
 Best regards,
 [Your Name]`;
 
+      // Pass draft through sanitizeJurisdictionInference to preserve Decision 10 neutrality
+      const sanitized = sanitizeJurisdictionInference(rawDraft, userJurisdiction);
+      setEditedBody(sanitized);
+    }
+  }, [finding, documentTitle, userJurisdiction]);
+
+  if (!isOpen) return null;
+
+  const emailSubject = `Question regarding ${documentTitle} - ${findingTitle}`;
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(emailBody);
+    navigator.clipboard.writeText(editedBody);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const mailtoUrl = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+  const mailtoUrl = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(editedBody)}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
@@ -69,29 +81,41 @@ Best regards,
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               Email Counter-Offer Generator
-              <span className="text-[10px] font-mono bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
-                Polite Wording
+              <span className="text-[10px] font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-bold">
+                EDITABLE DRAFT / TEMPLATE ONLY
               </span>
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Negotiate high-impact or restrictive clauses professionally</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Politely negotiate high-impact or restrictive clauses</p>
           </div>
+        </div>
+
+        {/* Legal Disclaimer Callout */}
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-500/30 text-xs text-amber-900 dark:text-amber-300 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] leading-relaxed">
+            <strong>Legal Disclaimer:</strong> This AI-generated template is provided for informational and drafting assistance only. It does NOT constitute legal advice or formal representation. Always review and personalize before sending.
+          </p>
         </div>
 
         <div className="space-y-3">
           <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-            <span className="text-slate-500 dark:text-slate-400 block mb-1">Flagged Provision:</span>
+            <span className="text-slate-500 dark:text-slate-400 block mb-1">Grounded Provision (Source Reference):</span>
             <span className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 block text-slate-800 dark:text-slate-200 italic line-clamp-2">
               "{quoteSnippet}"
             </span>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Suggested Email Wording:</label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="counter-offer-textarea" className="text-xs font-semibold text-slate-700 dark:text-slate-300">Editable Email Draft:</label>
+              <span className="text-[10px] text-slate-500 font-mono">You can edit text directly below</span>
+            </div>
             <textarea
-              readOnly
+              id="counter-offer-textarea"
               rows={8}
-              value={emailBody}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-300 font-mono focus:outline-none resize-none leading-relaxed"
+              value={editedBody}
+              onChange={(e) => setEditedBody(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed"
             />
           </div>
         </div>
@@ -105,12 +129,12 @@ Best regards,
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-emerald-400" />
-                Copied to Clipboard!
+                Copied Draft to Clipboard!
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4" />
-                Copy Counter-Offer Text
+                Copy Draft Wording
               </>
             )}
           </button>

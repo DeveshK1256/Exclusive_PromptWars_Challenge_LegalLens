@@ -3,46 +3,43 @@
 import React from 'react';
 import { ShieldCheck, AlertTriangle, ShieldAlert, Info } from 'lucide-react';
 import { SafetyScore3DOrb } from '@/components/3d/SafetyScore3DOrb';
+import { calculateSafetyScore, FindingLike } from '@/lib/xray/safetyScore';
 
 interface SafetyScoreGaugeProps {
-  score?: number; // 1 - 100 score
+  score?: number; // Optional override
   highImpactCount?: number;
   attentionAreaCount?: number;
+  findings?: FindingLike[];
 }
 
 export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
-  score = 82,
+  score,
   highImpactCount = 0,
-  attentionAreaCount = 1,
+  attentionAreaCount = 0,
+  findings = [],
 }) => {
-  // Determine rating bucket & color scheme
-  let calculatedScore = score;
+  // If findings are provided, use pure deterministic calculation engine
+  let result = calculateSafetyScore(findings);
 
-  if (highImpactCount > 0) {
-    calculatedScore = Math.min(score, 45);
-  } else if (attentionAreaCount >= 2) {
-    calculatedScore = Math.min(score, 68);
+  // If explicit score override is passed (e.g. from legacy state), use it unless findings exist
+  let calculatedScore = findings.length > 0 ? result.score : (score ?? 82);
+
+  if (findings.length === 0) {
+    if (highImpactCount > 0) {
+      calculatedScore = Math.min(calculatedScore, 45);
+    } else if (attentionAreaCount >= 2) {
+      calculatedScore = Math.min(calculatedScore, 68);
+    }
+    // Re-evaluate result object for visual labels
+    result = calculateSafetyScore([
+      ...Array(highImpactCount).fill({ severity_level: 'red' }),
+      ...Array(attentionAreaCount).fill({ severity_level: 'orange' }),
+    ]);
+    result.score = calculatedScore;
   }
 
-  let statusText = 'Standard & Fair Terms';
-  let badgeColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-  let strokeColor = '#10b981'; // emerald-500
-  let IconComponent = ShieldCheck;
-  let summaryDesc = 'This document contains balanced clauses matching typical industry standards.';
-
-  if (calculatedScore < 50) {
-    statusText = 'High Risk & Restrictive';
-    badgeColor = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-    strokeColor = '#f43f5e'; // rose-500
-    IconComponent = ShieldAlert;
-    summaryDesc = 'Caution: Contains restrictive covenants, heavy financial penalties, or unusual waivers.';
-  } else if (calculatedScore < 75) {
-    statusText = 'Moderate Caution Area';
-    badgeColor = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-    strokeColor = '#f59e0b'; // amber-500
-    IconComponent = AlertTriangle;
-    summaryDesc = 'Contains notice windows or fee conditions that require your attention before signing.';
-  }
+  const { ratingLabel, badgeColor, strokeColor, summaryDesc } = result;
+  const IconComponent = calculatedScore < 50 ? ShieldAlert : calculatedScore < 75 ? AlertTriangle : ShieldCheck;
 
   // SVG Gauge calculations (semi-circle)
   const radius = 40;
@@ -96,19 +93,25 @@ export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
           <div className="flex items-center gap-2">
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeColor}`}>
               <IconComponent className="w-3.5 h-3.5" />
-              {statusText}
+              {ratingLabel}
             </span>
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">Overall Document Fairness Gauge</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">Deterministic Document Fairness Gauge</h3>
           <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">{summaryDesc}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0 text-xs text-slate-700 dark:text-slate-300">
-        <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-        <span className="text-[11px] text-slate-600 dark:text-slate-400">
-          Score derived from clause severity, obligation weight, and risk balance.
-        </span>
+      <div className="flex flex-col gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0 text-xs text-slate-700 dark:text-slate-300">
+        <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-200">
+          <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+          <span>Calculated Score Breakdown:</span>
+        </div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] font-mono text-slate-600 dark:text-slate-400">
+          <span>🔴 Red (-15): {result.breakdown.red}</span>
+          <span>🟠 Orange (-8): {result.breakdown.orange}</span>
+          <span>🟡 Yellow (-3): {result.breakdown.yellow}</span>
+          <span>🟢 Green (+1): {result.breakdown.green}</span>
+        </div>
       </div>
     </div>
   );

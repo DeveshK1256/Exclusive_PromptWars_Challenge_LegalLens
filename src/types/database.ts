@@ -100,6 +100,7 @@ export interface TimelineEvent {
   event_date: string | null;
   event_type: string;
   description: string;
+  notice_window?: string | null;
   source_reference: string;
   confidence: number; // 0.0 - 1.0
   created_at: string;

@@ -1,90 +1,156 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, AlertCircle, ShieldAlert, CheckSquare, XSquare, Eye, Database, HardDrive, Lock, FileText, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, AlertCircle, ShieldAlert, CheckSquare, XSquare, Eye, Database, HardDrive, Lock, FileText } from 'lucide-react';
 import { HoverGlossaryText } from '@/components/ui/HoverGlossaryText';
+import { XRayFindingCard } from '@/lib/xray/types';
+import { ExtractedClauseItem } from '@/lib/intelligence/types';
 
 interface TermsOfServiceScorecardProps {
   documentTitle?: string;
+  findings?: XRayFindingCard[];
+  clauses?: ExtractedClauseItem[];
 }
 
 export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = ({
   documentTitle = 'Terms of Service & Privacy Policy',
+  findings = [],
+  clauses = [],
 }) => {
-  const dataPermissions = [
+  // 1. Data & Permissions Scorecard (Grouped by severity level from existing findings/clauses)
+  const dataRelatedFindings = findings.filter(
+    (f) =>
+      f.category.toLowerCase().includes('data') ||
+      f.category.toLowerCase().includes('privacy') ||
+      f.title.toLowerCase().includes('data') ||
+      f.title.toLowerCase().includes('collection') ||
+      f.title.toLowerCase().includes('share') ||
+      f.title.toLowerCase().includes('license')
+  );
+
+  const displayPermissions = dataRelatedFindings.length > 0
+    ? dataRelatedFindings.map((f) => ({
+        level: f.severity,
+        icon: f.severity === 'red' ? ShieldAlert : f.severity === 'orange' ? AlertCircle : ShieldCheck,
+        badge: f.severity === 'red' ? '🔴 High Risk Permissions' : f.severity === 'orange' ? '🟠 Attention Permission' : '🟡 Moderate Access',
+        title: f.title,
+        details: f.description,
+        source: f.source_reference,
+      }))
+    : [
+        {
+          level: 'green',
+          icon: ShieldCheck,
+          badge: '🟢 Standard Permissions',
+          title: 'Basic Device & Performance Diagnostics',
+          details: 'Standard operational permissions required to provide the core service.',
+          source: 'Section 1',
+        },
+        {
+          level: 'yellow',
+          icon: AlertCircle,
+          badge: '🟡 Analytics & Usage Data',
+          title: 'Usage Logs & Interaction Telemetry',
+          details: 'Collects page views and feature usage logs for product improvements.',
+          source: 'Section 2',
+        },
+        {
+          level: 'orange',
+          icon: ShieldAlert,
+          badge: '🟠 Third-Party Data Sharing',
+          title: 'Analytics & Broker Data Access',
+          details: 'May share aggregated analytics data with infrastructure partners.',
+          source: 'Section 3',
+        },
+      ];
+
+  // 2. Plain Language Summary Bullets
+  const tosBulletPoints = [
     {
-      level: 'green',
-      icon: ShieldCheck,
-      badge: '🟢 Normal Access',
-      title: 'Basic Device & Crash Diagnostics',
-      details: 'App can access device model, OS version, app performance logs, and error telemetry to fix bugs.',
-      storage: 'Stored temporarily for app performance.',
+      icon: Database,
+      category: 'Data Access & Collection',
+      points: clauses
+        .filter((c) => c.clause_type?.includes('data') || c.title?.toLowerCase().includes('data') || c.title?.toLowerCase().includes('collect'))
+        .map((c) => `${c.title}: ${c.plain_explanation} (Source: ${c.source_reference})`),
     },
     {
-      level: 'yellow',
-      icon: AlertCircle,
-      badge: '🟡 Moderate Access',
-      title: 'IP Address & Usage Analytics',
-      details: 'App accesses approximate location via IP, session length, button clicks, and feature usage patterns.',
-      storage: 'Stored in analytics databases for up to 24 months.',
+      icon: HardDrive,
+      category: 'Data Storage & Retention',
+      points: clauses
+        .filter((c) => c.title?.toLowerCase().includes('stor') || c.title?.toLowerCase().includes('retain') || c.title?.toLowerCase().includes('term'))
+        .map((c) => `${c.title}: ${c.plain_explanation} (Source: ${c.source_reference})`),
     },
     {
-      level: 'red',
-      icon: ShieldAlert,
-      badge: '🔴 High Risk Permissions & Storage',
-      title: 'GPS Location, Biometrics & Broker Sharing',
-      details: 'App claims ability to track precise GPS location, harvest contact lists, or sell data to 3rd-party data brokers.',
-      storage: 'Indefinite retention on cloud servers; shared with third parties.',
+      icon: Lock,
+      category: 'Third-Party Sharing & Licensing',
+      points: clauses
+        .filter((c) => c.title?.toLowerCase().includes('share') || c.title?.toLowerCase().includes('third') || c.title?.toLowerCase().includes('license'))
+        .map((c) => `${c.title}: ${c.plain_explanation} (Source: ${c.source_reference})`),
     },
   ];
 
-  const tosBulletPoints = [
+  // Fallback defaults if clauses array is empty
+  const defaultBullets = [
     {
       icon: Database,
       category: 'Data Access & Permissions',
       points: [
         'Collects device identifiers, browser type, and operating system details.',
         'Tracks user interaction, page views, and clickstream analytics.',
-        'May access background location services and network connection data when active.',
       ],
     },
     {
       icon: HardDrive,
       category: 'Data Storage & Retention Policy',
       points: [
-        'User data is stored on remote cloud infrastructure with standard encryption.',
-        'Data retention continues for as long as account remains active, plus backup retention.',
-        'Anonymized analytics data may be retained indefinitely for model training and product enhancement.',
+        'User data is stored on remote cloud infrastructure with encryption.',
+        'Data retention continues for as long as the account remains active.',
       ],
     },
     {
       icon: Lock,
       category: 'Third-Party Sharing & Broker Distribution',
       points: [
-        'Shares diagnostic data with infrastructure partners (hosting, analytics, payment processors).',
-        'Reserves right to share aggregated demographic insights with third-party advertising brokers.',
+        'Shares diagnostic data with hosting, analytics, and payment infrastructure partners.',
         'Discloses user records in response to valid court subpoenas or law enforcement requests.',
       ],
     },
   ];
 
-  const surrenderedRights = [
-    {
-      surrendered: true,
-      title: 'Mandatory Binding Arbitration',
-      desc: 'You waive the right to resolve disputes in a public court of law; all legal claims must go through private arbitration.',
-    },
-    {
-      surrendered: true,
-      title: 'Class Action Lawsuit Waiver',
-      desc: 'You waive any right to initiate, join, or participate in group or class-action lawsuits against the service provider.',
-    },
-    {
-      surrendered: false,
-      title: 'Indefinite User Content License',
-      desc: 'Provider receives a non-exclusive operational license to host services, but does not claim full ownership of your uploaded media.',
-    },
-  ];
+  const activeBullets = tosBulletPoints.some((b) => b.points.length > 0) ? tosBulletPoints : defaultBullets;
+
+  // 3. Rights You Surrender Checklist
+  const surrenderFindings = findings.filter(
+    (f) =>
+      f.finding_kind === 'action_required' ||
+      f.category.toLowerCase().includes('dispute') ||
+      f.category.toLowerCase().includes('liability') ||
+      f.title.toLowerCase().includes('arbitration') ||
+      f.title.toLowerCase().includes('class action') ||
+      f.title.toLowerCase().includes('waiver')
+  );
+
+  const surrenderedRights = surrenderFindings.length > 0
+    ? surrenderFindings.map((f) => ({
+        surrendered: true,
+        title: f.title,
+        desc: f.description,
+        source: f.source_reference,
+      }))
+    : [
+        {
+          surrendered: true,
+          title: 'Mandatory Binding Arbitration',
+          desc: 'Disputes resolved privately through individual arbitration instead of public court.',
+          source: 'Section 2',
+        },
+        {
+          surrendered: true,
+          title: 'Class Action Lawsuit Waiver',
+          desc: 'Waives right to participate in class-action or group litigation.',
+          source: 'Section 3',
+        },
+      ];
 
   return (
     <div className="space-y-6">
@@ -109,7 +175,7 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
 
         {/* 1. Traffic Light Data Access & Storage Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {dataPermissions.map((item, idx) => {
+          {displayPermissions.map((item, idx) => {
             const Icon = item.icon;
             const borderBg =
               item.level === 'green'
@@ -133,9 +199,12 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] font-mono text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-                  <HardDrive className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <span>Storage: {item.storage}</span>
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] font-mono text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <HardDrive className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    Storage &amp; Access
+                  </span>
+                  <span className="text-[10px] font-bold underline cursor-pointer">{item.source}</span>
                 </div>
               </div>
             );
@@ -150,7 +219,7 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {tosBulletPoints.map((sec, idx) => {
+            {activeBullets.map((sec, idx) => {
               const Icon = sec.icon;
               return (
                 <div key={idx} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
@@ -190,15 +259,15 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
                 ) : (
                   <CheckSquare className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
                 )}
-                <div>
-                  <span className="font-bold text-slate-900 dark:text-slate-100 block">
-                    <HoverGlossaryText text={right.title} />
-                    {right.surrendered && (
-                      <span className="ml-2 text-[10px] font-mono bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-500/20">
-                        Rights Surrendered
-                      </span>
-                    )}
-                  </span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 block">
+                      <HoverGlossaryText text={right.title} />
+                    </span>
+                    <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 italic">
+                      Source: {right.source}
+                    </span>
+                  </div>
                   <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5">
                     <HoverGlossaryText text={right.desc} />
                   </p>
@@ -211,4 +280,3 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
     </div>
   );
 };
-

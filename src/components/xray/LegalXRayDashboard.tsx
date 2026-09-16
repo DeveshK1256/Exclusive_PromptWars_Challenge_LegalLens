@@ -44,19 +44,20 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
       <SafetyScoreGauge
         highImpactCount={overview.high_impact_count}
         attentionAreaCount={overview.attention_area_count}
+        findings={overview.findings}
       />
 
       {/* 2. Dynamic Domain Scorecard / Heatmap based on documentType */}
       {(documentType === 'tos_privacy_policy' || documentType === 'terms_of_service' || documentType === 'privacy_policy' || documentType === 'policy_document' || documentType.includes('terms') || documentType.includes('privacy')) && (
-        <TermsOfServiceScorecard documentTitle={documentTitle} />
+        <TermsOfServiceScorecard documentTitle={documentTitle} findings={overview.findings} />
       )}
 
       {(documentType === 'rental_lease' || documentType === 'rental_agreement' || documentType === 'loan_document' || documentType === 'loan_agreement' || documentType === 'service_agreement' || documentType === 'service_contract') && (
-        <RentalAndLoanScorecard documentTitle={documentTitle} documentType={documentType} />
+        <RentalAndLoanScorecard documentTitle={documentTitle} documentType={documentType} findings={overview.findings} />
       )}
 
       {(documentType === 'employment_contract' || documentType === 'nda') && (
-        <EmploymentHeatmap documentTitle={documentTitle} />
+        <EmploymentHeatmap documentTitle={documentTitle} findings={overview.findings} />
       )}
 
       {/* 3D Spatial Document Layer Map Visualizer */}

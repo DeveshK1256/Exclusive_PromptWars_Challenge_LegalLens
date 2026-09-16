@@ -190,20 +190,20 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-100">LegalLens AI Workspace</h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">LegalLens AI Workspace</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Navigate, examine Legal X-Ray analysis reports, simplify clauses, inspect timelines, and execute action plans.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-slate-900 p-1.5 rounded-xl border border-slate-800 flex-wrap">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 flex-wrap">
           <button
             onClick={() => setActiveTab('upload')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'upload' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'upload' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -212,7 +212,7 @@ export default function DashboardPage() {
           <button
             onClick={() => setActiveTab('xray')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'xray' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'xray' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
@@ -221,7 +221,7 @@ export default function DashboardPage() {
           <button
             onClick={() => setActiveTab('simplification')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'simplification' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'simplification' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -230,7 +230,7 @@ export default function DashboardPage() {
           <button
             onClick={() => setActiveTab('qa')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'qa' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'qa' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -239,7 +239,7 @@ export default function DashboardPage() {
           <button
             onClick={() => setActiveTab('timeline')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'timeline' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'timeline' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -248,7 +248,7 @@ export default function DashboardPage() {
           <button
             onClick={() => setActiveTab('action')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
-              activeTab === 'action' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'action' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <CheckSquare className="w-3.5 h-3.5" />
@@ -259,15 +259,15 @@ export default function DashboardPage() {
 
       {/* Auto-Detection / Demo Banner */}
       {autoDetectedBanner && (
-        <div className="bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-xl text-indigo-300 text-xs font-semibold flex items-center justify-between gap-2">
+        <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 p-4 rounded-xl text-indigo-800 dark:text-indigo-300 text-xs font-semibold flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-400" />
+            <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             {autoDetectedBanner}
           </span>
           <button
             type="button"
             onClick={() => setAutoDetectedBanner(null)}
-            className="text-slate-400 hover:text-slate-200 text-xs"
+            className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 text-xs"
           >
             Dismiss
           </button>
@@ -283,18 +283,18 @@ export default function DashboardPage() {
 
       {activeTab === 'xray' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between bg-slate-900 p-5 rounded-2xl border border-slate-800 flex-wrap gap-3">
+          <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex-wrap gap-3 shadow-sm">
             <div>
-              <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                <Shield className="w-6 h-6 text-indigo-400" />
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 Legal X-Ray Analysis Report
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                 Detailed AI-assisted document classification by severity level (🔴 🟠 🟡 🟢) and domain scorecards with verbatim citations.
               </p>
             </div>
-            <span className="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-400" />
+            <span className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-bold flex items-center gap-2">
+              <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Analyzing: {activeDoc.original_filename}</span>
             </span>
           </div>

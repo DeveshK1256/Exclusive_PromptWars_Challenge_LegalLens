@@ -41,18 +41,18 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl overflow-hidden relative">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl overflow-hidden relative">
       {/* Top Controls Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
             <Layers className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               3D Spatial Document Layer Map
             </h3>
-            <p className="text-xs text-slate-400">Interactive 3D depth stack of contract clause severity layers</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Interactive 3D depth stack of contract clause severity layers</p>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
           <button
             type="button"
             onClick={() => setZoom((z) => Math.min(z + 0.15, 1.4))}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1 transition-colors"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
             title="Zoom In"
           >
             <ZoomIn className="w-4 h-4" />
@@ -68,7 +68,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(z - 0.15, 0.7))}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1 transition-colors"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
             title="Zoom Out"
           >
             <ZoomOut className="w-4 h-4" />
@@ -76,7 +76,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
           <button
             type="button"
             onClick={handleReset}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1 transition-colors"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
             title="Reset 3D View"
           >
             <RotateCcw className="w-4 h-4" />
@@ -85,9 +85,9 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
       </div>
 
       {/* 3D Scene Viewport Canvas */}
-      <div className="relative h-80 sm:h-96 w-full bg-slate-950 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center p-6 cursor-grab active:cursor-grabbing">
+      <div className="relative h-80 sm:h-96 w-full bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden flex items-center justify-center p-6 cursor-grab active:cursor-grabbing">
         {/* Subtle Background Grid Lines */}
-        <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
 
         {/* 3D Stack Container */}
         <div
@@ -113,15 +113,15 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
                 }}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border border-slate-700 bg-slate-900 ${style.text}`}>
+                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 ${style.text}`}>
                     Layer #{idx + 1} — {style.badge}
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">Kind: {finding.finding_kind}</span>
+                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">Kind: {finding.finding_kind}</span>
                 </div>
-                <h4 className="text-xs font-bold text-slate-100 group-hover:text-indigo-300 transition-colors line-clamp-1">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors line-clamp-1">
                   {finding.title}
                 </h4>
-                <p className="text-[11px] text-slate-300 line-clamp-2 mt-1 leading-relaxed">
+                <p className="text-[11px] text-slate-700 dark:text-slate-300 line-clamp-2 mt-1 leading-relaxed">
                   {finding.description}
                 </p>
               </div>
@@ -130,7 +130,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
         </div>
 
         {/* Rotate Drag Control Overlay Instructions */}
-        <div className="absolute bottom-3 left-3 bg-slate-900/90 border border-slate-800 backdrop-blur px-3 py-1.5 rounded-lg text-[10px] text-slate-400 font-mono flex items-center gap-2">
+        <div className="absolute bottom-3 left-3 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 backdrop-blur px-3 py-1.5 rounded-lg text-[10px] text-slate-600 dark:text-slate-400 font-mono flex items-center gap-2">
           <span>X-Rotate: {rotateX}°</span>
           <span>Z-Rotate: {rotateZ}°</span>
           <span>Zoom: {Math.round(zoom * 100)}%</span>
@@ -139,23 +139,23 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
 
       {/* Selected Finding Detail Drawer */}
       {selectedFinding && (
-        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-2 animate-in fade-in duration-200">
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs space-y-2 animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
-            <h4 className="font-bold text-slate-100 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-indigo-400" />
+            <h4 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               {selectedFinding.title}
             </h4>
             <button
               type="button"
               onClick={() => setSelectedFinding(null)}
-              className="text-slate-400 hover:text-slate-200 text-xs font-mono px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-xs font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
             >
               ✕ Close
             </button>
           </div>
-          <p className="text-slate-300 leading-relaxed">{selectedFinding.description}</p>
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{selectedFinding.description}</p>
           {selectedFinding.source_reference && (
-            <div className="text-[11px] text-slate-400 font-mono bg-slate-900 p-2.5 rounded-lg border border-slate-800 italic">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 italic">
               Verbatim Reference: "{selectedFinding.source_reference}"
             </div>
           )}

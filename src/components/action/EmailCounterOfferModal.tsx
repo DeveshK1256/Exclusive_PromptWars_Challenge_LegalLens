@@ -51,56 +51,56 @@ Best regards,
   const mailtoUrl = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 p-1 rounded-lg transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
             <Mail className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               Email Counter-Offer Generator
-              <span className="text-[10px] font-mono bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
+              <span className="text-[10px] font-mono bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
                 Polite Wording
               </span>
             </h3>
-            <p className="text-xs text-slate-400">Negotiate high-impact or restrictive clauses professionally</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Negotiate high-impact or restrictive clauses professionally</p>
           </div>
         </div>
 
         <div className="space-y-3">
-          <div className="text-xs text-slate-300 font-medium">
-            <span className="text-slate-400 block mb-1">Flagged Provision:</span>
-            <span className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 block text-slate-200 italic line-clamp-2">
+          <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+            <span className="text-slate-500 dark:text-slate-400 block mb-1">Flagged Provision:</span>
+            <span className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 block text-slate-800 dark:text-slate-200 italic line-clamp-2">
               "{quoteSnippet}"
             </span>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 block">Suggested Email Wording:</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Suggested Email Wording:</label>
             <textarea
               readOnly
               rows={8}
               value={emailBody}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 font-mono focus:outline-none resize-none leading-relaxed"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-300 font-mono focus:outline-none resize-none leading-relaxed"
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
           <button
             type="button"
             onClick={handleCopy}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.97] text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-all shadow-sm cursor-pointer"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.97] text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-all shadow-sm cursor-pointer"
           >
             {copied ? (
               <>
@@ -119,7 +119,7 @@ Best regards,
             href={mailtoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-[0.97] text-slate-200 font-semibold text-xs py-2.5 px-4 rounded-xl border border-slate-700 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.97] text-slate-700 dark:text-slate-200 font-semibold text-xs py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
           >
             <Send className="w-4 h-4" />
             Open Email App

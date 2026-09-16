@@ -50,7 +50,7 @@ export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
   const strokeDashoffset = circumference - (calculatedScore / 100) * circumference;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-5">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-5">
       <div className="flex flex-col sm:flex-row items-center gap-4">
         {/* 3D Animated Interactive Particle Orb */}
         <div className="shrink-0">
@@ -66,10 +66,11 @@ export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
               cy="50"
               r={radius}
               fill="none"
-              stroke="#1e293b"
+              stroke="#e2e8f0"
               strokeWidth="10"
               strokeDasharray={circumference}
               strokeDashoffset="0"
+              className="dark:stroke-slate-800"
             />
             {/* Value Arc */}
             <circle
@@ -86,8 +87,8 @@ export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-2xl font-black text-slate-100 tracking-tight">{calculatedScore}</span>
-            <span className="text-[9px] uppercase font-mono text-slate-400 tracking-wider">/ 100</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{calculatedScore}</span>
+            <span className="text-[9px] uppercase font-mono text-slate-500 dark:text-slate-400 tracking-wider">/ 100</span>
           </div>
         </div>
 
@@ -98,14 +99,14 @@ export const SafetyScoreGauge: React.FC<SafetyScoreGaugeProps> = ({
               {statusText}
             </span>
           </div>
-          <h3 className="text-sm font-bold text-slate-200">Overall Document Fairness Gauge</h3>
-          <p className="text-xs text-slate-400 max-w-md leading-relaxed">{summaryDesc}</p>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-200">Overall Document Fairness Gauge</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">{summaryDesc}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 shrink-0 text-xs text-slate-300">
-        <Info className="w-4 h-4 text-indigo-400 shrink-0" />
-        <span className="text-[11px] text-slate-400">
+      <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0 text-xs text-slate-700 dark:text-slate-300">
+        <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+        <span className="text-[11px] text-slate-600 dark:text-slate-400">
           Score derived from clause severity, obligation weight, and risk balance.
         </span>
       </div>

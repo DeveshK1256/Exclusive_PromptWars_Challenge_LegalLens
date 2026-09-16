@@ -73,15 +73,17 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           onClick={() => setSelectedFilter('red')}
           aria-label={`Filter by Red High-Impact Areas: ${overview.high_impact_count} items`}
           className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
-            selectedFilter === 'red' ? 'ring-2 ring-red-500 bg-red-950/40 border-red-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
+            selectedFilter === 'red'
+              ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-500/50'
+              : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border-slate-200 dark:border-slate-800 shadow-sm'
           }`}
         >
-          <div className="flex justify-between items-center text-rose-400 mb-1">
+          <div className="flex justify-between items-center text-rose-600 dark:text-rose-400 mb-1">
             <AlertOctagon className="w-5 h-5" aria-hidden="true" />
             <span className="text-2xl font-extrabold">{overview.high_impact_count}</span>
           </div>
-          <p className="text-xs font-bold text-slate-100">High-Impact Areas</p>
-          <p className="text-[11px] font-semibold text-rose-400">🔴 Urgent [High Impact]</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-slate-100">High-Impact Areas</p>
+          <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">🔴 Urgent [High Impact]</p>
         </button>
 
         <button
@@ -89,15 +91,17 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           onClick={() => setSelectedFilter('orange')}
           aria-label={`Filter by Orange Attention Areas: ${overview.attention_area_count} items`}
           className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 ${
-            selectedFilter === 'orange' ? 'ring-2 ring-orange-500 bg-amber-950/40 border-amber-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
+            selectedFilter === 'orange'
+              ? 'ring-2 ring-orange-500 bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/50'
+              : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border-slate-200 dark:border-slate-800 shadow-sm'
           }`}
         >
-          <div className="flex justify-between items-center text-amber-400 mb-1">
+          <div className="flex justify-between items-center text-amber-600 dark:text-amber-400 mb-1">
             <AlertTriangle className="w-5 h-5" aria-hidden="true" />
             <span className="text-2xl font-extrabold">{overview.attention_area_count}</span>
           </div>
-          <p className="text-xs font-bold text-slate-100">Attention Areas</p>
-          <p className="text-[11px] font-semibold text-amber-400">🟠 Review [Attention Area]</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Attention Areas</p>
+          <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">🟠 Review [Attention Area]</p>
         </button>
 
         <button
@@ -105,15 +109,17 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           onClick={() => setSelectedFilter('yellow')}
           aria-label={`Filter by Yellow Important Clauses: ${overview.important_count} items`}
           className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 ${
-            selectedFilter === 'yellow' ? 'ring-2 ring-amber-500 bg-amber-950/40 border-amber-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
+            selectedFilter === 'yellow'
+              ? 'ring-2 ring-amber-500 bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/50'
+              : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border-slate-200 dark:border-slate-800 shadow-sm'
           }`}
         >
-          <div className="flex justify-between items-center text-amber-400 mb-1">
+          <div className="flex justify-between items-center text-amber-600 dark:text-amber-400 mb-1">
             <Info className="w-5 h-5" aria-hidden="true" />
             <span className="text-2xl font-extrabold">{overview.important_count}</span>
           </div>
-          <p className="text-xs font-bold text-slate-100">Important Clauses</p>
-          <p className="text-[11px] font-semibold text-amber-400">🟡 Key [Important Clause]</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Important Clauses</p>
+          <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">🟡 Key [Important Clause]</p>
         </button>
 
         <button
@@ -121,39 +127,43 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
           onClick={() => setSelectedFilter('green')}
           aria-label={`Filter by Green General Terms: ${overview.general_count} items`}
           className={`p-4 rounded-2xl border text-left transition-[transform,opacity,background-color,border-color] duration-150 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${
-            selectedFilter === 'green' ? 'ring-2 ring-emerald-500 bg-emerald-950/40 border-emerald-500/50' : 'bg-slate-900 hover:bg-slate-850 border-slate-800'
+            selectedFilter === 'green'
+              ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-500/50'
+              : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border-slate-200 dark:border-slate-800 shadow-sm'
           }`}
         >
-          <div className="flex justify-between items-center text-emerald-400 mb-1">
+          <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400 mb-1">
             <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
             <span className="text-2xl font-extrabold">{overview.general_count}</span>
           </div>
-          <p className="text-xs font-bold text-slate-100">General Terms</p>
-          <p className="text-[11px] font-semibold text-emerald-400">🟢 Standard [General Provision]</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-slate-100">General Terms</p>
+          <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">🟢 Standard [General Provision]</p>
         </button>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
         <div className="flex space-x-2">
           <button
             type="button"
             onClick={() => setSelectedFilter('all')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              selectedFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-750'
+              selectedFilter === 'all'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750'
             }`}
           >
             All Findings ({overview.findings.length})
           </button>
         </div>
 
-        <div className="flex items-center space-x-3 text-xs text-slate-400">
+        <div className="flex items-center space-x-3 text-xs text-slate-600 dark:text-slate-400">
           <span className="flex items-center space-x-1">
-            <Clock className="w-3.5 h-3.5 text-indigo-400" aria-hidden="true" />
+            <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
             <span>{overview.deadlines_count} Deadlines</span>
           </span>
           <span className="flex items-center space-x-1">
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" aria-hidden="true" />
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" aria-hidden="true" />
             <span>{overview.action_items_count} Action Items</span>
           </span>
         </div>
@@ -173,7 +183,7 @@ export const LegalXRayDashboard: React.FC<LegalXRayDashboardProps> = ({
       </div>
 
       {/* 3. Attorney Prep Sheet PDF / Printable Section */}
-      <div className="pt-6 border-t border-slate-800">
+      <div className="pt-6 border-t border-slate-200 dark:border-slate-800">
         <AttorneyPrepSheet
           documentTitle={documentTitle}
           documentType={documentType}
@@ -200,16 +210,16 @@ const FindingCardItem: React.FC<{
   onCounterOffer: () => void;
 }> = ({ finding, isExpanded, onToggle, onCounterOffer }) => {
   const severityStyles = {
-    red: { bg: 'bg-rose-950/20', border: 'border-rose-500/30', text: 'text-rose-200', badge: 'bg-rose-500/10 text-rose-400 border-rose-500/20', label: 'High Impact / Urgent', icon: AlertOctagon },
-    orange: { bg: 'bg-amber-950/20', border: 'border-amber-500/30', text: 'text-amber-200', badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20', label: 'Attention Area / Review', icon: AlertTriangle },
-    yellow: { bg: 'bg-amber-950/20', border: 'border-amber-500/30', text: 'text-amber-200', badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20', label: 'Important / Key Term', icon: Info },
-    green: { bg: 'bg-emerald-950/20', border: 'border-emerald-500/30', text: 'text-emerald-200', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', label: 'General / Standard Term', icon: CheckCircle2 },
+    red: { bg: 'bg-rose-50 dark:bg-rose-950/20', border: 'border-rose-200 dark:border-rose-500/30', text: 'text-rose-900 dark:text-rose-200', badge: 'bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20', label: 'High Impact / Urgent', icon: AlertOctagon },
+    orange: { bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-amber-200 dark:border-amber-500/30', text: 'text-amber-900 dark:text-amber-200', badge: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20', label: 'Attention Area / Review', icon: AlertTriangle },
+    yellow: { bg: 'bg-amber-50 dark:bg-amber-950/20', border: 'border-amber-200 dark:border-amber-500/30', text: 'text-amber-900 dark:text-amber-200', badge: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20', label: 'Important / Key Term', icon: Info },
+    green: { bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-200 dark:border-emerald-500/30', text: 'text-emerald-900 dark:text-emerald-200', badge: 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', label: 'General / Standard Term', icon: CheckCircle2 },
   }[finding.severity];
 
   const IconComp = severityStyles.icon;
 
   return (
-    <div className={`bg-slate-900 rounded-2xl border ${severityStyles.border} shadow-sm overflow-hidden transition-all`}>
+    <div className={`bg-white dark:bg-slate-900 rounded-2xl border ${severityStyles.border} shadow-sm overflow-hidden transition-all`}>
       <div className="p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <button
           type="button"
@@ -224,15 +234,15 @@ const FindingCardItem: React.FC<{
           </div>
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <h4 className="font-bold text-slate-100 text-base group-hover:text-indigo-300 transition-colors">{finding.title}</h4>
+              <h4 className="font-bold text-slate-900 dark:text-slate-100 text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">{finding.title}</h4>
               <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${severityStyles.badge}`}>
                 [{severityStyles.label}]
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300 capitalize border border-slate-700">
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize border border-slate-200 dark:border-slate-700">
                 Kind: {finding.finding_kind.replace('_', ' ')}
               </span>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">{finding.description}</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{finding.description}</p>
           </div>
         </button>
 
@@ -253,7 +263,7 @@ const FindingCardItem: React.FC<{
             onClick={onToggle}
             aria-label={`Toggle verbatim source citation details for ${finding.title}`}
             aria-expanded={isExpanded}
-            className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <ChevronRight className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} aria-hidden="true" />
           </button>
@@ -262,17 +272,17 @@ const FindingCardItem: React.FC<{
 
       {/* Grounded Source Evidence Drawer */}
       {isExpanded && (
-        <div id={`finding-evidence-${finding.id}`} className="bg-slate-950 p-4 border-t border-slate-800 text-xs space-y-2" role="region" aria-label={`Evidence Citation for ${finding.title}`}>
-          <div className="flex items-center justify-between font-bold text-slate-300">
+        <div id={`finding-evidence-${finding.id}`} className="bg-slate-50 dark:bg-slate-950 p-4 border-t border-slate-200 dark:border-slate-800 text-xs space-y-2" role="region" aria-label={`Evidence Citation for ${finding.title}`}>
+          <div className="flex items-center justify-between font-bold text-slate-800 dark:text-slate-300">
             <div className="flex items-center space-x-1.5">
-              <FileText className="w-4 h-4 text-indigo-400" aria-hidden="true" />
+              <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
               <span>Document Source Evidence (Verbatim Citation)</span>
             </div>
-            <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+            <span className="text-[10px] font-mono text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
               {(finding.confidence * 100).toFixed(0)}% Confidence
             </span>
           </div>
-          <p className="bg-slate-900 p-3 rounded-xl border border-slate-800 text-slate-200 font-mono leading-relaxed">
+          <p className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-mono leading-relaxed">
             {finding.source_reference}
           </p>
         </div>

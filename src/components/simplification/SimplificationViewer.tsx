@@ -68,14 +68,14 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
   return (
     <div className="space-y-6">
       {/* Header & Mode Switcher */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Document Simplification Engine
             </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Translates legal text into plain language with interactive hover definitions and ELI5 side-by-side view.
             </p>
           </div>
@@ -87,7 +87,7 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
                 viewMode === 'eli5_split'
                   ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                  : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-750'
               }`}
             >
               <Split className="w-3.5 h-3.5" />
@@ -100,7 +100,7 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
         </div>
 
         {/* Complexity Level Selector */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-800" role="tablist" aria-label="Explanation Complexity Controls">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-200 dark:border-slate-800" role="tablist" aria-label="Explanation Complexity Controls">
           {(Object.keys(LEVEL_LABELS) as ComplexityLevel[]).map((lvl) => (
             <button
               key={lvl}
@@ -111,12 +111,12 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
               onClick={() => handleLevelSelect(lvl)}
               className={`px-3 py-2 text-xs font-medium rounded-xl transition-all text-left border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                 activeLevel === lvl
-                  ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-sm'
-                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-600/20 border-indigo-400 dark:border-indigo-500 text-indigo-900 dark:text-indigo-300 shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <div className="font-semibold text-slate-200">{LEVEL_LABELS[lvl].label}</div>
-              <div className="text-[10px] text-slate-400 truncate mt-0.5">{LEVEL_LABELS[lvl].desc}</div>
+              <div className="font-semibold text-slate-900 dark:text-slate-200">{LEVEL_LABELS[lvl].label}</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{LEVEL_LABELS[lvl].desc}</div>
             </button>
           ))}
         </div>
@@ -124,13 +124,13 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
 
       {/* ELI5 Split-Screen View */}
       {viewMode === 'eli5_split' ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-              <Split className="w-4 h-4 text-indigo-400" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Split className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               ELI5 (Explain Like I'm 5) Side-by-Side View
             </h3>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">
               Click any source snippet to highlight and verify in document text
             </span>
           </div>
@@ -138,9 +138,9 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Pane: Original Legal Clauses */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-300 px-1">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 px-1">
                 <span>📄 Original Legal Clauses</span>
-                <span className="text-[10px] font-mono text-slate-400">Source Document</span>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">Source Document</span>
               </div>
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                 {clausesList.map((clause, idx) => {
@@ -150,11 +150,11 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
                       key={idx}
                       className={`p-4 rounded-xl border text-xs leading-relaxed transition-all ${
                         isHighlighted
-                          ? 'bg-indigo-950/50 border-indigo-500 text-indigo-200 ring-2 ring-indigo-500/30'
-                          : 'bg-slate-950 border-slate-800 text-slate-300'
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-400 dark:border-indigo-500 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/30'
+                          : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300'
                       }`}
                     >
-                      <span className="text-[10px] font-mono text-indigo-400 block mb-1">Clause {idx + 1}</span>
+                      <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 block mb-1">Clause {idx + 1}</span>
                       <HoverGlossaryText text={clause} />
                     </div>
                   );
@@ -164,17 +164,17 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
 
             {/* Right Pane: Simplified Conversational Explanation */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-300 px-1">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 px-1">
                 <span>💬 Simplified Plain-Language Summary</span>
-                <span className="text-[10px] font-mono text-emerald-400">ELI5 Mode</span>
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">ELI5 Mode</span>
               </div>
-              <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4 max-h-[500px] overflow-y-auto">
-                <div className="text-xs text-slate-200 leading-relaxed space-y-2 whitespace-pre-line">
+              <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[500px] overflow-y-auto">
+                <div className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed space-y-2 whitespace-pre-line">
                   <HoverGlossaryText text={currentSummary.summary_text} />
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 space-y-2">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Click-to-Verify Source References
                   </span>
                   {glossary.map((g, idx) => (
@@ -182,10 +182,10 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => setHighlightedSnippet(g.source_reference)}
-                      className="w-full text-left p-2.5 bg-slate-900 hover:bg-slate-850 rounded-lg border border-slate-800 text-xs text-indigo-300 flex items-center justify-between group transition-colors"
+                      className="w-full text-left p-2.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-indigo-700 dark:text-indigo-300 flex items-center justify-between group transition-colors shadow-xs"
                     >
                       <span className="truncate pr-2">🔍 Verify: {g.term} ({g.source_reference})</span>
-                      <Eye className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
+                      <Eye className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -195,12 +195,12 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
         </div>
       ) : (
         /* Standard Overview View */
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-3">
-          <h3 className="text-base font-semibold text-slate-200 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-indigo-400" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-3">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             Executive Overview ({LEVEL_LABELS[activeLevel].label})
           </h3>
-          <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <p className="text-xs text-slate-800 dark:text-slate-300 leading-relaxed whitespace-pre-line bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
             <HoverGlossaryText text={currentSummary.summary_text} />
           </p>
         </div>
@@ -208,15 +208,15 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
 
       {/* Grid: Key Takeaways & Derived Obligations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-3">
-          <h3 className="text-base font-semibold text-slate-200 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-3">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Key Takeaways
           </h3>
           <ul className="space-y-2.5">
             {currentSummary.key_takeaways.map((takeaway, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-semibold text-[10px] shrink-0 mt-0.5">
+              <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-semibold text-[10px] shrink-0 mt-0.5">
                   {idx + 1}
                 </span>
                 <span><HoverGlossaryText text={takeaway} /></span>
@@ -225,56 +225,56 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
           </ul>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-slate-200 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-400" />
+            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               Summary of Obligations
             </h3>
-            <span className="text-[10px] text-indigo-400 font-mono bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+            <span className="text-[10px] text-indigo-700 dark:text-indigo-400 font-mono bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
               Derived from X-Ray
             </span>
           </div>
-          <div className="text-xs text-slate-300 whitespace-pre-line bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono leading-relaxed">
+          <div className="text-xs text-slate-800 dark:text-slate-300 whitespace-pre-line bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 font-mono leading-relaxed">
             <HoverGlossaryText text={currentSummary.obligations_summary} />
           </div>
         </div>
       </div>
 
       {/* Key Terms Glossary Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-        <h3 className="text-base font-semibold text-slate-200 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-indigo-400" />
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-200 flex items-center gap-2">
+          <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           Key Terms Glossary ({glossary.length} defined terms)
         </h3>
 
         {glossary.length === 0 ? (
-          <p className="text-xs text-slate-400 py-4 text-center">No specialized legal terms detected in this document section.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">No specialized legal terms detected in this document section.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-semibold bg-slate-950">
+                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold bg-slate-50 dark:bg-slate-950">
                   <th className="py-2.5 px-3">Term</th>
                   <th className="py-2.5 px-3">Plain Definition</th>
                   <th className="py-2.5 px-3">Contextual Meaning</th>
                   <th className="py-2.5 px-3">Source Reference</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 text-slate-800 dark:text-slate-300">
                 {glossary.map((g) => (
-                  <tr key={g.id} className="hover:bg-slate-850 transition-colors">
-                    <td className="py-3 px-3 font-semibold text-indigo-300 whitespace-nowrap">{g.term}</td>
-                    <td className="py-3 px-3 text-slate-300 max-w-xs">{g.plain_language_definition}</td>
-                    <td className="py-3 px-3 text-slate-400 max-w-xs">{g.contextual_meaning}</td>
-                    <td className="py-3 px-3 text-indigo-400 font-mono whitespace-nowrap">
+                  <tr key={g.id} className="hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
+                    <td className="py-3 px-3 font-semibold text-indigo-600 dark:text-indigo-300 whitespace-nowrap">{g.term}</td>
+                    <td className="py-3 px-3 text-slate-700 dark:text-slate-300 max-w-xs">{g.plain_language_definition}</td>
+                    <td className="py-3 px-3 text-slate-600 dark:text-slate-400 max-w-xs">{g.contextual_meaning}</td>
+                    <td className="py-3 px-3 text-indigo-600 dark:text-indigo-400 font-mono whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => {
                           setViewMode('eli5_split');
                           setHighlightedSnippet(g.source_reference);
                         }}
-                        className="bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded text-[11px] border border-indigo-500/20 transition-colors cursor-pointer"
+                        className="bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 px-2 py-0.5 rounded text-[11px] border border-indigo-200 dark:border-indigo-500/20 transition-colors cursor-pointer"
                       >
                         Verify: {g.source_reference}
                       </button>

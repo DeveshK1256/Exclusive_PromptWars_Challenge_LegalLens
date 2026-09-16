@@ -88,21 +88,21 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-sm">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
               <Eye className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 Data Access &amp; Privacy Scorecard
-                <span className="text-[10px] font-mono bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
+                <span className="text-[10px] font-mono bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
                   ToS &amp; Privacy Analyzer
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">Ability to access, collect, and store user data under {documentTitle}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Ability to access, collect, and store user data under {documentTitle}</p>
             </div>
           </div>
         </div>
@@ -113,10 +113,10 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
             const Icon = item.icon;
             const borderBg =
               item.level === 'green'
-                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
+                ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-400'
                 : item.level === 'yellow'
-                ? 'bg-amber-950/20 border-amber-500/30 text-amber-400'
-                : 'bg-rose-950/20 border-rose-500/30 text-rose-400';
+                ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-400'
+                : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-400';
 
             return (
               <div key={idx} className={`p-4 rounded-xl border ${borderBg} space-y-2 flex flex-col justify-between`}>
@@ -127,14 +127,14 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
                       {item.badge}
                     </span>
                   </div>
-                  <h4 className="text-sm font-semibold text-slate-100">{item.title}</h4>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.title}</h4>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                     <HoverGlossaryText text={item.details} />
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/80 text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
-                  <HardDrive className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] font-mono text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                  <HardDrive className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   <span>Storage: {item.storage}</span>
                 </div>
               </div>
@@ -143,9 +143,9 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
         </div>
 
         {/* 2. Plain Language Bullet Points Summary of ToS & Privacy Policy */}
-        <div className="pt-4 border-t border-slate-800 space-y-4">
-          <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-            <FileText className="w-4 h-4 text-indigo-400" />
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
+          <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>Plain-Language Summary: What is Written in the Terms &amp; Privacy Policy</span>
           </h4>
 
@@ -153,15 +153,15 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
             {tosBulletPoints.map((sec, idx) => {
               const Icon = sec.icon;
               return (
-                <div key={idx} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2.5">
-                  <div className="flex items-center gap-2 text-xs font-bold text-indigo-300">
-                    <Icon className="w-4 h-4 text-indigo-400" />
+                <div key={idx} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                    <Icon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     <span>{sec.category}</span>
                   </div>
-                  <ul className="space-y-2 text-xs text-slate-300">
+                  <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
                     {sec.points.map((pt, pIdx) => (
                       <li key={pIdx} className="flex items-start gap-2">
-                        <span className="text-indigo-400 font-bold shrink-0 mt-0.5">•</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0 mt-0.5">•</span>
                         <span>
                           <HoverGlossaryText text={pt} />
                         </span>
@@ -175,31 +175,31 @@ export const TermsOfServiceScorecard: React.FC<TermsOfServiceScorecardProps> = (
         </div>
 
         {/* 3. Rights You Surrender Checklist */}
-        <div className="pt-4 border-t border-slate-800 space-y-3">
-          <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+          <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
             <span>⚖️ Rights You Surrender Checklist</span>
           </h4>
           <div className="space-y-2.5">
             {surrenderedRights.map((right, idx) => (
               <div
                 key={idx}
-                className="flex items-start gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-200"
+                className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200"
               >
                 {right.surrendered ? (
-                  <XSquare className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <XSquare className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
                 ) : (
-                  <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <CheckSquare className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <span className="font-bold text-slate-100 block">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 block">
                     <HoverGlossaryText text={right.title} />
                     {right.surrendered && (
-                      <span className="ml-2 text-[10px] font-mono bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">
+                      <span className="ml-2 text-[10px] font-mono bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-500/20">
                         Rights Surrendered
                       </span>
                     )}
                   </span>
-                  <p className="text-slate-400 text-xs mt-0.5">
+                  <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5">
                     <HoverGlossaryText text={right.desc} />
                   </p>
                 </div>

@@ -15,15 +15,15 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
   documentType,
   findings,
 }) => {
-  const [rotateX, setRotateX] = useState(24);
+  const [rotateX, setRotateX] = useState(20);
   const [rotateZ, setRotateZ] = useState(-15);
-  const [zoom, setZoom] = useState(0.95);
+  const [zoom, setZoom] = useState(0.85);
   const [selectedFinding, setSelectedFinding] = useState<XRayFindingCard | null>(null);
 
   const handleReset = () => {
-    setRotateX(24);
+    setRotateX(20);
     setRotateZ(-15);
-    setZoom(0.95);
+    setZoom(0.85);
     setSelectedFinding(null);
   };
 
@@ -83,7 +83,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setZoom((z) => Math.max(z - 0.1, 0.6))}
+            onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
             className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1 transition-colors"
             title="Zoom Out"
           >
@@ -101,34 +101,34 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
       </div>
 
       {/* 3D Scene Viewport Canvas */}
-      <div className="relative h-96 sm:h-[420px] w-full bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden flex items-center justify-center p-6">
+      <div className="relative h-[480px] sm:h-[540px] w-full bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden flex items-center justify-center p-6">
         {/* Subtle Background Grid Lines */}
         <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
 
         {/* 3D Stack Container */}
         <div
-          className="relative transition-transform duration-300 ease-out transform-gpu flex flex-col items-center justify-center pt-8"
+          className="relative transition-transform duration-300 ease-out transform-gpu flex flex-col items-center justify-center py-4"
           style={{
-            transform: `translateY(15px) scale(${zoom}) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg)`,
+            transform: `scale(${zoom}) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg)`,
             transformStyle: 'preserve-3d',
             perspective: '1200px',
           }}
         >
           {findings.map((finding, idx) => {
             const style = getSeverityGlow(finding.severity);
-            const zOffset = (findings.length - idx) * 28;
+            const zOffset = (findings.length - idx) * 20;
 
             return (
               <div
                 key={finding.id}
                 onClick={() => setSelectedFinding(finding)}
-                className={`w-72 sm:w-80 p-4 rounded-2xl border ${style.border} ${style.bg} ${style.shadow} backdrop-blur-md transition-all duration-300 cursor-pointer hover:-translate-y-2 hover:scale-105 group mb-[-25px]`}
+                className={`w-72 sm:w-80 p-3.5 rounded-2xl border ${style.border} ${style.bg} ${style.shadow} backdrop-blur-md transition-all duration-300 cursor-pointer hover:-translate-y-2 hover:scale-105 group mb-[-40px]`}
                 style={{
                   transform: `translateZ(${zOffset}px)`,
                   transformStyle: 'preserve-3d',
                 }}
               >
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-1">
                   <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 ${style.text}`}>
                     Layer #{idx + 1} — {style.badge}
                   </span>
@@ -137,7 +137,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
                 <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors line-clamp-1">
                   {finding.title}
                 </h4>
-                <p className="text-[11px] text-slate-700 dark:text-slate-300 line-clamp-2 mt-1 leading-relaxed">
+                <p className="text-[11px] text-slate-700 dark:text-slate-300 line-clamp-2 mt-0.5 leading-relaxed">
                   {finding.description}
                 </p>
               </div>

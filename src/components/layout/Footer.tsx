@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export const Footer: React.FC = () => {
   return (
@@ -12,9 +13,9 @@ export const Footer: React.FC = () => {
             </p>
           </div>
           <div className="flex space-x-6 text-left">
-            <a href="#privacy" className="text-slate-300 hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#terms" className="text-slate-300 hover:text-white transition-colors">Terms of Service</a>
-            <a href="#safety" className="text-slate-300 hover:text-white transition-colors">Safety & Policy</a>
+            <Link href="/privacy" className="text-slate-300 hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="text-slate-300 hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/terms#safety" className="text-slate-300 hover:text-white transition-colors">Safety &amp; Policy</Link>
           </div>
         </div>
 

@@ -37,6 +37,33 @@ export default function HomePage() {
             <Compass className="w-4 h-4 ml-2 text-slate-500 dark:text-slate-400 group-hover:rotate-45 transition-transform" />
           </Link>
         </div>
+
+        {/* Interactive Demo Sandbox (No Login Required) */}
+        <div className="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-3">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+            ⚡ Interactive Demo Sandbox (No Login Required)
+          </span>
+          <div className="flex flex-wrap justify-center gap-2.5">
+            <Link
+              href="/dashboard?sample=rental_lease"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors"
+            >
+              <span>🏠 Try Sample Rental Lease</span>
+            </Link>
+            <Link
+              href="/dashboard?sample=employment_contract"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors"
+            >
+              <span>💼 Try Sample Employment Contract</span>
+            </Link>
+            <Link
+              href="/dashboard?sample=tos_privacy_policy"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors"
+            >
+              <span>🔒 Try Sample App ToS &amp; Privacy Policy</span>
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* Legal X-Ray & Core Features */}

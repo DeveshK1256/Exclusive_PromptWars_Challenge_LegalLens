@@ -30,13 +30,13 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
   const getSeverityGlow = (severity: string) => {
     switch (severity) {
       case 'red':
-        return { border: 'border-rose-500/60', bg: 'bg-rose-950/40', text: 'text-rose-400', shadow: 'shadow-[0_0_25px_rgba(244,63,94,0.3)]', badge: 'High Risk' };
+        return { border: 'border-rose-500/60 dark:border-rose-500/80', bg: 'bg-white dark:bg-rose-950', text: 'text-rose-600 dark:text-rose-400', shadow: 'shadow-[0_4px_20px_rgba(244,63,94,0.3)]', badge: 'High Risk' };
       case 'orange':
-        return { border: 'border-amber-500/60', bg: 'bg-amber-950/40', text: 'text-amber-400', shadow: 'shadow-[0_0_20px_rgba(245,158,11,0.25)]', badge: 'Review' };
+        return { border: 'border-amber-500/60 dark:border-amber-500/80', bg: 'bg-white dark:bg-amber-950', text: 'text-amber-600 dark:text-amber-400', shadow: 'shadow-[0_4px_20px_rgba(245,158,11,0.25)]', badge: 'Review' };
       case 'yellow':
-        return { border: 'border-yellow-500/50', bg: 'bg-yellow-950/30', text: 'text-yellow-400', shadow: 'shadow-[0_0_15px_rgba(234,179,8,0.2)]', badge: 'Key Term' };
+        return { border: 'border-yellow-500/50 dark:border-yellow-500/70', bg: 'bg-white dark:bg-yellow-950', text: 'text-yellow-600 dark:text-yellow-400', shadow: 'shadow-[0_4px_15px_rgba(234,179,8,0.2)]', badge: 'Key Term' };
       default:
-        return { border: 'border-emerald-500/50', bg: 'bg-emerald-950/30', text: 'text-emerald-400', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.2)]', badge: 'Standard' };
+        return { border: 'border-emerald-500/50 dark:border-emerald-500/70', bg: 'bg-white dark:bg-emerald-950', text: 'text-emerald-600 dark:text-emerald-400', shadow: 'shadow-[0_4px_15px_rgba(16,185,129,0.2)]', badge: 'Standard' };
     }
   };
 
@@ -117,23 +117,29 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
           {findings.map((finding, idx) => {
             const style = getSeverityGlow(finding.severity);
             const isSelected = selectedFinding?.id === finding.id;
+            const hasSelection = selectedFinding !== null;
+
+            // When a card is selected, render ONLY the selected card in the 3D stack view
+            if (hasSelection && !isSelected) {
+              return null;
+            }
+
             const zOffset = isSelected
               ? (findings.length * 20) + 120
               : (findings.length - idx) * 20;
-            const translateY = isSelected ? -32 : 0;
-            const scale = isSelected ? 1.08 : 1;
+            const scale = isSelected ? 1.1 : 1;
 
             return (
               <div
                 key={finding.id}
                 onClick={() => setSelectedFinding(isSelected ? null : finding)}
-                className={`w-72 sm:w-80 p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer group mb-[-40px] ${
+                className={`w-72 sm:w-80 p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer group ${
                   isSelected
-                    ? 'ring-2 ring-indigo-500 dark:ring-indigo-400 bg-indigo-50 dark:bg-indigo-950/90 border-indigo-500 dark:border-indigo-400 shadow-[0_10px_35px_rgba(99,102,241,0.4)]'
-                    : `${style.border} ${style.bg} ${style.shadow} backdrop-blur-md hover:scale-[1.02]`
+                    ? 'ring-2 ring-indigo-500 dark:ring-indigo-400 bg-indigo-50 dark:bg-indigo-950 border-indigo-500 dark:border-indigo-400 shadow-[0_10px_35px_rgba(99,102,241,0.5)] my-auto'
+                    : `${style.border} ${style.bg} ${style.shadow} mb-[-40px] hover:scale-105`
                 }`}
                 style={{
-                  transform: `translateZ(${zOffset}px) translateY(${translateY}px) scale(${scale})`,
+                  transform: `translateZ(${zOffset}px) scale(${scale})`,
                   transformStyle: 'preserve-3d',
                   zIndex: isSelected ? 50 : findings.length - idx,
                 }}

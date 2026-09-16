@@ -30,20 +30,36 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user || null;
+  } catch {
+    user = null;
+  }
 
   // Protected Routes verification
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
                            request.nextUrl.pathname.startsWith('/documents') ||
-                           request.nextUrl.pathname.startsWith('/compare');
+                           request.nextUrl.pathname.startsWith('/compare') ||
+                           request.nextUrl.pathname.startsWith('/action-plans') ||
+                           request.nextUrl.pathname.startsWith('/settings');
 
-  // Check demo session cookie fallback for demo/test mode
-  const demoCookie = request.cookies.get('legallens_demo_session') || request.cookies.get('sb-access-token');
+  // Comprehensive session detection across demo mode, local auth, and Supabase cookies
+  const allCookies = request.cookies.getAll();
+  const hasUserEmail = request.cookies.has('legallens_user_email');
+  const hasDemoSession = request.cookies.has('legallens_demo_session');
+  const hasSbAccessToken = request.cookies.has('sb-access-token');
+  const hasAnySbAuthCookie = allCookies.some(c =>
+    c.name.startsWith('sb-') ||
+    c.name.includes('auth-token') ||
+    c.name.includes('session')
+  );
 
-  // If user is not authenticated and no session cookie is present, redirect to login
-  if (isProtectedRoute && !user && !demoCookie && process.env.NODE_ENV === 'production') {
+  const isAuthenticated = !!user || hasUserEmail || hasDemoSession || hasSbAccessToken || hasAnySbAuthCookie;
+
+  // If user is not authenticated and accessing a protected route, redirect to login
+  if (isProtectedRoute && !isAuthenticated && process.env.NODE_ENV === 'production') {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

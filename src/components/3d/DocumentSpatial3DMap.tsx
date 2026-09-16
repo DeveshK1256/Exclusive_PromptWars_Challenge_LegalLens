@@ -116,20 +116,28 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
         >
           {findings.map((finding, idx) => {
             const style = getSeverityGlow(finding.severity);
-            const zOffset = (findings.length - idx) * 20;
+            const isSelected = selectedFinding?.id === finding.id;
+            const zOffset = isSelected
+              ? (findings.length * 20) + 120
+              : (findings.length - idx) * 20;
 
             return (
               <div
                 key={finding.id}
-                onClick={() => setSelectedFinding(finding)}
-                className={`w-72 sm:w-80 p-3.5 rounded-2xl border ${style.border} ${style.bg} ${style.shadow} backdrop-blur-md transition-all duration-300 cursor-pointer hover:-translate-y-2 hover:scale-105 group mb-[-40px]`}
+                onClick={() => setSelectedFinding(isSelected ? null : finding)}
+                className={`w-72 sm:w-80 p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer group mb-[-40px] ${
+                  isSelected
+                    ? 'ring-2 ring-indigo-500 dark:ring-indigo-400 bg-indigo-950/80 dark:bg-indigo-950/90 border-indigo-400 shadow-[0_0_35px_rgba(99,102,241,0.6)] scale-[1.06] -translate-y-2'
+                    : `${style.border} ${style.bg} ${style.shadow} backdrop-blur-md hover:-translate-y-2 hover:scale-105`
+                }`}
                 style={{
                   transform: `translateZ(${zOffset}px)`,
                   transformStyle: 'preserve-3d',
+                  zIndex: isSelected ? 50 : findings.length - idx,
                 }}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 ${style.text}`}>
+                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 ${isSelected ? 'text-indigo-300 border-indigo-500/50' : style.text}`}>
                     Layer #{idx + 1} — {style.badge}
                   </span>
                   <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">Kind: {finding.finding_kind}</span>

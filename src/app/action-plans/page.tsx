@@ -87,12 +87,12 @@ export default function ActionPlansPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="border-b border-slate-800 pb-5">
-        <h1 className="text-3xl font-extrabold text-slate-100 flex items-center gap-3">
-          <ListCheck className="w-8 h-8 text-indigo-400" />
+      <div className="border-b border-slate-200 dark:border-slate-800 pb-5">
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+          <ListCheck className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
           Action Plans & Task Center
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
           Review pre-signature checklists, questions for legal counsel, and post-signing task tracker across all documents.
         </p>
       </div>

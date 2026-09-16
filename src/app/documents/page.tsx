@@ -29,8 +29,8 @@ export default function DocumentsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">My Legal Documents</h1>
-          <p className="text-slate-600 text-sm">
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">My Legal Documents</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
             Manage your uploaded contracts, leases, and agreements.
           </p>
         </div>

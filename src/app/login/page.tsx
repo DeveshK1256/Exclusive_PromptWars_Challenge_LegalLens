@@ -220,10 +220,10 @@ export default function LoginPage() {
         <div className="bg-indigo-600 text-white p-3 rounded-2xl w-12 h-12 mx-auto flex items-center justify-center shadow-md">
           <Shield className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-100">
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
           {activeTab === 'login' ? 'Sign in to LegalLens AI' : 'Create Your Account'}
         </h1>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-600 dark:text-slate-400">
           {activeTab === 'login'
             ? 'Access your secure document workspace and legal intelligence.'
             : 'Register to unlock plain-language legal document analysis.'}
@@ -231,17 +231,17 @@ export default function LoginPage() {
       </div>
 
       {/* Tab Switcher (Sign In vs Create Account) */}
-      <div className="flex bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+      <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
         <button
           type="button"
           onClick={() => {
             setActiveTab('login');
             setLoginError(null);
           }}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
             activeTab === 'login'
               ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           Sign In
@@ -253,10 +253,10 @@ export default function LoginPage() {
             setRegErrors({});
             setLoginSuccessMsg(null);
           }}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
             activeTab === 'register'
               ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           Create Account
@@ -267,25 +267,25 @@ export default function LoginPage() {
       {activeTab === 'login' && (
         <div className="space-y-4">
           {loginSuccessMsg && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl text-xs text-emerald-400 flex items-start gap-2 font-semibold">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2 font-semibold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <span>{loginSuccessMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleLoginSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
+          <form onSubmit={handleLoginSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm">
             {loginError && (
-              <div className="bg-red-500/10 border border-red-500/30 p-3.5 rounded-xl text-xs text-red-400 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <div className="bg-red-500/10 border border-red-500/30 p-3.5 rounded-xl text-xs text-red-700 dark:text-red-400 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                 <span>{loginError}</span>
               </div>
             )}
 
             {/* Email Field */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Email Address *</label>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email Address *</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
                 <input
                   type="email"
                   value={loginEmail}
@@ -295,7 +295,7 @@ export default function LoginPage() {
                   }}
                   placeholder="demo@legallens.ai"
                   disabled={isLockedOut}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -303,17 +303,17 @@ export default function LoginPage() {
             {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-300">Password *</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Password *</label>
                 <button
                   type="button"
                   onClick={() => setShowForgotPasswordModal(true)}
-                  className="text-[11px] text-indigo-400 hover:underline"
+                  className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                 >
                   Forgot password?
                 </button>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
                 <input
                   type={showLoginPassword ? 'text' : 'password'}
                   value={loginPassword}
@@ -323,12 +323,12 @@ export default function LoginPage() {
                   }}
                   placeholder="••••••••"
                   disabled={isLockedOut}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 disabled:opacity-50"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -337,12 +337,12 @@ export default function LoginPage() {
 
             {/* Remember Me */}
             <div className="flex items-center justify-between">
-              <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+              <label className="flex items-center space-x-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500"
+                  className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-indigo-600 focus:ring-indigo-500"
                 />
                 <span>Remember me for 30 days</span>
               </label>
@@ -353,7 +353,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading || isLockedOut}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:opacity-75 text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:opacity-75 text-white font-bold py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isLoading ? (
                   <>
@@ -369,12 +369,12 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <div className="pt-3 border-t border-slate-800 text-center text-xs text-slate-400">
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-600 dark:text-slate-400">
               Don't have an account?{' '}
               <button
                 type="button"
                 onClick={() => setActiveTab('register')}
-                className="text-indigo-400 font-bold hover:underline ml-1"
+                className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline ml-1 cursor-pointer"
               >
                 Create Account
               </button>
@@ -385,51 +385,51 @@ export default function LoginPage() {
 
       {/* TAB 2: REGISTRATION FORM */}
       {activeTab === 'register' && (
-        <form onSubmit={handleRegistrationSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
+        <form onSubmit={handleRegistrationSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
           {/* Full Name Field */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Full Name / Username *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Full Name / Username *</label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <User className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
               <input
                 type="text"
                 maxLength={50}
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
                 placeholder="Jane Doe"
-                className={`w-full bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 ${
-                  regErrors.name ? 'border-red-500/50' : 'border-slate-800'
+                className={`w-full bg-slate-50 dark:bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 ${
+                  regErrors.name ? 'border-red-500/50' : 'border-slate-200 dark:border-slate-800'
                 }`}
               />
             </div>
-            {regErrors.name && <p className="text-[11px] text-red-400">{regErrors.name}</p>}
+            {regErrors.name && <p className="text-[11px] text-red-600 dark:text-red-400">{regErrors.name}</p>}
           </div>
 
           {/* Email Field */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Email Address *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email Address *</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
               <input
                 type="email"
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
                 placeholder="jane@example.com"
-                className={`w-full bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 ${
-                  regErrors.email ? 'border-red-500/50' : 'border-slate-800'
+                className={`w-full bg-slate-50 dark:bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 ${
+                  regErrors.email ? 'border-red-500/50' : 'border-slate-200 dark:border-slate-800'
                 }`}
               />
             </div>
-            {regErrors.email && <p className="text-[11px] text-red-400">{regErrors.email}</p>}
+            {regErrors.email && <p className="text-[11px] text-red-600 dark:text-red-400">{regErrors.email}</p>}
           </div>
 
           {/* Role Perspective Context */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Personal Perspective Role (`context_role`) *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Personal Perspective Role (`context_role`) *</label>
             <select
               value={regRole}
               onChange={(e) => setRegRole(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="Employee">Employee / Job Applicant</option>
               <option value="Tenant">Tenant / Resident</option>
@@ -441,36 +441,36 @@ export default function LoginPage() {
 
           {/* Password Field */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Password *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Password *</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
               <input
                 type={showRegPassword ? 'text' : 'password'}
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full bg-slate-950 border rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 ${
-                  regErrors.password ? 'border-red-500/50' : 'border-slate-800'
+                className={`w-full bg-slate-50 dark:bg-slate-950 border rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 ${
+                  regErrors.password ? 'border-red-500/50' : 'border-slate-200 dark:border-slate-800'
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setShowRegPassword(!showRegPassword)}
-                className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
+                className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {regErrors.password && <p className="text-[11px] text-red-400">{regErrors.password}</p>}
+            {regErrors.password && <p className="text-[11px] text-red-600 dark:text-red-400">{regErrors.password}</p>}
 
             {/* Password Strength Indicator */}
             {regPassword && (
               <div className="pt-1 space-y-1">
-                <div className="flex justify-between items-center text-[10px] text-slate-400">
+                <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400">
                   <span>Password Strength:</span>
-                  <span className="font-bold text-slate-200">{passwordStrength.label}</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-200">{passwordStrength.label}</span>
                 </div>
-                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800">
+                <div className="w-full bg-slate-100 dark:bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800">
                   <div
                     className={`h-full transition-all duration-300 ${passwordStrength.color}`}
                     style={{ width: `${passwordStrength.percent}%` }}
@@ -482,27 +482,27 @@ export default function LoginPage() {
 
           {/* Confirm Password Field */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Confirm Password *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Confirm Password *</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3" />
               <input
                 type={showRegPassword ? 'text' : 'password'}
                 value={regConfirmPassword}
                 onChange={(e) => setRegConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-600 ${
-                  regErrors.confirmPassword ? 'border-red-500/50' : 'border-slate-800'
+                className={`w-full bg-slate-50 dark:bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600 ${
+                  regErrors.confirmPassword ? 'border-red-500/50' : 'border-slate-200 dark:border-slate-800'
                 }`}
               />
             </div>
-            {regErrors.confirmPassword && <p className="text-[11px] text-red-400">{regErrors.confirmPassword}</p>}
+            {regErrors.confirmPassword && <p className="text-[11px] text-red-600 dark:text-red-400">{regErrors.confirmPassword}</p>}
           </div>
 
           {/* Action Buttons: Register & Reset */}
           <div className="pt-2 space-y-2">
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm cursor-pointer"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm cursor-pointer"
             >
               Create Account
             </button>
@@ -510,19 +510,19 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleResetRegistration}
-              className="w-full bg-slate-950 hover:bg-slate-800 text-slate-400 font-semibold py-2 rounded-xl text-xs border border-slate-800 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 font-semibold py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Reset Form
             </button>
           </div>
 
-          <div className="pt-3 border-t border-slate-800 text-center text-xs text-slate-400">
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-600 dark:text-slate-400">
             Already have an account?{' '}
             <button
               type="button"
               onClick={() => setActiveTab('login')}
-              className="text-indigo-400 font-bold hover:underline ml-1"
+              className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline ml-1 cursor-pointer"
             >
               Sign In
             </button>
@@ -532,60 +532,60 @@ export default function LoginPage() {
 
       {/* FORGOT PASSWORD MODAL */}
       {showForgotPasswordModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative">
             <button
               onClick={() => {
                 setShowForgotPasswordModal(false);
                 setForgotPasswordSubmitted(false);
               }}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-200"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               Reset Password
             </h3>
 
             {forgotPasswordSubmitted ? (
               <div className="space-y-3 text-center">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Password reset link sent to <strong className="text-indigo-300">{forgotPasswordEmail}</strong>. Check your inbox for instructions.
+                <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  Password reset link sent to <strong className="text-indigo-600 dark:text-indigo-300">{forgotPasswordEmail}</strong>. Check your inbox for instructions.
                 </p>
                 <button
                   onClick={() => {
                     setShowForgotPasswordModal(false);
                     setForgotPasswordSubmitted(false);
                   }}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-xl text-xs transition-colors"
+                  className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-2 rounded-xl text-xs transition-colors cursor-pointer"
                 >
                   Close
                 </button>
               </div>
             ) : (
               <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Enter your account email address to receive a secure password reset link.
                 </p>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Email Address</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
                   <input
                     type="email"
                     required
                     value={forgotPasswordEmail}
                     onChange={(e) => setForgotPasswordEmail(e.target.value)}
                     placeholder="user@example.com"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
                 >
                   Send Reset Link
                 </button>

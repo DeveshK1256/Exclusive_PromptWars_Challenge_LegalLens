@@ -21,46 +21,65 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
+// In-memory vector embedding cache for high-efficiency retrieval
+const embeddingCache = new Map<string, number[]>();
+const MAX_CACHE_SIZE = 500;
+
 /**
  * Generates vector embedding array for text using Gemini text-embedding model
  * Consumes AI_CONFIG.embeddingModel and enforces AI_CONFIG.embeddingDimensions (768)
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
+  const cacheKey = (text || '').trim();
+  if (embeddingCache.has(cacheKey)) {
+    return embeddingCache.get(cacheKey)!;
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   const isVitest = process.env.VITEST === 'true';
   const isLiveTestMode = process.env.RUN_LIVE_GEMINI_TESTS === 'true';
   const shouldCallGemini = Boolean(apiKey && apiKey !== 'dummy_gemini_key' && (!isVitest || isLiveTestMode));
 
+  let vectorResult: number[];
+
   if (!shouldCallGemini) {
-    return generateHeuristicVector(text, AI_CONFIG.embeddingDimensions);
+    vectorResult = generateHeuristicVector(text, AI_CONFIG.embeddingDimensions);
+  } else {
+    try {
+      const ai = getGeminiClient();
+      const response = await ai.models.embedContent({
+        model: AI_CONFIG.embeddingModel,
+        contents: text,
+      });
+
+      const resObj = response as unknown as {
+        embedding?: { values: number[] };
+        embeddings?: Array<{ values: number[] }>;
+      };
+
+      if (resObj.embedding?.values) {
+        vectorResult = resObj.embedding.values.slice(0, AI_CONFIG.embeddingDimensions);
+      } else if (resObj.embeddings?.[0]?.values) {
+        vectorResult = resObj.embeddings[0].values.slice(0, AI_CONFIG.embeddingDimensions);
+      } else {
+        vectorResult = generateHeuristicVector(text, AI_CONFIG.embeddingDimensions);
+      }
+    } catch (err) {
+      if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
+        throw err;
+      }
+      vectorResult = generateHeuristicVector(text, AI_CONFIG.embeddingDimensions);
+    }
   }
 
-  try {
-    const ai = getGeminiClient();
-    const response = await ai.models.embedContent({
-      model: AI_CONFIG.embeddingModel,
-      contents: text,
-    });
-
-    const resObj = response as unknown as {
-      embedding?: { values: number[] };
-      embeddings?: Array<{ values: number[] }>;
-    };
-
-    if (resObj.embedding?.values) {
-      return resObj.embedding.values.slice(0, AI_CONFIG.embeddingDimensions);
-    }
-    if (resObj.embeddings?.[0]?.values) {
-      return resObj.embeddings[0].values.slice(0, AI_CONFIG.embeddingDimensions);
-    }
-  } catch (err) {
-    // In live mode with real API key, throw error if model or request fails
-    if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') {
-      throw err;
-    }
+  // Cache result for O(1) retrieval
+  if (embeddingCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = embeddingCache.keys().next().value;
+    if (oldestKey) embeddingCache.delete(oldestKey);
   }
+  embeddingCache.set(cacheKey, vectorResult);
 
-  return generateHeuristicVector(text, AI_CONFIG.embeddingDimensions);
+  return vectorResult;
 }
 
 function generateHeuristicVector(text: string = '', dimensions = 768): number[] {

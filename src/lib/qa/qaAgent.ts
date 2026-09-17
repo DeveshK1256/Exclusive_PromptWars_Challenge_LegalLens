@@ -51,20 +51,21 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
 
   // 3. Evidence Relevance Validation & Unsupported-Answer Fallback (Zero-Hallucination Gate)
   if (allRetrieved.length === 0 || topRelevanceScore < DOCUMENT_CONFIG.qaRelevanceThreshold) {
-    const topic = extractTopicFromQuestion(request.question);
+    const suggestedFollowUps = [
+      'What are the main termination clauses in this document?',
+      'What obligations or payment terms are specified?',
+      'What dispute or governing law procedures apply?',
+    ];
     return {
       questionId,
       answerId,
       question: request.question,
-      answerText: `This document does not contain information about ${topic}.`,
+      answerText: generateWellFormedFallbackText(suggestedFollowUps),
       confidence: 0.0,
       safetyStatus: 'passed',
       isUnsupportedAnswer: true,
       citations: [],
-      suggestedFollowUpQuestions: [
-        'What are the main termination clauses in this document?',
-        'What obligations or payment terms are specified?',
-      ],
+      suggestedFollowUpQuestions: suggestedFollowUps,
     };
   }
 
@@ -141,23 +142,21 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
 
   // Check if generated answer explicitly states content is absent from document (only when answer is entirely statement of absence)
   const isAbsentResponse =
-    /^this document does not (?:contain|mention|specify|provide|state|include)/i.test(answerText) ||
+    /^this document (?:does not|doesn't) (?:appear to )?(?:contain|mention|specify|provide|state|include)/i.test(answerText) ||
     /^no (?:information|mention|reference|details) (?:is|are|was|were) (?:found|provided|contained|available)/i.test(answerText);
 
   if (isAbsentResponse) {
+    const suggestedFollowUps = generateSuggestedFollowUps(request.question, retrievalResults);
     return {
       questionId,
       answerId,
       question: request.question,
-      answerText: `This document does not contain information about ${extractTopicFromQuestion(request.question)}.`,
+      answerText: generateWellFormedFallbackText(suggestedFollowUps),
       confidence: 0.0,
       safetyStatus: 'passed',
       isUnsupportedAnswer: true,
       citations: [],
-      suggestedFollowUpQuestions: [
-        'What are the main termination clauses in this document?',
-        'What obligations or payment terms are specified?',
-      ],
+      suggestedFollowUpQuestions: suggestedFollowUps,
     };
   }
 
@@ -185,29 +184,19 @@ function checkPromptInjection(text: string): boolean {
   return injectionPatterns.some((pattern) => pattern.test(text));
 }
 
-function extractTopicFromQuestion(question: string): string {
-  const cleaned = question
-    .replace(/^(what|who|where|when|why|how|is|are|does|can|tell\s+me|explain)\s+/i, '')
-    .replace(/[?.!]/g, '')
-    .trim();
-  return cleaned || 'this topic';
+function generateWellFormedFallbackText(suggestedFollowUps?: string[]): string {
+  let text = "This document doesn't appear to contain information that directly answers your question.";
+  if (suggestedFollowUps && suggestedFollowUps.length > 0) {
+    const topicsList = suggestedFollowUps.slice(0, 3).map((q) => `• ${q}`).join('\n');
+    text += `\n\nYou could try asking about:\n${topicsList}`;
+  }
+  return text;
 }
 
 function generateDeterministicGroundedAnswer(question: string, retrievalResults: any[]): string {
   const topChunk = retrievalResults[0]?.chunk;
-  if (!topChunk) return 'Based on the document text provided, no relevant details were found.';
-
-  const STOP_WORDS = new Set(['what', 'where', 'when', 'which', 'that', 'this', 'from', 'have', 'with', 'will', 'would', 'should', 'could', 'about', 'does', 'your', 'their', 'them', 'is', 'are', 'the']);
-  const queryWords = question
-    .toLowerCase()
-    .split(/\W+/)
-    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
-
-  const chunkTextLower = retrievalResults.map((r) => r.chunk.content.toLowerCase()).join(' ');
-  const hasKeywordMatch = queryWords.some((qw) => chunkTextLower.includes(qw.length > 4 ? qw.substring(0, 4) : qw));
-
-  if (!hasKeywordMatch && queryWords.length > 0) {
-    return `This document does not contain information about ${extractTopicFromQuestion(question)}.`;
+  if (!topChunk) {
+    return generateWellFormedFallbackText();
   }
 
   return `Based on the document text (Ref: Page ${topChunk.page_start || 1}): ${topChunk.content.substring(0, 220)}...`;

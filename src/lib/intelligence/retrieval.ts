@@ -20,7 +20,10 @@ export async function retrieveRelevantChunks(
     return [];
   }
 
-  const STOP_WORDS = new Set(['what', 'where', 'when', 'which', 'that', 'this', 'from', 'have', 'with', 'will', 'would', 'should', 'could', 'about', 'does', 'your', 'their', 'them']);
+  const STOP_WORDS = new Set([
+    'what', 'where', 'when', 'which', 'that', 'this', 'from', 'have', 'with', 'will', 'would', 'should', 'could', 'about', 'does', 'your', 'their', 'them',
+    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'to', 'for', 'at', 'by', 'it', 'its', 'as', 'be'
+  ]);
 
   // Generate vector embedding for user query
   const queryVector = await generateEmbedding(query);
@@ -37,19 +40,28 @@ export async function retrieveRelevantChunks(
       const chunkVector = await generateEmbedding(chunk.content);
       const similarity = cosineSimilarity(queryVector, chunkVector);
 
-      // Compute keyword overlap boost with word stem matching (e.g., terminate/termination)
+      // Compute keyword overlap ratio with word stem matching (e.g., terminate/termination)
       const chunkTextLower = chunk.content.toLowerCase();
       let matchCount = 0;
       queryWords.forEach((qw) => {
-        const stem = qw.length > 5 ? qw.substring(0, 5) : qw;
+        const stem = qw.length > 4 ? qw.substring(0, 4) : qw;
         if (chunkTextLower.includes(stem)) matchCount++;
       });
 
-      const keywordBoost = queryWords.size > 0 ? (matchCount / queryWords.size) * 0.7 : 0;
-      const combinedScore = Math.max(similarity, keywordBoost > 0 ? similarity + keywordBoost : similarity);
+      const keywordRatio = queryWords.size > 0 ? matchCount / queryWords.size : 0;
+
+      // If query has non-stop words but ZERO match in chunk, penalize score to prevent false 50%+ similarity on completely unrelated topics
+      let combinedScore = similarity;
+      if (queryWords.size > 0) {
+        if (matchCount === 0) {
+          combinedScore = similarity * 0.2; // Penalize unrelated topics below 0.50 threshold
+        } else {
+          combinedScore = Math.max(similarity, similarity + keywordRatio * 0.5);
+        }
+      }
 
       // Relevance score float 0.0 - 1.0
-      const score = Number(Math.max(0.1, Math.min(1.0, combinedScore)).toFixed(2));
+      const score = Number(Math.max(0.0, Math.min(1.0, combinedScore)).toFixed(2));
 
       return {
         chunk,

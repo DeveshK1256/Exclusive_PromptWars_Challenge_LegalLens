@@ -57,9 +57,64 @@ describe('Sprint 6 — Grounded Document Q&A & Zero-Hallucination Gate Test Suit
     });
 
     expect(response.isUnsupportedAnswer).toBe(true);
-    expect(response.answerText).toContain('This document does not contain information about');
+    expect(response.answerText).toContain("This document doesn't appear to contain information that directly answers your question");
+    expect(response.answerText).not.toMatch(/about\s+(are|is|what|how)\b/i);
     expect(response.confidence).toBe(0.0);
     expect(response.citations.length).toBe(0);
+  });
+
+  it('Bug 1 & 2 Fix: question about obligations or penalties against ToS document returns grounded answer with non-zero confidence and clean citations', async () => {
+    const tosChunks: ChunkItem[] = [
+      {
+        id: 'tos_1',
+        document_id: 'doc_tos_test',
+        document_version_id: 'v1',
+        section_id: 'Section 1: Data Collection & Permissions',
+        content: 'We collect device model, crash logs, IP address, browsing activity, and precise GPS location data to personalize services.',
+        chunk_index: 0,
+        page_start: 1,
+        page_end: 1,
+        token_count: 30,
+      },
+      {
+        id: 'tos_2',
+        document_id: 'doc_tos_test',
+        document_version_id: 'v1',
+        section_id: 'Section 2: Mandatory Arbitration & Jury Waiver',
+        content: 'All legal disputes must be resolved through binding individual arbitration. You waive any right to jury trial.',
+        chunk_index: 1,
+        page_start: 1,
+        page_end: 1,
+        token_count: 25,
+      },
+      {
+        id: 'tos_3',
+        document_id: 'doc_tos_test',
+        document_version_id: 'v1',
+        section_id: 'Section 3: User Obligations & Default Penalties',
+        content: 'User obligations include maintaining confidentiality and prompt payment. Failure to adhere triggers immediate suspension penalties and account termination.',
+        chunk_index: 2,
+        page_start: 1,
+        page_end: 1,
+        token_count: 28,
+      },
+    ];
+
+    const response = await runGroundedQAAgent({
+      documentId: 'doc_tos_test',
+      documentVersionId: 'v1',
+      question: 'What are the key obligations or penalties associated with this?',
+      chunks: tosChunks,
+    });
+
+    // 1. Assert response is grounded (NOT falsely marked unsupported/0% confidence)
+    expect(response.isUnsupportedAnswer).toBe(false);
+    expect(response.confidence).toBeGreaterThan(0.0);
+    expect(response.citations.length).toBeGreaterThan(0);
+    expect(response.answerText).not.toContain("about are the key obligations");
+
+    // 2. Assert citations match top retrieved chunks
+    expect(response.citations[0].quotedTextSnippet).toBeDefined();
   });
 
   it('enforces Prompt-Injection Security Scan on malicious directive inputs', async () => {

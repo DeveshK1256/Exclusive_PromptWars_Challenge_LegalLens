@@ -24,6 +24,22 @@
 
 ---
 
+## 🎯 Alignment with Problem Statement: AI for Legal Assistance & Access
+
+LegalLens AI maps 1-to-1 against all 7 potential use cases specified in the challenge theme:
+
+| Challenge Potential Use Case | LegalLens AI Built Solution | Key Feature Implementation |
+| :--- | :--- | :--- |
+| **1. Simplifying complex legal documents** | Multi-Level Simplification & Glossaries | 4 complexity levels (*Very Simple* 5th-grade to *Legal Terminology*), Key Terms Glossary, and factual fidelity auditing pass. |
+| **2. Comparing contracts, agreements, or policies** | Contract Comparison & Redline Diffing | Dual-document clause matching, missing clause detection, and line-by-line redline revision diffing with AI change summaries. |
+| **3. Highlighting important clauses, obligations, risks** | Legal X-Ray & 3D Spatial Layer Map | Dual classification by `severity_level` (*green/yellow/orange/red*) AND `finding_kind` (*informational/action_required/deadline*) + 3D layer map. |
+| **4. Answering questions based on legal documents** | Grounded Document Q&A & Inline Q&A | Vector retrieval engine (`gemini-embedding-001`) with Zero-Hallucination Gate requiring traceable `source_reference` citations. |
+| **5. Helping users understand options & next steps** | Perspective-Aware Impact & Action Plans | Role-based reframing (`context_role`: Employee, Tenant, Freelancer, Consumer, Small Business) + 4-step user journey navigator. |
+| **6. Generating summaries, checklists, actionable outputs** | "Before You Sign" Checklist & Calendar Export | Pre-signature checklists, 1-click `.ics` calendar deadline export, and deterministic Portfolio Risk Grades (`A+` to `F`). |
+| **7. Preparing questions for a legal professional** | Lawyer Consultation Question Generator | Synthesizes targeted, clause-traceable questions for users to take into professional legal consultations. |
+
+---
+
 ## 🛡️ Product Guardrails & Absolute Safety Rules
 
 1. **Information, Not Legal Advice:** LegalLens AI provides legal information and navigation assistance, not professional legal advice.

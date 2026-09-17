@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Shield, Eye, Compass, HelpCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Eye, Compass, HelpCircle, ArrowRight, CheckCircle2, GitCompare, BookOpen, Calendar, ListChecks } from 'lucide-react';
 import { Card3DPerspective } from '@/components/ui/Card3DPerspective';
 
 export default function HomePage() {
@@ -67,59 +67,126 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Legal X-Ray & Core Features */}
+      {/* All 7 Use Cases — aligned with "AI for Legal Assistance & Access" challenge */}
       <section id="how-it-works" className="space-y-8">
         <div className="text-center space-y-2">
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
-            How LegalLens AI Navigates Documents
+            7 Ways LegalLens AI Helps You
           </h2>
           <p className="text-slate-700 dark:text-slate-300 text-sm sm:text-base">
-            Every AI finding is grounded directly in document source text with verifiable evidence.
+            Covering every use case in the AI for Legal Assistance &amp; Access challenge — all findings grounded in document source text.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Legal X-Ray */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Use Case 1: Simplification */}
           <Card3DPerspective>
             <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
-              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-                <Eye className="w-5 h-5" />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <BookOpen className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Use Case 1</span>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Legal X-Ray</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Simplify Legal Documents</h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Classifies key findings by severity (green, yellow, orange, red) and finding kind (informational, action required, deadline).
-              </p>
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                <span className="text-emerald-500">🟢 Standard</span>
-                <span className="text-yellow-500">🟡 Important</span>
-                <span className="text-orange-500">🟠 Attention</span>
-                <span className="text-red-500">🔴 High-Impact</span>
-              </div>
-            </div>
-          </Card3DPerspective>
-
-          {/* Card 2: Personal Impact */}
-          <Card3DPerspective>
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <Compass className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Personal Impact</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Select your role (Employee, Tenant, Freelancer, Business owner) to understand how specific obligations and clauses affect your position.
+                4 reading-level summaries from 5th-grade plain English to Legal Terminology. Plus Key Terms Glossary and Obligations Summary.
               </p>
             </div>
           </Card3DPerspective>
 
-          {/* Card 3: Grounded Q&A */}
+          {/* Use Case 2: Compare */}
           <Card3DPerspective>
             <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                <HelpCircle className="w-5 h-5" />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <GitCompare className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Use Case 2</span>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Grounded Q&amp;A</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Compare Contracts</h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Ask questions directly against uploaded documents with traceable chunk citations, verified accuracy, and safety checks.
+                Semantic clause-by-clause comparison between two documents. Detects modified clauses, risk changes, and missing provisions.
+              </p>
+            </div>
+          </Card3DPerspective>
+
+          {/* Use Case 3: Legal X-Ray */}
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
+                  <Eye className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Use Case 3</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Highlight Clauses &amp; Risks</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Legal X-Ray classifies findings by severity (🟢🟡🟠🔴) and kind (informational / action required / deadline) with verbatim source citations.
+              </p>
+            </div>
+          </Card3DPerspective>
+
+          {/* Use Case 4: Grounded Q&A */}
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                  <HelpCircle className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Use Case 4</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Answer Questions from Documents</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Grounded Q&amp;A with vector retrieval. Every answer cites exact source paragraphs. Zero-hallucination gate prevents fabricated answers.
+              </p>
+            </div>
+          </Card3DPerspective>
+
+          {/* Use Case 5: Personal Impact */}
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Compass className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Use Case 5</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Understand Your Options</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Personal Impact reframes every finding for your role (Employee, Tenant, Freelancer, Consumer). Action Plan guides your next steps.
+              </p>
+            </div>
+          </Card3DPerspective>
+
+          {/* Use Case 6: Checklists */}
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <ListChecks className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Use Case 6</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Generate Checklists &amp; Outputs</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                "Before You Sign" checklist, 1-click .ics calendar deadline export, and Portfolio Risk Grade (A+ to F) across all your documents.
+              </p>
+            </div>
+          </Card3DPerspective>
+
+          {/* Use Case 7: Lawyer Questions */}
+          <Card3DPerspective>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 h-full">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                  <Calendar className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Use Case 7</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Prepare for a Legal Professional</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Generates targeted, clause-traceable questions for your attorney consultation — bridging AI assistance with professional legal advice.
               </p>
             </div>
           </Card3DPerspective>

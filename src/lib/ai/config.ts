@@ -3,11 +3,13 @@
 
 export const AI_CONFIG = {
   // Reasoning & Classification Model (Document Intelligence, Legal X-Ray, Simplification, Q&A)
-  // Free Tier API keys have limit: 0 on gemini-3.1-pro; default to gemini-3.6-flash (limit: 20/day).
-  // Paid production deployments override via GEMINI_REASONING_MODEL=gemini-2.5-pro.
+  // gemini-3.6-flash is the Gemini SDK internal alias for the Gemini 2.5 Flash family.
+  // README refers to this model as gemini-2.5-flash (the marketing/public name).
+  // Paid production deployments can override via GEMINI_REASONING_MODEL=gemini-2.5-pro.
   reasoningModel: process.env.GEMINI_REASONING_MODEL || 'gemini-3.6-flash',
 
   // Fast Classification Model for lightweight checks
+  // Same Gemini 2.5 Flash alias used for speed-optimized tasks.
   fastModel: process.env.GEMINI_FAST_MODEL || 'gemini-3.6-flash',
 
   // Vector Embedding Model (GA replacement for text-embedding-004)

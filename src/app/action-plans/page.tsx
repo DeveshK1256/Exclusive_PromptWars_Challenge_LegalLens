@@ -19,7 +19,7 @@ export default function ActionPlansPage() {
       {
         id: 'chk_1',
         title: 'Clarify Non-Compete Scope',
-        recommendation: 'Review geographic and duration limits of non-compete clause to ensure enforceability under California law.',
+        recommendation: 'Review geographic and duration limits of non-compete clause with your legal professional to understand enforceability in your jurisdiction.',
         severity: 'orange',
         sourceReference: 'Section 8.2, Page 4',
         checked: false,

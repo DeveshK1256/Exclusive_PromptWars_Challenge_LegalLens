@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { Document, Finding } from '@/types/database';
 import { getStoredDocuments, DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
 import { generateRealXRayOverview } from '@/lib/documentAnalysis';
@@ -90,10 +88,7 @@ export default function PortfolioPage() {
   const gradeStyle = report ? GRADE_COLORS[report.portfolioGrade] : GRADE_COLORS['A'];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
         {/* Page Title - ALWAYS rendered */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
@@ -286,9 +281,6 @@ export default function PortfolioPage() {
             </div>
           </>
         )}
-      </main>
-
-      <Footer />
     </div>
   );
 }

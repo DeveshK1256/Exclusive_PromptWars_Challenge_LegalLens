@@ -8,6 +8,7 @@ interface DocumentQAChatProps {
   documentId: string;
   documentTitle?: string;
   rawText?: string;
+  preseededClause?: { title: string; source_reference: string; description?: string } | null;
   onAskQuestion?: (question: string) => Promise<QAResponse>;
 }
 
@@ -15,11 +16,18 @@ export const DocumentQAChat: React.FC<DocumentQAChatProps> = ({
   documentId,
   documentTitle = 'Document',
   rawText,
+  preseededClause,
   onAskQuestion,
 }) => {
   const [questionInput, setQuestionInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<QAResponse[]>([]);
+
+  React.useEffect(() => {
+    if (preseededClause) {
+      setQuestionInput(`Explain the terms and implications of ${preseededClause.title} (${preseededClause.source_reference})`);
+    }
+  }, [preseededClause]);
 
   const sampleQuestions = [
     'What are the termination notice requirements?',

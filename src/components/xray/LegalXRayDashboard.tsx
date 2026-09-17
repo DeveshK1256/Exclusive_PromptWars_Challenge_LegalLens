@@ -10,6 +10,7 @@ import { EmploymentHeatmap } from '@/components/xray/EmploymentHeatmap';
 import { EmailCounterOfferModal } from '@/components/action/EmailCounterOfferModal';
 import { AttorneyPrepSheet } from '@/components/action/AttorneyPrepSheet';
 import { DocumentSpatial3DMap } from '@/components/3d/DocumentSpatial3DMap';
+import { NegotiationStatusBadge } from '@/components/xray/NegotiationStatusBadge';
 
 interface LegalXRayDashboardProps {
   overview: LegalXRayOverview;
@@ -222,30 +223,44 @@ const FindingCardItem: React.FC<{
   return (
     <div className={`bg-white dark:bg-slate-900 rounded-2xl border ${severityStyles.border} shadow-sm overflow-hidden transition-all`}>
       <div className="p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={isExpanded}
-          aria-controls={`finding-evidence-${finding.id}`}
-          aria-label={`${finding.title} - Severity: ${severityStyles.label}. Click to ${isExpanded ? 'collapse' : 'expand'} verbatim source citation.`}
-          className="flex-1 text-left focus:outline-none flex items-start space-x-3 group"
-        >
-          <div className={`p-2.5 rounded-xl border ${severityStyles.badge} shrink-0 mt-0.5`}>
+        <div className="flex-1 text-left flex items-start space-x-3 group">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={isExpanded}
+            aria-controls={`finding-evidence-${finding.id}`}
+            aria-label={`${finding.title} - Severity: ${severityStyles.label}. Click to ${isExpanded ? 'collapse' : 'expand'} verbatim source citation.`}
+            className="p-2.5 rounded-xl border ${severityStyles.badge} shrink-0 mt-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+          >
             <IconComp className="w-5 h-5" aria-hidden="true" />
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <h4 className="font-bold text-slate-900 dark:text-slate-100 text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">{finding.title}</h4>
-              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${severityStyles.badge}`}>
-                [{severityStyles.label}]
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize border border-slate-200 dark:border-slate-700">
-                Kind: {finding.finding_kind.replace('_', ' ')}
-              </span>
+          </button>
+
+          <div className="space-y-1.5 flex-1">
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-expanded={isExpanded}
+              aria-controls={`finding-evidence-${finding.id}`}
+              aria-label={`${finding.title} - Severity: ${severityStyles.label}. Click to ${isExpanded ? 'collapse' : 'expand'} verbatim source citation.`}
+              className="text-left focus:outline-none w-full cursor-pointer"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">{finding.title}</h4>
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${severityStyles.badge}`}>
+                  [{severityStyles.label}]
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize border border-slate-200 dark:border-slate-700">
+                  Kind: {finding.finding_kind.replace('_', ' ')}
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed mt-1">{finding.description}</p>
+            </button>
+
+            <div className="pt-1">
+              <NegotiationStatusBadge finding={finding} />
             </div>
-            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{finding.description}</p>
           </div>
-        </button>
+        </div>
 
         <div className="flex items-center gap-2 shrink-0 sm:pt-1">
           {finding.severity === 'red' && (

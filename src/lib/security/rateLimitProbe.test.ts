@@ -50,4 +50,45 @@ describe('Manual Rate Limit Probe — Upload Route 11th Request Verification', (
     expect(eleventhRes.retryAfter).toBeDefined();
     expect(Number(eleventhRes.retryAfter)).toBeGreaterThan(0);
   });
+
+  it('executes 21 sequential GET requests to /api/shared/[token] and verifies 21st request returns HTTP 429 rate-limit error', async () => {
+    const { GET } = await import('../../app/api/shared/[token]/route');
+    const { createSharedLink } = await import('../sharing/shareStorage');
+    
+    // Create valid token for testing
+    const { rawToken } = createSharedLink('user_rl_probe', 'doc_1', 'v1');
+    resetRateLimitsForTesting();
+
+    const responses = [];
+    const clientIp = '198.51.100.42';
+
+    for (let i = 1; i <= 21; i++) {
+      const req = new NextRequest(`http://localhost:3000/api/shared/${rawToken}`, {
+        method: 'GET',
+        headers: {
+          'x-forwarded-for': clientIp,
+        },
+      });
+
+      const res = await GET(req, { params: { token: rawToken } });
+      responses.push({
+        requestNumber: i,
+        status: res.status,
+      });
+    }
+
+    const firstRes = responses[0];
+    const twentiethRes = responses[19];
+    const twentyFirstRes = responses[20];
+
+    console.log('\n--- SHARED LINK API RATE LIMIT PROBE RESULTS ---');
+    console.log(`Request #1 Status: ${firstRes.status} (OK/Valid)`);
+    console.log(`Request #20 Status: ${twentiethRes.status} (Allowed)`);
+    console.log(`Request #21 Status: ${twentyFirstRes.status} (Blocked HTTP 429)`);
+
+    expect(firstRes.status).toBe(200);
+    expect(twentiethRes.status).toBe(200);
+    expect(twentyFirstRes.status).toBe(429);
+  });
 });
+

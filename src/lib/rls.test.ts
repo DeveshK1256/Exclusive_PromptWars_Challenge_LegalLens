@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { recordSecurityAuditLog, readAuditLogsFromDatabase, clearAuditLogsForTesting } from './security/auditLog';
+import { generatePortfolioReport } from './portfolio/portfolioAggregator';
+import { createSharedLink, validateAndAccessSharedLink, revokeSharedLink } from './sharing/shareStorage';
+import { saveFindingAnnotation, getStoredAnnotations } from './annotations/annotationStorage';
+import { Document, Finding } from '@/types/database';
 
 /**
  * Simulated RLS Policy Engine matching Postgres SQL Policies in supabase/schema.sql
- * Evaluates row-level security policies across ALL 10 user-owned database entities:
+ * Evaluates row-level security policies across ALL user-owned database entities:
  * 1. documents
  * 2. comparisons
  * 3. clauses
@@ -14,6 +18,9 @@ import { recordSecurityAuditLog, readAuditLogsFromDatabase, clearAuditLogsForTes
  * 8. questions
  * 9. answers
  * 10. action_items
+ * 11. finding_annotations (negotiation status)
+ * 12. shared_links
+ * 13. portfolio risk aggregation
  */
 class FullRLSSimulatedDatabase {
   private documents = [
@@ -256,5 +263,102 @@ describe('Sprint 10 — Comprehensive Row-Level Security (RLS) & Audit Logging T
     const log = auditLogs.find((l) => l.action === 'cross_user_access_denied' && l.resource_type === 'action_items');
     expect(log).toBeDefined();
     expect(log?.resource_id).toBe('act_a1');
+  });
+
+  it('enforces RLS entity 11: finding_annotations — User B cannot read or modify User A finding annotations', () => {
+    saveFindingAnnotation('user_a', 'fnd_a1', 'resolved', 'Resolved by User A');
+
+    const bobAnnotations = getStoredAnnotations('user_b');
+    const leak = bobAnnotations.some((a) => a.finding_id === 'fnd_a1');
+    expect(leak).toBe(false);
+  });
+
+  it('enforces RLS entity 12: shared_links — revoked/expired tokens return null; User B cannot revoke User A link', () => {
+    const { rawToken, link } = createSharedLink('user_a', 'doc_a1', 'v1', 7);
+
+    // User B revokes User A link -> DENIED
+    const bobRevokeAttempt = revokeSharedLink('user_b', link.id);
+    expect(bobRevokeAttempt).toBe(false);
+
+    // User A revokes User A link -> OK
+    const aliceRevokeSuccess = revokeSharedLink('user_a', link.id);
+    expect(aliceRevokeSuccess).toBe(true);
+
+    // Post-revocation access attempt -> null
+    const accessAttempt = validateAndAccessSharedLink(rawToken);
+    expect(accessAttempt).toBeNull();
+  });
+
+  it('enforces RLS entity 13: portfolio aggregation — strictly filters and aggregates user-owned documents only', () => {
+    const docA: Document = {
+      id: 'doc_a1',
+      user_id: 'user_a',
+      title: 'User A Contract',
+      original_filename: 'a.pdf',
+      mime_type: 'application/pdf',
+      file_size: 1000,
+      file_hash: 'ha',
+      storage_path: '/p/a',
+      document_type: 'employment_contract',
+      jurisdiction: null,
+      status: 'completed',
+      deleted_at: null,
+      retention_expires_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const docB: Document = {
+      id: 'doc_b1',
+      user_id: 'user_b',
+      title: 'User B Contract',
+      original_filename: 'b.pdf',
+      mime_type: 'application/pdf',
+      file_size: 1000,
+      file_hash: 'hb',
+      storage_path: '/p/b',
+      document_type: 'rental_agreement',
+      jurisdiction: null,
+      status: 'completed',
+      deleted_at: null,
+      retention_expires_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const findingA: Finding = {
+      id: 'f_a',
+      document_id: 'doc_a1',
+      document_version_id: 'v1',
+      clause_id: 'c1',
+      category: 'Termination',
+      severity: 'red',
+      title: 'Immediate Termination',
+      description: 'Term',
+      finding_type: 'recommendation',
+      confidence: 0.9,
+      source_reference: 'Section 1',
+      created_at: new Date().toISOString(),
+    };
+
+    const findingB: Finding = {
+      id: 'f_b',
+      document_id: 'doc_b1',
+      document_version_id: 'v1',
+      clause_id: 'c2',
+      category: 'Rent',
+      severity: 'red',
+      title: 'High Rent Increase',
+      description: 'Rent',
+      finding_type: 'recommendation',
+      confidence: 0.9,
+      source_reference: 'Section 2',
+      created_at: new Date().toISOString(),
+    };
+
+    const reportA = generatePortfolioReport('user_a', [docA, docB], [findingA, findingB]);
+    expect(reportA.totalDocuments).toBe(1);
+    expect(reportA.documentSummaries.length).toBe(1);
+    expect(reportA.documentSummaries[0].document.id).toBe('doc_a1');
   });
 });

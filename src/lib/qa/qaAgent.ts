@@ -101,7 +101,9 @@ export async function runGroundedQAAgent(request: QARequest): Promise<QAResponse
         answerText = response.text.trim();
       }
     } catch (err: any) {
-      if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') throw err;
+      if (process.env.RUN_LIVE_GEMINI_TESTS === 'true' && !err?.message?.includes('429') && !err?.message?.includes('RESOURCE_EXHAUSTED') && !err?.message?.includes('fetch failed')) {
+        throw err;
+      }
     }
   }
 

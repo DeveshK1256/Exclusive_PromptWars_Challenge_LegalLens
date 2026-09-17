@@ -106,6 +106,20 @@ export interface TimelineEvent {
   created_at: string;
 }
 
+export interface TimelineEventDismissal {
+  id: string;
+  user_id: string;
+  timeline_event_id: string;
+  dismissed_at: string;
+}
+
+export interface DeadlineAlert {
+  event: TimelineEvent;
+  documentTitle: string;
+  daysRemaining: number;
+  urgency: 'overdue' | 'urgent_7d' | 'upcoming_30d';
+}
+
 export interface Comparison {
   id: string;
   user_id: string;
@@ -220,3 +234,6 @@ export interface AuditLog {
   metadata: Record<string, unknown>;
   created_at: string;
 }
+
+export type { SharedLink, SharedLinkAuditRecord } from '@/lib/sharing/shareStorage';
+export type { DiffHunk, DocumentDiffResult } from '@/lib/diff/documentDiff';

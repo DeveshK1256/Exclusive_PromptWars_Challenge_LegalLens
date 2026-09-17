@@ -16,6 +16,7 @@ import {
   generateRealTimeline,
   generateRealActionPlan,
 } from '@/lib/documentAnalysis';
+import { DeadlineReminderBanner } from '@/components/timeline/DeadlineReminderBanner';
 import { FileText, Shield, BookOpen, MessageSquare, Calendar, CheckSquare, Sparkles, CheckCircle2 } from 'lucide-react';
 
 const SAMPLE_DOCS: Record<string, Document> = {
@@ -256,6 +257,9 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Feature 1: Upcoming Deadline Reminders Banner */}
+      <DeadlineReminderBanner documents={documents} userId={activeDoc.user_id} onNavigateTab={setActiveTab} />
 
       {/* Auto-Detection / Demo Banner */}
       {autoDetectedBanner && (

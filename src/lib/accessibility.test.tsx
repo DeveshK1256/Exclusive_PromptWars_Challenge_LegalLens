@@ -338,4 +338,31 @@ describe('Sprint 11 — Extended 10-Component Rendered DOM Accessibility & WCAG 
       });
     });
   });
+
+  describe('5. DOM XSS Escaping Verification (Script-Tag Render Safety)', () => {
+    it('renders script tag inputs as literal escaped text nodes in React DOM, preventing HTML/script execution', () => {
+      const maliciousOverview: LegalXRayOverview = {
+        ...mockXRayData,
+        findings: [
+          {
+            ...mockXRayData.findings[0],
+            title: '<script>alert("XSS_ATTACK_TIT")</script>',
+            description: '<img src=x onerror=alert("XSS_ATTACK_DESC")>',
+            source_reference: '<script>console.log("XSS_SRC")</script>',
+          },
+        ],
+      };
+
+      const { container } = render(<LegalXRayDashboard overview={maliciousOverview} />);
+
+      // 1. Confirm literal text nodes render in the DOM safely
+      expect(screen.getAllByText('<script>alert("XSS_ATTACK_TIT")</script>').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('<img src=x onerror=alert("XSS_ATTACK_DESC")>').length).toBeGreaterThan(0);
+
+      // 2. Confirm no actual <script> DOM elements were injected into the container
+      const scriptElements = container.querySelectorAll('script');
+      expect(scriptElements.length).toBe(0);
+    });
+  });
 });
+

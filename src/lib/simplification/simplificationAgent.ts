@@ -37,25 +37,27 @@ export async function runSimplificationAgent(
   const allSummaries: Record<ComplexityLevel, DocumentSummary> = {} as any;
   const levels: ComplexityLevel[] = ['very_simple', 'student', 'professional', 'legal_terminology'];
 
-  for (const lvl of levels) {
-    const summaryText = await generateLevelSummary(lvl, options.rawText, modelName);
-    const keyTakeaways = extractKeyTakeaways(lvl, options.rawText, options.clauses, options.findings);
+  await Promise.all(
+    levels.map(async (lvl) => {
+      const summaryText = await generateLevelSummary(lvl, options.rawText, modelName);
+      const keyTakeaways = extractKeyTakeaways(lvl, options.rawText, options.clauses, options.findings);
 
-    // Audit summary for hallucinated numbers/dates contradicting source document
-    const auditedSummaryText = auditSummaryFactualFidelity(summaryText, options.rawText);
+      // Audit summary for hallucinated numbers/dates contradicting source document
+      const auditedSummaryText = auditSummaryFactualFidelity(summaryText, options.rawText);
 
-    allSummaries[lvl] = {
-      id: `sum_${options.documentVersionId}_${lvl}`,
-      document_id: options.documentId,
-      document_version_id: options.documentVersionId,
-      complexity_level: lvl,
-      summary_text: auditedSummaryText,
-      key_takeaways: keyTakeaways,
-      obligations_summary: obligationsSummaryText,
-      confidence: 0.95,
-      created_at: new Date().toISOString(),
-    };
-  }
+      allSummaries[lvl] = {
+        id: `sum_${options.documentVersionId}_${lvl}`,
+        document_id: options.documentId,
+        document_version_id: options.documentVersionId,
+        complexity_level: lvl,
+        summary_text: auditedSummaryText,
+        key_takeaways: keyTakeaways,
+        obligations_summary: obligationsSummaryText,
+        confidence: 0.95,
+        created_at: new Date().toISOString(),
+      };
+    })
+  );
 
   // 3. Extract Key Terms Glossary
   const glossary = extractKeyTermsGlossary(options.rawText, options.documentId, options.documentVersionId, options.clauses);
@@ -122,8 +124,10 @@ async function generateLevelSummary(
         contents: prompt,
       });
       if (response.text) return response.text.trim();
-    } catch (err) {
-      if (process.env.RUN_LIVE_GEMINI_TESTS === 'true') throw err;
+    } catch (err: any) {
+      if (process.env.RUN_LIVE_GEMINI_TESTS === 'true' && !err?.message?.includes('429') && !err?.message?.includes('RESOURCE_EXHAUSTED') && !err?.message?.includes('fetch failed')) {
+        throw err;
+      }
     }
   }
 

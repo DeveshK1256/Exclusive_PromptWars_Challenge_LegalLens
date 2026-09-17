@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Shield, FileText, GitCompare, ListCheck, Settings, User, LogOut } from 'lucide-react';
+import { Shield, FileText, GitCompare, ListCheck, Settings, User, LogOut, PieChart } from 'lucide-react';
 import { getCurrentSession, signOutUser } from '@/lib/auth';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
@@ -81,6 +81,7 @@ export const Navbar: React.FC = () => {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: FileText },
     { href: '/documents', label: 'My Documents', icon: FileText },
+    { href: '/portfolio', label: 'Portfolio Risk', icon: PieChart },
     { href: '/compare', label: 'Compare', icon: GitCompare },
     { href: '/action-plans', label: 'Action Plans', icon: ListCheck },
     { href: '/settings', label: 'Settings', icon: Settings },

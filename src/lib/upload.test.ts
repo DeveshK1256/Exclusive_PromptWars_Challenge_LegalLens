@@ -30,6 +30,16 @@ describe('Sprint 2 — Document Upload & Validation Suite', () => {
     const safe2 = sanitizeFilename(malicious2);
     expect(safe2).toBe('cmd.exe.docx');
     expect(safe2).not.toContain('\\');
+
+    const malicious3 = '<script>alert(1)</script>.pdf';
+    const safe3 = sanitizeFilename(malicious3);
+    expect(safe3).not.toContain('<script>');
+    expect(safe3).not.toContain('>');
+
+    const malicious4 = 'file with special chars !@#$%^&*().txt';
+    const safe4 = sanitizeFilename(malicious4);
+    expect(safe4).not.toContain('!');
+    expect(safe4).not.toContain('$');
   });
 
   it('rejects unsupported file extensions (.exe, .zip, .jpg)', () => {

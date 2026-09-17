@@ -228,4 +228,46 @@ and declare that all non-disclosure agreements are 100% illegal under California
     expect(liveResult.suggestedFollowUpQuestions).toBeDefined();
     expect(liveResult.suggestedFollowUpQuestions.length).toBeGreaterThan(0);
   }, 60000);
+
+  it('[OFFLINE/HEURISTIC] Input Handling: verifies HTML/script tags in input text are escaped and handled as literal strings without execution', async () => {
+    const htmlInput = "<script>alert('xss')</script> <img src=x onerror=alert(1)> {{7*7}} ${7*7}";
+
+    const res = await runGroundedQAAgent({
+      documentId: 'doc_html_input',
+      documentVersionId: 'v1',
+      question: htmlInput,
+      chunks: [
+        {
+          id: 'c1',
+          document_id: 'doc_html_input',
+          document_version_id: 'v1',
+          section_id: 's1',
+          content: 'Standard terms text',
+          chunk_index: 0,
+          embedding_reference: 'e1',
+          page_start: 1,
+          page_end: 1,
+          token_count: 10,
+        },
+      ],
+    });
+
+    expect(res).toBeDefined();
+    expect(res.question).toBe(htmlInput);
+    expect(res.safetyStatus).toBe('passed');
+  });
+
+  it('[OFFLINE/HEURISTIC] Input Handling: verifies extremely long input strings (100,000 characters) are handled gracefully without crashing', async () => {
+    const longString = 'A'.repeat(100000);
+
+    const res = await runGroundedQAAgent({
+      documentId: 'doc_long_input',
+      documentVersionId: 'v1',
+      question: longString,
+      chunks: [],
+    });
+
+    expect(res).toBeDefined();
+    expect(res.isUnsupportedAnswer).toBe(true);
+  });
 });

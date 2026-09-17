@@ -77,17 +77,41 @@ export interface DatabaseAuditLogRecord {
 
 ---
 
-## 5. Verification & Security Testing Metrics
+## 5. Shareable Read-Only Summary Links Security Surface (Feature 6)
+
+Public shareable summary links (`/share/[token]`) expose document summaries to unauthenticated external readers. To prevent data leakage, unauthorized text extraction, and token harvesting, the following controls are strictly enforced:
+
+### Cryptographic CSPRNG Token Hashing (SHA-256)
+- **Token Entropy:** Share link URL tokens are generated using a 256-bit cryptographically secure pseudorandom number generator (32 random bytes = 64 hex characters).
+- **Database Hash Storage:** Raw tokens are **NEVER** stored in the database or logs. The database stores only `token_hash = SHA256(raw_token)`. A database leak or compromise cannot reveal active tokens.
+- **Lookup Verification:** Incoming HTTP requests to `/api/shared/[token]` hash the URL token and query `token_hash`.
+
+### Public Endpoint Rate-Limiting & IP Keying
+- **IP-Keyed Rate Limits:** Unauthenticated calls to `/api/shared/[token]` execute `checkRateLimit(ip, 'ai_route')`, enforcing a sliding window rate limit (20 reqs/min) keyed strictly by client IP address (`req.headers.get('x-forwarded-for') || '127.0.0.1'`), requiring zero reliance on user session cookies.
+
+### Strict Scope Restriction (`summary_xray_only`)
+- **Scope Limit:** Public shared links return plain-language summaries (`summaryText`, `keyTakeaways`) and aggregate X-Ray risk scorecards.
+- **Sensitive Field Stripping:** Raw text (`raw_text`), storage paths (`storage_path`), clause embeddings, and original file downloads are **STRICTLY EXCLUDED** from the public API payload.
+
+### Instant Revocation & Expiration
+- **Expiration Enforcement:** Share links carry an explicit `expires_at` timestamp (default: 7 days).
+- **Owner Revocation:** Document owners can invalidate active links instantly via `revokeSharedLink()` (`revoked_at = NOW()`). Access attempts post-revocation return HTTP 404 Access Denied.
+- **Audit Logging:** Access events write audit records (`SharedLinkAuditRecord`) tracking access timestamps, client IP addresses, and token hashes.
+
+---
+
+## 6. Verification & Security Testing Metrics
 
 Security controls are automatically validated via Vitest:
 - `src/lib/security/maliciousDocument.test.ts` — 6 tests (5 offline/heuristic + 1 `[LIVE]` Gemini API injection test).
 - `src/lib/rls.test.ts` — 12 tests (10-entity explicit RLS cross-user isolation test suite).
+- `src/lib/sharing/shareStorage.test.ts` — 4 tests (256-bit token hash validation, SHA-256 lookup, instant revocation, and RLS revocation ownership enforcement).
 - `src/lib/security/rateLimitProbe.test.ts` — 1 test (11th request HTTP 429 + `Retry-After` header probe).
-- **Total Test Suite:** **131 passing tests across 19 test files**.
+- **Total Test Suite:** **136 passing tests across 21 test files**.
 
 ---
 
-## 6. AI Verification & Live Model Quota Disclosure
+## 7. AI Verification & Live Model Quota Disclosure
 
 > [!NOTE]
 > AI outputs are validated by a zero-hallucination benchmark gate; live-model verification is currently constrained by free-tier API quota (see benchmark walkthrough for details) and will require a paid tier for full-coverage live regression testing.

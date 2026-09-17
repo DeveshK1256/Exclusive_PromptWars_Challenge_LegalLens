@@ -137,7 +137,7 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
             return (
               <div
                 key={finding.id}
-                className="mb-[-40px] pointer-events-none"
+                className="mb-[-24px] pointer-events-none"
                 style={{
                   transform: `translateZ(${zOffset}px)`,
                   transformStyle: 'preserve-3d',

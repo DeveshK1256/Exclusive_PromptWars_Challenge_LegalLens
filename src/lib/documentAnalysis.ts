@@ -33,7 +33,7 @@ export function generateRealXRayOverview(doc: ExtendedDocument): LegalXRayOvervi
     quote: string
   ) => {
     list.push({
-      id: `fnd_${doc.id}_${list.length + 1}`,
+      id: `fnd_${doc.id}_${severity}_${list.length + 1}`,
       document_id: doc.id,
       document_version_id: `ver_${doc.id}_v1`,
       clause_id: `c_${list.length + 1}`,
@@ -44,7 +44,7 @@ export function generateRealXRayOverview(doc: ExtendedDocument): LegalXRayOvervi
       description,
       finding_type: severity === 'green' ? 'fact' : severity === 'red' ? 'recommendation' : 'ai_interpretation',
       confidence: 0.96,
-      source_reference: quote.length > 150 ? quote.substring(0, 147) + '...' : quote,
+      source_reference: (quote && quote.trim().length > 0) ? (quote.length > 150 ? quote.substring(0, 147) + '...' : quote) : `Document reference for ${doc.title}`,
       created_at: new Date().toISOString(),
     });
   };

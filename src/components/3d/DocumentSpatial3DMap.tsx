@@ -122,51 +122,56 @@ export const DocumentSpatial3DMap: React.FC<DocumentSpatial3DMapProps> = ({
               ? (findings.length * 20) + 120
               : (findings.length - idx) * 20;
 
-            const handleCardClick = () => {
+            const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+              e.stopPropagation();
               setSelectedFinding(isSelected ? null : finding);
             };
 
             const handleKeyDown = (e: React.KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'Enter' || e.code === 'Space') {
                 e.preventDefault();
-                handleCardClick();
+                handleCardClick(e);
               }
             };
 
             return (
               <div
                 key={finding.id}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isSelected}
-                aria-label={`Layer #${idx + 1} — ${finding.title}, ${style.badge}`}
-                onClick={handleCardClick}
-                onKeyDown={handleKeyDown}
-                className={`w-72 sm:w-80 p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer group mb-[-40px] focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                  isSelected
-                    ? 'ring-2 ring-indigo-500 dark:ring-indigo-400 bg-indigo-50 dark:bg-slate-900 border-indigo-500 dark:border-indigo-400 shadow-[0_10px_35px_rgba(99,102,241,0.5)] scale-[1.06] -translate-y-2'
-                    : `${style.border} ${style.bg} ${style.shadow} backdrop-blur-md hover:-translate-y-2 hover:scale-105`
-                }`}
+                className="mb-[-40px] pointer-events-none"
                 style={{
                   transform: `translateZ(${zOffset}px)`,
                   transformStyle: 'preserve-3d',
                   zIndex: isSelected ? 50 : findings.length - idx,
                 }}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border ${isSelected ? 'text-indigo-700 dark:text-indigo-300 border-indigo-400/50 bg-white/90 dark:bg-slate-900' : `border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 ${style.text}`}`}>
-                    Layer #{idx + 1} — {style.badge}
-                  </span>
-                  <span className={`text-[10px] font-mono ${isSelected ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'}`}>
-                    Kind: {finding.finding_kind}
-                  </span>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  aria-label={`Layer #${idx + 1} — ${finding.title}, ${style.badge}`}
+                  onClick={handleCardClick}
+                  onKeyDown={handleKeyDown}
+                  className={`w-72 sm:w-80 p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer group pointer-events-auto focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isSelected
+                      ? 'ring-2 ring-indigo-500 dark:ring-indigo-400 bg-indigo-50 dark:bg-slate-900 border-indigo-500 dark:border-indigo-400 shadow-[0_10px_35px_rgba(99,102,241,0.5)] scale-[1.06] -translate-y-2'
+                      : `${style.border} ${style.bg} ${style.shadow} backdrop-blur-md hover:-translate-y-2 hover:scale-105`
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border ${isSelected ? 'text-indigo-700 dark:text-indigo-300 border-indigo-400/50 bg-white/90 dark:bg-slate-900' : `border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 ${style.text}`}`}>
+                      Layer #{idx + 1} — {style.badge}
+                    </span>
+                    <span className={`text-[10px] font-mono ${isSelected ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                      Kind: {finding.finding_kind}
+                    </span>
+                  </div>
+                  <h4 className={`text-xs font-bold transition-colors line-clamp-1 ${isSelected ? 'text-indigo-950 dark:text-indigo-100' : 'text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300'}`}>
+                    {finding.title}
+                  </h4>
+                  <p className={`text-[11px] line-clamp-2 mt-0.5 leading-relaxed ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-700 dark:text-slate-300'}`}>
+                    {finding.description}
+                  </p>
                 </div>
-                <h4 className={`text-xs font-bold transition-colors line-clamp-1 ${isSelected ? 'text-indigo-950 dark:text-indigo-100' : 'text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300'}`}>
-                  {finding.title}
-                </h4>
-                <p className={`text-[11px] line-clamp-2 mt-0.5 leading-relaxed ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-slate-700 dark:text-slate-300'}`}>
-                  {finding.description}
-                </p>
               </div>
             );
           })}

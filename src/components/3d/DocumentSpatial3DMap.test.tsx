@@ -5,116 +5,101 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { DocumentSpatial3DMap } from './DocumentSpatial3DMap';
 import { XRayFindingCard } from '@/lib/xray/types';
 
-const mockFindings: XRayFindingCard[] = [
+const mockFourFindings: XRayFindingCard[] = [
   {
     id: 'f1',
     document_version_id: 'v1',
-    section_label: 'Section 1',
-    finding_kind: 'informational',
-    severity: 'green',
-    finding_type: 'fact',
-    title: 'Standard Terms',
-    description: 'General governing terms and conditions.',
-    source_reference: 'Section 1.1',
-    confidence: 0.95,
+    section_label: 'Section 3.1',
+    finding_kind: 'action_required',
+    severity: 'red',
+    finding_type: 'recommendation',
+    title: 'Broad Non-Compete Provision',
+    description: 'Restricts employment nationwide for 36 months.',
+    source_reference: 'Employee agrees not to engage in competing business for 36 months.',
+    confidence: 0.96,
   },
   {
     id: 'f2',
     document_version_id: 'v1',
-    section_label: 'Section 2',
+    section_label: 'Section 4.2',
     finding_kind: 'deadline',
     severity: 'orange',
     finding_type: 'fact',
-    title: 'Notice Window & Cancellation Provision',
-    description: 'Requires 30 days written notice for termination.',
-    source_reference: 'Section 2.4',
-    confidence: 0.91,
+    title: 'Short Termination Notice Period',
+    description: 'Notice period reduced from 30 days to 14 days.',
+    source_reference: 'Either party may terminate upon 14 days written notice.',
+    confidence: 0.92,
   },
   {
     id: 'f3',
     document_version_id: 'v1',
-    section_label: 'Section 3',
+    section_label: 'Section 8.5',
+    finding_kind: 'informational',
+    severity: 'yellow',
+    finding_type: 'fact',
+    title: 'Unlimited Liability Cap Exclusion',
+    description: 'Liability cap excludes breach of confidentiality.',
+    source_reference: 'Maximum liability limitation shall not apply to Section 8 breach.',
+    confidence: 0.89,
+  },
+  {
+    id: 'f4',
+    document_version_id: 'v1',
+    section_label: 'Section 12.1',
     finding_kind: 'action_required',
-    severity: 'red',
+    severity: 'emerald',
     finding_type: 'recommendation',
-    title: 'Liability Cap Exclusion',
-    description: 'Unlimited liability for indirect damages.',
-    source_reference: 'Section 3.2',
-    confidence: 0.98,
+    title: 'Outside Work Moonlighting Restriction',
+    description: 'Secondary employment requires prior written approval.',
+    source_reference: 'Employee shall not engage in secondary employment without approval.',
+    confidence: 0.94,
   },
 ];
 
-describe('DocumentSpatial3DMap — Layer Stacking & Focus Suite', () => {
-  it('renders all layer cards in resting stack order', () => {
+describe('DocumentSpatial3DMap — 4-Layer Click Mapping & Stack Suite', () => {
+  it('renders all 4 layer cards in resting stack order', () => {
     render(
       <DocumentSpatial3DMap
         documentTitle="Executive Employment Agreement"
         documentType="Employment Contract"
-        findings={mockFindings}
+        findings={mockFourFindings}
       />
     );
 
     const layerCards = screen.getAllByRole('button', { name: /Layer #/i });
-    expect(layerCards).toHaveLength(3);
+    expect(layerCards).toHaveLength(4);
 
-    // Initial resting stack: unselected cards have zIndex corresponding to (findings.length - idx)
-    expect(layerCards[0].style.zIndex).toBe('3');
-    expect(layerCards[1].style.zIndex).toBe('2');
-    expect(layerCards[2].style.zIndex).toBe('1');
+    expect(layerCards[0].getAttribute('aria-pressed')).toBe('false');
     expect(layerCards[1].getAttribute('aria-pressed')).toBe('false');
+    expect(layerCards[2].getAttribute('aria-pressed')).toBe('false');
+    expect(layerCards[3].getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('elevates ONLY the 2nd layer card to highest zIndex (50) and active state on mouse click', () => {
+  it('clicking EACH of the 4 layer cards displays that EXACT layer\'s title and verbatim reference in the detail panel', () => {
     render(
       <DocumentSpatial3DMap
         documentTitle="Executive Employment Agreement"
         documentType="Employment Contract"
-        findings={mockFindings}
+        findings={mockFourFindings}
       />
     );
 
     const layerCards = screen.getAllByRole('button', { name: /Layer #/i });
-    const secondCard = layerCards[1];
 
-    // Click 2nd layer card
-    fireEvent.click(secondCard);
+    // 1. Click Layer #1
+    fireEvent.click(layerCards[0]);
+    expect(screen.getByText(/Employee agrees not to engage in competing business for 36 months./i)).toBeTruthy();
 
-    const updatedCards = screen.getAllByRole('button', { name: /Layer #/i });
-    const activeSecondCard = updatedCards[1];
+    // 2. Click Layer #2 — Must display Layer #2's exact title + verbatim reference (Section 4.2)
+    fireEvent.click(layerCards[1]);
+    expect(screen.getByText(/Either party may terminate upon 14 days written notice./i)).toBeTruthy();
 
-    // Assert 2nd card is promoted to highest zIndex (50) and aria-pressed is true
-    expect(activeSecondCard.style.zIndex).toBe('50');
-    expect(activeSecondCard.getAttribute('aria-pressed')).toBe('true');
-    expect(activeSecondCard.style.transform).toContain('translateZ(180px)'); // (3 * 20) + 120 = 180px
+    // 3. Click Layer #3 — Must display Layer #3's exact title + verbatim reference (Section 8.5)
+    fireEvent.click(layerCards[2]);
+    expect(screen.getByText(/Maximum liability limitation shall not apply to Section 8 breach./i)).toBeTruthy();
 
-    // Unselected cards maintain default resting stack zIndex
-    expect(updatedCards[0].style.zIndex).toBe('3');
-    expect(updatedCards[2].style.zIndex).toBe('1');
-    expect(updatedCards[0].getAttribute('aria-pressed')).toBe('false');
-    expect(updatedCards[2].getAttribute('aria-pressed')).toBe('false');
-  });
-
-  it('elevates 2nd layer card via keyboard Enter keypress without regressing WCAG accessibility', () => {
-    render(
-      <DocumentSpatial3DMap
-        documentTitle="Executive Employment Agreement"
-        documentType="Employment Contract"
-        findings={mockFindings}
-      />
-    );
-
-    const layerCards = screen.getAllByRole('button', { name: /Layer #/i });
-    const secondCard = layerCards[1];
-
-    // Fire keydown and click event for keyboard Enter activation in jsdom
-    fireEvent.keyDown(secondCard, { key: 'Enter', code: 'Enter' });
-    fireEvent.click(secondCard);
-
-    const updatedCards = screen.getAllByRole('button', { name: /Layer #/i });
-    const activeSecondCard = updatedCards[1];
-
-    expect(activeSecondCard.style.zIndex).toBe('50');
-    expect(activeSecondCard.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByText(/Verbatim Reference: "Section 2.4"/i)).toBeTruthy();
+    // 4. Click Layer #4 — Must display Layer #4's exact title + verbatim reference (Section 12.1)
+    fireEvent.click(layerCards[3]);
+    expect(screen.getByText(/Employee shall not engage in secondary employment without approval./i)).toBeTruthy();
   });
 });

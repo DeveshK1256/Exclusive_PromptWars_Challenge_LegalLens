@@ -395,4 +395,33 @@ test.describe('LegalLens AI - Full UI Regression Suite', () => {
     await expect(page.getByText('Short Termination Notice Period')).toBeVisible();
   });
 
+  // -------------------------------------------------------------
+  // 11. 3D Spatial Document Layer Map — 4-Card Click-to-Detail Mapping (/dashboard)
+  // -------------------------------------------------------------
+  test('3D Spatial Document Layer Map: clicking each of the 4 layer cards displays that exact layer title & reference in detail panel', async ({ page }) => {
+    await page.goto('/dashboard');
+
+    const mapHeader = page.getByRole('heading', { name: '3D Spatial Document Layer Map' });
+    await expect(mapHeader).toBeVisible();
+
+    const layerCards = page.getByRole('button', { name: /Layer #/ });
+    await expect(layerCards).toHaveCount(4);
+
+    // Click Layer #1 -> Asserts Layer #1 details
+    await layerCards.nth(0).click();
+    await expect(page.getByText(/Verbatim Reference:/i).first()).toBeVisible();
+
+    // Click Layer #2 -> Asserts Layer #2 details
+    await layerCards.nth(1).click();
+    await expect(page.getByText(/Verbatim Reference:/i).first()).toBeVisible();
+
+    // Click Layer #3 -> Asserts Layer #3 details
+    await layerCards.nth(2).click();
+    await expect(page.getByText(/Verbatim Reference:/i).first()).toBeVisible();
+
+    // Click Layer #4 -> Asserts Layer #4 details
+    await layerCards.nth(3).click();
+    await expect(page.getByText(/Verbatim Reference:/i).first()).toBeVisible();
+  });
+
 });

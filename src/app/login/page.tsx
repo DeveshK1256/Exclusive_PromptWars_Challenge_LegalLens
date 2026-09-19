@@ -33,6 +33,80 @@ export default function LoginPage() {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
 
+  // --- Persistent Lockout & Countdown State ---
+  const [clientId, setClientId] = useState('');
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+
+  // Initialize or retrieve persistent clientId (stored in localStorage)
+  React.useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      let cid = localStorage.getItem('legallens_client_id');
+      if (!cid) {
+        cid = `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem('legallens_client_id', cid);
+      }
+      setClientId(cid);
+    }
+  }, []);
+
+  // Sync lockout status from server whenever email or clientId changes (and on page load / refresh!)
+  const syncServerLockoutStatus = React.useCallback(async (email: string) => {
+    if (!email) return;
+    try {
+      const cid = clientId || (typeof localStorage !== 'undefined' ? localStorage.getItem('legallens_client_id') : '') || 'browser_client';
+      const res = await fetch(`/api/auth/lockout-status?email=${encodeURIComponent(email)}&clientId=${encodeURIComponent(cid)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setFailedLoginCount(data.attemptCount || 0);
+        if (data.isLocked && data.lockedUntil) {
+          setIsLockedOut(true);
+          setLockedUntil(data.lockedUntil);
+          const rem = Math.max(1, Math.ceil((data.lockedUntil - Date.now()) / 1000));
+          setRemainingSeconds(rem);
+        } else if (!data.isLocked && isLockedOut) {
+          setIsLockedOut(false);
+          setLockedUntil(null);
+          setRemainingSeconds(0);
+        }
+      }
+    } catch {
+      // Ignore network fallback
+    }
+  }, [clientId, isLockedOut]);
+
+  React.useEffect(() => {
+    const targetEmail = loginEmail.trim() || 'demo@legallens.ai';
+    syncServerLockoutStatus(targetEmail);
+  }, [loginEmail, clientId, syncServerLockoutStatus]);
+
+  // Live Real-Time Countdown Timer (updates every second based on server lockedUntil timestamp)
+  React.useEffect(() => {
+    if (!isLockedOut || !lockedUntil) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const diffSeconds = Math.max(0, Math.ceil((lockedUntil - now) / 1000));
+      setRemainingSeconds(diffSeconds);
+
+      if (diffSeconds <= 0) {
+        setIsLockedOut(false);
+        setLockedUntil(null);
+        setFailedLoginCount(0);
+        setLoginError(null);
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isLockedOut, lockedUntil]);
+
+  const formatCountdown = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
   // Real-time password complexity evaluation (Bug B)
   const passwordComplexity = validatePasswordComplexity(regPassword).rules;
 
@@ -132,78 +206,54 @@ export default function LoginPage() {
     if (e) e.preventDefault();
     setLoginError(null);
 
-    if (isLockedOut) {
-      setLoginError('Account locked due to 5 consecutive failed login attempts. Please try again later or reset password.');
+    const emailToUse = loginEmail.trim() || 'demo@legallens.ai';
+    const passwordToUse = loginPassword;
+
+    if (!passwordToUse) {
+      setLoginError('Please enter both your email address and password.');
       return;
     }
 
     setIsLoading(true);
 
-    const emailToUse = loginEmail.trim();
-    const passwordToUse = loginPassword;
+    const cid = clientId || (typeof localStorage !== 'undefined' ? localStorage.getItem('legallens_client_id') : '') || 'browser_client';
 
-    if (!emailToUse || !passwordToUse) {
-      setLoginError('Please enter both your email address and password.');
-      setIsLoading(false);
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailToUse)) {
-      setLoginError('Please enter a valid email address format.');
-      setIsLoading(false);
-      return;
-    }
-
-    // 1. Attempt Real Supabase Authentication First
     try {
-      const authData = await signInUser(emailToUse, passwordToUse);
-      if (authData?.user) {
-        setFailedLoginCount(0);
-        performLoginRedirect(authData.user.email || emailToUse);
-        return;
-      }
-    } catch (supabaseError: any) {
-      // Supabase returned an explicit auth error (e.g. invalid credentials)
-      if (supabaseError?.message && !supabaseError.message.includes('FetchError') && !supabaseError.message.includes('Failed to fetch')) {
-        // Handle failed attempt count
-        const nextFailed = failedLoginCount + 1;
-        setFailedLoginCount(nextFailed);
-        if (nextFailed >= 5) {
-          setIsLockedOut(true);
-          setLoginError('Account locked due to 5 consecutive failed login attempts.');
-        } else {
-          setLoginError(`Invalid email or password. Attempt ${nextFailed} of 5 before temporary lock.`);
-        }
+      const res = await fetch('/api/auth/login-attempt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToUse, password: passwordToUse, clientId: cid }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 429 || data.isLocked) {
+        setIsLockedOut(true);
+        setLockedUntil(data.lockedUntil || Date.now() + 300000);
+        setRemainingSeconds(data.remainingSeconds || 300);
+        setFailedLoginCount(data.attemptCount || 5);
+        setLoginError(`Account locked due to 5 consecutive failed login attempts. Try again in ${formatCountdown(data.remainingSeconds || 300)}.`);
         setIsLoading(false);
         return;
       }
-    }
 
-    // 2. Client-side Auth Store Check (for local demo mode / newly registered local users)
-    const cleanEmail = emailToUse.toLowerCase();
-    const registeredStore = getRegisteredUserStore();
+      if (res.ok && data.success) {
+        setFailedLoginCount(0);
+        setIsLockedOut(false);
+        setLockedUntil(null);
+        performLoginRedirect(emailToUse);
+        return;
+      }
 
-    // Default valid demo accounts
-    const isDemoAccount = (cleanEmail === 'demo@legallens.ai' || cleanEmail === 'admin@legallens.ai') && passwordToUse === 'Password123!';
-    const isRegisteredAccount = registeredStore[cleanEmail] && registeredStore[cleanEmail] === passwordToUse;
-
-    if (isDemoAccount || isRegisteredAccount) {
-      setFailedLoginCount(0);
-      performLoginRedirect(cleanEmail);
-      return;
-    }
-
-    // 3. REJECT ALL UNREGISTERED OR INVALID CREDENTIALS!
-    const nextFailed = failedLoginCount + 1;
-    setFailedLoginCount(nextFailed);
-    if (nextFailed >= 5) {
-      setIsLockedOut(true);
-      setLoginError('Account locked due to 5 consecutive failed login attempts.');
-    } else {
+      // Security Requirement 1: Generic error message to prevent user enumeration
+      const nextFailed = data.attemptCount || (failedLoginCount + 1);
+      setFailedLoginCount(nextFailed);
       setLoginError(`Invalid email or password. Attempt ${nextFailed} of 5 before temporary lock.`);
+      setIsLoading(false);
+    } catch {
+      setIsLoading(false);
+      setLoginError('Invalid email or password.');
     }
-    setIsLoading(false);
   };
 
   // --- Registration Handler ---
@@ -296,6 +346,25 @@ export default function LoginPage() {
             : 'Register to unlock plain-language legal document analysis.'}
         </p>
       </div>
+
+      {/* Real-time Persistent Lockout Banner (Visible on BOTH Sign In & Sign Up tabs) */}
+      {isLockedOut && (
+        <div className="bg-red-500/10 border-2 border-red-500/40 p-4 rounded-2xl text-xs text-red-700 dark:text-red-300 flex items-center justify-between gap-3 shadow-md" role="alert" aria-live="polite">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 animate-pulse" />
+            <div>
+              <p className="font-extrabold text-red-900 dark:text-red-200">Account Security Lockout Active</p>
+              <p className="text-[11px] text-red-700 dark:text-red-300">
+                Attempt limit reached (5/5). Server lockout expires in{' '}
+                <strong className="font-mono text-sm underline font-bold">{formatCountdown(remainingSeconds)}</strong>.
+              </p>
+            </div>
+          </div>
+          <span className="font-mono bg-red-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold animate-pulse shrink-0">
+            {formatCountdown(remainingSeconds)}
+          </span>
+        </div>
+      )}
 
       {/* Tab Switcher (Sign In vs Create Account) */}
       <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -580,9 +649,10 @@ export default function LoginPage() {
           <div className="pt-2 space-y-2">
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm cursor-pointer"
+              disabled={isLockedOut}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:opacity-60 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm cursor-pointer disabled:cursor-not-allowed"
             >
-              Create Account
+              {isLockedOut ? `Registration Locked (${formatCountdown(remainingSeconds)})` : 'Create Account'}
             </button>
 
             <button

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DocumentUploadZone } from '@/components/upload/DocumentUploadZone';
 import { DocumentList } from '@/components/documents/DocumentList';
 import { SimplificationViewer } from '@/components/simplification/SimplificationViewer';
@@ -8,8 +8,10 @@ import { DocumentQAChat } from '@/components/qa/DocumentQAChat';
 import { LegalTimelineViewer } from '@/components/timeline/LegalTimelineViewer';
 import { ActionPlanViewer } from '@/components/action/ActionPlanViewer';
 import { LegalXRayDashboard } from '@/components/xray/LegalXRayDashboard';
-import { Document, DocumentType } from '@/types/database';
+import { Document, DocumentType, DocumentSummary, GlossaryTerm, ComplexityLevel, TimelineEvent } from '@/types/database';
 import { getStoredDocuments, saveUploadedDocument, deleteStoredDocument, DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
+import { LegalXRayOverview } from '@/lib/xray/types';
+import { ActionPlanResult } from '@/lib/action/types';
 import {
   generateRealXRayOverview,
   generateRealSummary,
@@ -17,8 +19,56 @@ import {
   generateRealActionPlan,
 } from '@/lib/documentAnalysis';
 import { DeadlineReminderBanner } from '@/components/timeline/DeadlineReminderBanner';
-import { FileText, Shield, BookOpen, MessageSquare, Calendar, CheckSquare, Sparkles, CheckCircle2 } from 'lucide-react';
+import { FileText, Shield, BookOpen, MessageSquare, Calendar, CheckSquare, Sparkles, Loader2 } from 'lucide-react';
 
+// ── Per-document AI result cache ─────────────────────────────────────────────
+interface AIDocCache {
+  xray?: LegalXRayOverview;
+  simplification?: { summary: DocumentSummary; glossary: GlossaryTerm[]; allSummaries?: Record<ComplexityLevel, DocumentSummary> };
+  timeline?: { events: TimelineEvent[]; upcomingDeadlinesCount: number };
+  actionPlan?: ActionPlanResult;
+}
+
+type TabKey = 'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action';
+
+// ── Loading Spinner Component ────────────────────────────────────────────────
+function GeminiLoadingSpinner({ feature }: { feature: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 space-y-4">
+      <div className="relative">
+        <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
+        <Sparkles className="w-5 h-5 text-amber-500 absolute -top-1 -right-1 animate-pulse" />
+      </div>
+      <div className="text-center space-y-1">
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          Gemini AI is analysing your document…
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Running {feature} with grounded evidence extraction. This may take a few seconds.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Error Banner Component ───────────────────────────────────────────────────
+function AIErrorBanner({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-xl text-sm space-y-2">
+      <p className="text-amber-800 dark:text-amber-300 font-semibold">⚠️ Gemini AI returned an error</p>
+      <p className="text-amber-700 dark:text-amber-400 text-xs">{message}</p>
+      <p className="text-amber-600 dark:text-amber-500 text-xs">Showing heuristic fallback analysis. Results below are pattern-matched, not AI-generated.</p>
+      <button
+        onClick={onRetry}
+        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition-colors"
+      >
+        Retry with Gemini AI
+      </button>
+    </div>
+  );
+}
+
+// ── Sample Documents ─────────────────────────────────────────────────────────
 const SAMPLE_DOCS: Record<string, Document> = {
   rental_lease: {
     id: 'doc_sample_rental',
@@ -115,10 +165,19 @@ const SAMPLE_DOCS: Record<string, Document> = {
 };
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action'>('upload');
+  const [activeTab, setActiveTab] = useState<TabKey>('upload');
   const [documents, setDocuments] = useState<Document[]>([DEFAULT_SAMPLE_DOC]);
   const [activeDoc, setActiveDoc] = useState<Document>(DEFAULT_SAMPLE_DOC);
   const [autoDetectedBanner, setAutoDetectedBanner] = useState<string | null>(null);
+
+  // AI result cache: keyed by document ID → cached Gemini results per feature
+  const [aiCache, setAICache] = useState<Record<string, AIDocCache>>({});
+  // Loading flags per feature
+  const [aiLoading, setAILoading] = useState<Record<string, boolean>>({});
+  // Error messages per feature (docId:feature → message)
+  const [aiErrors, setAIErrors] = useState<Record<string, string>>({});
+  // Track in-flight requests to prevent duplicates
+  const inflightRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const storedDocs = getStoredDocuments();
@@ -138,7 +197,7 @@ export default function DashboardPage() {
         setActiveTab('xray');
         setAutoDetectedBanner(`Loaded Demo Sandbox: ${sampleDoc.title}`);
       } else if (tabParam && ['upload', 'xray', 'simplification', 'qa', 'timeline', 'action'].includes(tabParam)) {
-        setActiveTab(tabParam as 'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action');
+        setActiveTab(tabParam as TabKey);
       }
     }
   }, []);
@@ -168,10 +227,168 @@ export default function DashboardPage() {
     }
   }, [activeDoc?.id]);
 
-  const xrayOverview = generateRealXRayOverview(activeDoc);
-  const { summary: sampleSummary, glossary: sampleGlossary } = generateRealSummary(activeDoc);
-  const sampleEvents = generateRealTimeline(activeDoc);
-  const sampleActionPlan = generateRealActionPlan(activeDoc);
+  // ── Gemini API Fetch Functions ───────────────────────────────────────────
+  const fetchGeminiXRay = useCallback(async (doc: Document) => {
+    const cacheKey = `${doc.id}:xray`;
+    if (inflightRef.current.has(cacheKey)) return;
+    inflightRef.current.add(cacheKey);
+    setAILoading(prev => ({ ...prev, [cacheKey]: true }));
+    setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
+
+    try {
+      const res = await fetch(`/api/documents/${doc.id}/xray`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawText: doc.raw_text, jurisdiction: doc.jurisdiction }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.data) {
+        setAICache(prev => ({
+          ...prev,
+          [doc.id]: { ...prev[doc.id], xray: json.data as LegalXRayOverview },
+        }));
+      } else {
+        throw new Error(json.error || 'X-Ray API returned an error');
+      }
+    } catch (err: any) {
+      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to run X-Ray' }));
+    } finally {
+      setAILoading(prev => ({ ...prev, [cacheKey]: false }));
+      inflightRef.current.delete(cacheKey);
+    }
+  }, []);
+
+  const fetchGeminiSimplification = useCallback(async (doc: Document) => {
+    const cacheKey = `${doc.id}:simplification`;
+    if (inflightRef.current.has(cacheKey)) return;
+    inflightRef.current.add(cacheKey);
+    setAILoading(prev => ({ ...prev, [cacheKey]: true }));
+    setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
+
+    try {
+      const res = await fetch(`/api/documents/${doc.id}/simplify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawText: doc.raw_text, level: 'very_simple' }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setAICache(prev => ({
+          ...prev,
+          [doc.id]: {
+            ...prev[doc.id],
+            simplification: {
+              summary: json.summary,
+              glossary: json.glossary || [],
+              allSummaries: json.allSummaries,
+            },
+          },
+        }));
+      } else {
+        throw new Error(json.error || 'Simplification API returned an error');
+      }
+    } catch (err: any) {
+      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to simplify' }));
+    } finally {
+      setAILoading(prev => ({ ...prev, [cacheKey]: false }));
+      inflightRef.current.delete(cacheKey);
+    }
+  }, []);
+
+  const fetchGeminiTimeline = useCallback(async (doc: Document) => {
+    const cacheKey = `${doc.id}:timeline`;
+    if (inflightRef.current.has(cacheKey)) return;
+    inflightRef.current.add(cacheKey);
+    setAILoading(prev => ({ ...prev, [cacheKey]: true }));
+    setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
+
+    try {
+      const res = await fetch(`/api/documents/${doc.id}/timeline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawText: doc.raw_text }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.data) {
+        setAICache(prev => ({
+          ...prev,
+          [doc.id]: {
+            ...prev[doc.id],
+            timeline: {
+              events: json.data.events || [],
+              upcomingDeadlinesCount: json.data.upcomingDeadlinesCount || 0,
+            },
+          },
+        }));
+      } else {
+        throw new Error(json.error || 'Timeline API returned an error');
+      }
+    } catch (err: any) {
+      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to extract timeline' }));
+    } finally {
+      setAILoading(prev => ({ ...prev, [cacheKey]: false }));
+      inflightRef.current.delete(cacheKey);
+    }
+  }, []);
+
+  const fetchGeminiActionPlan = useCallback(async (doc: Document) => {
+    const cacheKey = `${doc.id}:actionPlan`;
+    if (inflightRef.current.has(cacheKey)) return;
+    inflightRef.current.add(cacheKey);
+    setAILoading(prev => ({ ...prev, [cacheKey]: true }));
+    setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
+
+    try {
+      const res = await fetch(`/api/documents/${doc.id}/action-plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawText: doc.raw_text }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.data) {
+        setAICache(prev => ({
+          ...prev,
+          [doc.id]: { ...prev[doc.id], actionPlan: json.data as ActionPlanResult },
+        }));
+      } else {
+        throw new Error(json.error || 'Action Plan API returned an error');
+      }
+    } catch (err: any) {
+      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to generate action plan' }));
+    } finally {
+      setAILoading(prev => ({ ...prev, [cacheKey]: false }));
+      inflightRef.current.delete(cacheKey);
+    }
+  }, []);
+
+  // ── Trigger Gemini fetch when tab or document changes ──────────────────
+  useEffect(() => {
+    if (!activeDoc?.raw_text) return;
+    const docCache = aiCache[activeDoc.id] || {};
+
+    if (activeTab === 'xray' && !docCache.xray && !aiLoading[`${activeDoc.id}:xray`]) {
+      fetchGeminiXRay(activeDoc);
+    } else if (activeTab === 'simplification' && !docCache.simplification && !aiLoading[`${activeDoc.id}:simplification`]) {
+      fetchGeminiSimplification(activeDoc);
+    } else if (activeTab === 'timeline' && !docCache.timeline && !aiLoading[`${activeDoc.id}:timeline`]) {
+      fetchGeminiTimeline(activeDoc);
+    } else if (activeTab === 'action' && !docCache.actionPlan && !aiLoading[`${activeDoc.id}:actionPlan`]) {
+      fetchGeminiActionPlan(activeDoc);
+    }
+  }, [activeTab, activeDoc?.id]);
+
+  // ── Heuristic fallback data (used only when API fails) ─────────────────
+  const heuristicXRay = generateRealXRayOverview(activeDoc);
+  const { summary: heuristicSummary, glossary: heuristicGlossary } = generateRealSummary(activeDoc);
+  const heuristicEvents = generateRealTimeline(activeDoc);
+  const heuristicActionPlan = generateRealActionPlan(activeDoc);
+
+  // ── Resolved data: prefer AI cache, fall back to heuristic on error ────
+  const docCache = aiCache[activeDoc.id] || {};
+  const xrayData = docCache.xray || (aiErrors[`${activeDoc.id}:xray`] ? heuristicXRay : null);
+  const simplData = docCache.simplification || (aiErrors[`${activeDoc.id}:simplification`] ? { summary: heuristicSummary, glossary: heuristicGlossary } : null);
+  const timelineData = docCache.timeline || (aiErrors[`${activeDoc.id}:timeline`] ? { events: heuristicEvents, upcomingDeadlinesCount: 1 } : null);
+  const actionData = docCache.actionPlan || (aiErrors[`${activeDoc.id}:actionPlan`] ? heuristicActionPlan : null);
 
   const handleUploadSuccess = (newDocRecord: Record<string, unknown>) => {
     const uploadedDoc = newDocRecord as unknown as Document;
@@ -189,13 +406,25 @@ export default function DashboardPage() {
     }
   };
 
+  // Retry handler: clears cache for this doc+feature so it re-fetches
+  const handleRetry = (feature: 'xray' | 'simplification' | 'timeline' | 'actionPlan') => {
+    const mapKey = feature === 'actionPlan' ? 'actionPlan' : feature;
+    const cacheKey = `${activeDoc.id}:${mapKey}`;
+    setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
+    setAICache(prev => {
+      const docEntry = { ...prev[activeDoc.id] };
+      delete docEntry[feature];
+      return { ...prev, [activeDoc.id]: docEntry };
+    });
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">LegalLens AI Workspace</h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Navigate, examine Legal X-Ray analysis reports, simplify clauses, inspect timelines, and execute action plans.
+            GenAI-powered legal document analysis — simplify, compare, highlight risks, answer questions, and prepare for your legal professional.
           </p>
         </div>
 
@@ -294,7 +523,7 @@ export default function DashboardPage() {
                 Legal X-Ray Analysis Report
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Detailed AI-assisted document classification by severity level (🔴 🟠 🟡 🟢) and domain scorecards with verbatim citations.
+                Gemini AI document classification by severity level (🔴 🟠 🟡 🟢) and domain scorecards with verbatim citations.
               </p>
             </div>
             <span className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-bold flex items-center gap-2">
@@ -302,17 +531,42 @@ export default function DashboardPage() {
               <span>Analyzing: {activeDoc.original_filename}</span>
             </span>
           </div>
-          <LegalXRayDashboard
-            overview={xrayOverview}
-            documentTitle={activeDoc.title}
-            documentType={activeDoc.document_type}
-            jurisdiction={activeDoc.jurisdiction || 'Jurisdiction Neutral'}
-          />
+          {aiErrors[`${activeDoc.id}:xray`] && (
+            <AIErrorBanner message={aiErrors[`${activeDoc.id}:xray`]} onRetry={() => handleRetry('xray')} />
+          )}
+          {aiLoading[`${activeDoc.id}:xray`] ? (
+            <GeminiLoadingSpinner feature="Legal X-Ray clause classification" />
+          ) : xrayData ? (
+            <LegalXRayDashboard
+              overview={xrayData}
+              documentTitle={activeDoc.title}
+              documentType={activeDoc.document_type}
+              jurisdiction={activeDoc.jurisdiction || 'Jurisdiction Neutral'}
+            />
+          ) : (
+            <GeminiLoadingSpinner feature="Legal X-Ray clause classification" />
+          )}
         </div>
       )}
 
       {activeTab === 'simplification' && (
-        <SimplificationViewer initialSummary={sampleSummary} glossary={sampleGlossary} rawText={activeDoc.raw_text} />
+        <div className="space-y-6">
+          {aiErrors[`${activeDoc.id}:simplification`] && (
+            <AIErrorBanner message={aiErrors[`${activeDoc.id}:simplification`]} onRetry={() => handleRetry('simplification')} />
+          )}
+          {aiLoading[`${activeDoc.id}:simplification`] ? (
+            <GeminiLoadingSpinner feature="multi-level document simplification" />
+          ) : simplData ? (
+            <SimplificationViewer
+              initialSummary={simplData.summary}
+              allSummaries={simplData.allSummaries}
+              glossary={simplData.glossary}
+              rawText={activeDoc.raw_text}
+            />
+          ) : (
+            <GeminiLoadingSpinner feature="multi-level document simplification" />
+          )}
+        </div>
       )}
 
       {activeTab === 'qa' && (
@@ -320,11 +574,33 @@ export default function DashboardPage() {
       )}
 
       {activeTab === 'timeline' && (
-        <LegalTimelineViewer events={sampleEvents} upcomingDeadlinesCount={1} />
+        <div className="space-y-6">
+          {aiErrors[`${activeDoc.id}:timeline`] && (
+            <AIErrorBanner message={aiErrors[`${activeDoc.id}:timeline`]} onRetry={() => handleRetry('timeline')} />
+          )}
+          {aiLoading[`${activeDoc.id}:timeline`] ? (
+            <GeminiLoadingSpinner feature="legal timeline & deadline extraction" />
+          ) : timelineData ? (
+            <LegalTimelineViewer events={timelineData.events} upcomingDeadlinesCount={timelineData.upcomingDeadlinesCount} />
+          ) : (
+            <GeminiLoadingSpinner feature="legal timeline & deadline extraction" />
+          )}
+        </div>
       )}
 
       {activeTab === 'action' && (
-        <ActionPlanViewer data={sampleActionPlan} />
+        <div className="space-y-6">
+          {aiErrors[`${activeDoc.id}:actionPlan`] && (
+            <AIErrorBanner message={aiErrors[`${activeDoc.id}:actionPlan`]} onRetry={() => handleRetry('actionPlan')} />
+          )}
+          {aiLoading[`${activeDoc.id}:actionPlan`] ? (
+            <GeminiLoadingSpinner feature="action plan & lawyer questions generation" />
+          ) : actionData ? (
+            <ActionPlanViewer data={actionData} />
+          ) : (
+            <GeminiLoadingSpinner feature="action plan & lawyer questions generation" />
+          )}
+        </div>
       )}
     </div>
   );

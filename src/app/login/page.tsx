@@ -237,6 +237,13 @@ export default function LoginPage() {
         return;
       }
 
+      // Unconfirmed email response (HTTP 403) — does NOT count as a failed password attempt
+      if (res.status === 403 || data.emailNotConfirmed) {
+        setLoginError('Email address not confirmed. Please check your inbox for the verification link before signing in.');
+        setIsLoading(false);
+        return;
+      }
+
       if (res.ok && data.success) {
         setFailedLoginCount(0);
         setIsLockedOut(false);
@@ -257,7 +264,7 @@ export default function LoginPage() {
   };
 
   // --- Registration Handler ---
-  const handleRegistrationSubmit = (e: React.FormEvent) => {
+  const handleRegistrationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
 
@@ -303,24 +310,61 @@ export default function LoginPage() {
       return;
     }
 
-    // Registration Success: Register account and redirect!
+    // Registration Success: Register account via Server API!
     const createdEmail = regEmail.trim().toLowerCase();
     const createdPassword = regPassword;
+    const createdName = regName.trim();
+    const createdRole = regRole;
 
-    // Register user in store & attempt Supabase signup
-    registerUserInStore(createdEmail, createdPassword);
-    signUpUser(createdEmail, createdPassword, regRole as any).catch(() => {
-      // Supabase registration fallback if local/demo environment
-    });
+    setIsLoading(true);
 
-    setRegErrors({});
-    handleResetRegistration();
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: createdName,
+          email: createdEmail,
+          password: createdPassword,
+          role: createdRole,
+        }),
+      });
 
-    // BUG A FIX: Switch to Login tab, set login email, BUT ALWAYS CLEAR PASSWORD FIELD!
-    setLoginEmail(createdEmail);
-    setLoginPassword(''); // Password is NOT pre-filled or stored in state!
-    setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Please enter your password to sign in.`);
-    setActiveTab('login');
+      const data = await res.json();
+      setIsLoading(false);
+
+      if (!res.ok || data.error) {
+        setRegErrors({ email: data.error || 'Registration failed. Please try again.' });
+        return;
+      }
+
+      // Register in browser local store for fallback
+      registerUserInStore(createdEmail, createdPassword);
+
+      setRegErrors({});
+      handleResetRegistration();
+
+      // BUG A FIX: Switch to Login tab, set login email, BUT ALWAYS CLEAR PASSWORD FIELD!
+      setLoginEmail(createdEmail);
+      setLoginPassword(''); // Password is NOT pre-filled or stored in state!
+
+      if (data.emailConfirmationRequired) {
+        setLoginSuccessMsg(`Account created! We've sent a verification link to ${createdEmail}. Please check your inbox and confirm your email before signing in.`);
+      } else {
+        setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Please enter your password to sign in.`);
+      }
+
+      setActiveTab('login');
+    } catch {
+      setIsLoading(false);
+      registerUserInStore(createdEmail, createdPassword);
+      setRegErrors({});
+      handleResetRegistration();
+      setLoginEmail(createdEmail);
+      setLoginPassword('');
+      setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Please enter your password to sign in.`);
+      setActiveTab('login');
+    }
   };
 
   const handleForgotPasswordSubmit = (e: React.FormEvent) => {

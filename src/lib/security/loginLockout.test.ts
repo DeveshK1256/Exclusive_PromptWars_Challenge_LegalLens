@@ -1,4 +1,4 @@
-﻿// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   checkLockoutStatus,
@@ -130,5 +130,49 @@ describe('Persistent Login Lockout & Security Audit Suite', () => {
     status = await checkLockoutStatus(email, clientId);
     expect(status.attemptCount).toBe(0);
     expect(status.isLocked).toBe(false);
+  });
+});
+
+import { registerUserServer, verifyUserCredentialsServer, clearUserRegistryForTesting } from './userRegistry';
+
+describe('Server-Side User Registry & New Account Verification Suite', () => {
+  beforeEach(() => {
+    clearUserRegistryForTesting();
+  });
+
+  it('allows newly registered account to sign in with its own credentials', async () => {
+    const newEmail = 'new-user-test-123@example.com';
+    const newPass = 'ValidPassword123!';
+
+    // Register user on server
+    await registerUserServer(newEmail, newPass, 'Test User', 'Employee', true);
+
+    // Verify credentials immediately
+    const verifyResult = verifyUserCredentialsServer(newEmail, newPass);
+    expect(verifyResult.valid).toBe(true);
+    expect(verifyResult.user?.email).toBe(newEmail);
+  });
+
+  it('handles email normalization (case insensitive & trimming)', async () => {
+    const emailWithSpaces = '  NewAccountCaseTest@Example.Com  ';
+    const password = 'ValidPassword123!';
+
+    await registerUserServer(emailWithSpaces, password, 'Case User', 'Employee', true);
+
+    // Attempt signin with lowercase / trimmed variant
+    const verifyResult = verifyUserCredentialsServer('newaccountcasetest@example.com', password);
+    expect(verifyResult.valid).toBe(true);
+  });
+
+  it('returns email_not_confirmed when user is registered but unconfirmed', async () => {
+    const unconfirmedEmail = 'unconfirmed@example.com';
+    const password = 'ValidPassword123!';
+
+    // Register user with isConfirmed = false
+    await registerUserServer(unconfirmedEmail, password, 'Unconfirmed User', 'Tenant', false);
+
+    const verifyResult = verifyUserCredentialsServer(unconfirmedEmail, password);
+    expect(verifyResult.valid).toBe(false);
+    expect(verifyResult.reason).toBe('email_not_confirmed');
   });
 });

@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shield, Mail, Lock, User, ArrowRight, CheckCircle2, AlertTriangle, RefreshCw, Eye, EyeOff, HelpCircle, X, LogIn } from 'lucide-react';
-import { signInUser, signUpUser } from '@/lib/auth';
+import { Shield, Mail, Lock, User, ArrowRight, CheckCircle2, AlertTriangle, RefreshCw, Eye, EyeOff, HelpCircle, X, LogIn, Check } from 'lucide-react';
+import { signInUser, signUpUser, validatePasswordComplexity } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,6 +32,9 @@ export default function LoginPage() {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
+
+  // Real-time password complexity evaluation (Bug B)
+  const passwordComplexity = validatePasswordComplexity(regPassword).rules;
 
   // Registered account store (persists registered accounts in localStorage for client-side demo auth)
   const getRegisteredUserStore = (): Record<string, string> => {
@@ -203,7 +206,7 @@ export default function LoginPage() {
     setIsLoading(false);
   };
 
-  // --- Registration Handler (Redirects to Login Page after Account Creation) ---
+  // --- Registration Handler ---
   const handleRegistrationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
@@ -234,9 +237,10 @@ export default function LoginPage() {
       errors.email = 'An account with this email address already exists. Please sign in or use another email.';
     }
 
-    // TC_REG_004: Password strength minimum
-    if (regPassword && regPassword.length < 8) {
-      errors.password = 'Password must be at least 8 characters long.';
+    // Bug B: Strict Password Complexity Enforcement (5 Rules)
+    const complexity = validatePasswordComplexity(regPassword);
+    if (regPassword && !complexity.valid) {
+      errors.password = complexity.errors.join(' ');
     }
 
     // TC_REG_005: Password match check
@@ -249,7 +253,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Registration Success: Register account and pre-fill login email!
+    // Registration Success: Register account and redirect!
     const createdEmail = regEmail.trim().toLowerCase();
     const createdPassword = regPassword;
 
@@ -262,10 +266,10 @@ export default function LoginPage() {
     setRegErrors({});
     handleResetRegistration();
 
-    // Switch to Login tab and populate credentials with success message!
+    // BUG A FIX: Switch to Login tab, set login email, BUT ALWAYS CLEAR PASSWORD FIELD!
     setLoginEmail(createdEmail);
-    setLoginPassword(createdPassword);
-    setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Click Sign In to log into your new workspace.`);
+    setLoginPassword(''); // Password is NOT pre-filled or stored in state!
+    setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Please enter your password to sign in.`);
     setActiveTab('login');
   };
 
@@ -526,21 +530,32 @@ export default function LoginPage() {
             </div>
             {regErrors.password && <p className="text-[11px] text-red-600 dark:text-red-400">{regErrors.password}</p>}
 
-            {/* Password Strength Indicator */}
-            {regPassword && (
-              <div className="pt-1 space-y-1">
-                <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400">
-                  <span>Password Strength:</span>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">{passwordStrength.label}</span>
+            {/* Real-Time Interactive Password Complexity Checklist (Bug B) */}
+            <div className="mt-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5">
+              <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Password Requirements:</p>
+              <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                <div className={`flex items-center gap-1.5 transition-colors ${passwordComplexity.minLength ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <Check className={`w-3.5 h-3.5 ${passwordComplexity.minLength ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 opacity-40'}`} />
+                  <span>8+ characters</span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800">
-                  <div
-                    className={`h-full transition-all duration-300 ${passwordStrength.color}`}
-                    style={{ width: `${passwordStrength.percent}%` }}
-                  />
+                <div className={`flex items-center gap-1.5 transition-colors ${passwordComplexity.hasUppercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <Check className={`w-3.5 h-3.5 ${passwordComplexity.hasUppercase ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 opacity-40'}`} />
+                  <span>Uppercase (A-Z)</span>
+                </div>
+                <div className={`flex items-center gap-1.5 transition-colors ${passwordComplexity.hasLowercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <Check className={`w-3.5 h-3.5 ${passwordComplexity.hasLowercase ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 opacity-40'}`} />
+                  <span>Lowercase (a-z)</span>
+                </div>
+                <div className={`flex items-center gap-1.5 transition-colors ${passwordComplexity.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <Check className={`w-3.5 h-3.5 ${passwordComplexity.hasNumber ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 opacity-40'}`} />
+                  <span>Number (0-9)</span>
+                </div>
+                <div className={`flex items-center gap-1.5 col-span-2 transition-colors ${passwordComplexity.hasSpecialChar ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <Check className={`w-3.5 h-3.5 ${passwordComplexity.hasSpecialChar ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 opacity-40'}`} />
+                  <span>Special character (!@#$%^&*)</span>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Confirm Password Field */}

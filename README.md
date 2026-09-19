@@ -102,7 +102,23 @@ The challenge lists 7 potential use cases. **LegalLens AI implements every singl
 | **Google Gemini `gemini-2.0-flash-exp`** | Grounded Document Q&A answers — generates responses strictly grounded to retrieved document chunks with traceable citations |
 | **Google `gemini-embedding-001`** | Generates vector embeddings for all document chunks; powers cosine similarity retrieval for Q&A; O(1) LRU embedding cache (max 500 entries) eliminates redundant API calls |
 
-All Gemini calls are server-side only (Next.js Server Actions / Route Handlers). The `GEMINI_API_KEY` is never exposed to the browser.
+All Gemini calls are server-side only (Next.js Route Handlers). The `GEMINI_API_KEY` is never exposed to the browser.
+
+### 🔥 Real-Time Gemini API Calls — Every Dashboard Tab
+
+Every analysis tab in the dashboard triggers a **live, real-time Gemini API call** when opened. There is no pre-computed or cached mock data — the user sees a "Gemini AI is analysing…" loading spinner while the model processes their document:
+
+| Dashboard Tab | API Route Called | Gemini Agent Invoked | What It Returns |
+| :--- | :--- | :--- | :--- |
+| **Analysis Report (X-Ray)** | `POST /api/documents/[id]/xray` | `runLegalXRayAgent` | AI-classified findings by severity + finding_kind with source citations |
+| **Simplification** | `POST /api/documents/[id]/simplify` | `runSimplificationAgent` | 4-level summaries + glossary + obligations via `Promise.all` |
+| **Grounded Q&A** | `POST /api/documents/[id]/qa` | `runGroundedQAAgent` | Vector-retrieved, citation-grounded answers |
+| **Timeline** | `POST /api/documents/[id]/timeline` | `runLegalTimelineAgent` | AI-extracted dates, deadlines, and milestones |
+| **Action Plan** | `POST /api/documents/[id]/action-plan` | `runActionPlanAgent` | Checklist, lawyer questions, and action items |
+| **Personal Impact** | `POST /api/documents/[id]/impact` | `runPersonalImpactAgent` | Role-aware reframing of findings |
+| **Contract Comparison** | `POST /api/documents/compare` | `runComparisonAgent` | Semantic clause matching + missing clause detection |
+
+Results are cached client-side per document ID so switching tabs doesn't re-fetch — but the **initial analysis for each document is always a live Gemini call**.
 
 ---
 
@@ -215,56 +231,8 @@ LegalLens AI maps 1-to-1 against all 7 potential use cases specified in the chal
 4. **Jurisdiction-Neutral Language:** Clauses are flagged using jurisdiction-neutral phrasing ("potential attention area") rather than definitive statutory claims unless explicitly supported.
 5. **Row-Level Security (RLS):** 13-entity Supabase RLS policies ensuring complete multi-tenant data isolation across all user documents, findings, shared links, and annotations.
 
----
-
-## 🛠️ Tech Stack & Architecture
-
-- **Frontend:** Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Lucide Icons, 3D Spatial Canvas
-- **AI & Reasoning:** Google Gemini (`gemini-3.6-flash` / `gemini-3.1-pro-preview`)
-- **Document Processing:** `pdf-parse`, `mammoth` (DOCX)
-- **Database & Auth:** Supabase PostgreSQL with 13 Row-Level Security (RLS) policies
-- **Testing:** 
-  - **Vitest Unit & Integration:** 171 / 171 tests passing (28 test files)
-  - **Playwright E2E Regression:** 19 / 19 E2E browser tests passing
-- **Deployment:** Vercel Production Deployment
-
----
-
-## 🚦 Getting Started (Local Development)
-
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd "Challenge 1_LegalLens"
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables:**
-   Create `.env.local`:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL="https://your-supabase-url.supabase.co"
-   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
-   GEMINI_API_KEY="your-gemini-api-key"
-   ```
-
-4. **Run the local development server:**
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:3000` in your browser.
-
-5. **Run tests & build:**
-   ```bash
-   npm test
-   npm run build
-   ```
-
----
 
 ## 📜 Disclaimer
 
-LegalLens AI provides general legal information and document navigation assistance. It does **not** provide qualified legal advice and does not replace a licensed attorney.
+LegalLens AI provides general legal information and document navigation assistance. It does **not** provide qualified legal advice and does not replace a licensed attorney. Users are encouraged to consult a qualified legal professional for advice specific to their situation.
+

@@ -41,8 +41,10 @@ export async function signUpUser(email: string, password: string, contextRole?: 
     throw new Error('Email and password are required for registration.');
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!emailRegex.test(cleanEmail)) {
     throw new Error('Invalid email address format.');
   }
 
@@ -53,7 +55,7 @@ export async function signUpUser(email: string, password: string, contextRole?: 
 
   const supabase = createClient();
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: cleanEmail,
     password,
     options: {
       data: {
@@ -71,9 +73,11 @@ export async function signInUser(email: string, password: string) {
     throw new Error('Email and password are required for sign in.');
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: cleanEmail,
     password,
   });
 

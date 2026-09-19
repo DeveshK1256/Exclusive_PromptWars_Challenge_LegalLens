@@ -9,9 +9,50 @@ interface ActionPlanViewerProps {
 }
 
 export const ActionPlanViewer: React.FC<ActionPlanViewerProps> = ({ data }) => {
+  const rawChecklist = Array.isArray(data?.checklist) ? data.checklist : [];
+  const normalizedChecklist: BeforeYouSignItem[] = rawChecklist.map((item: any, idx: number) => ({
+    id: item.id || `chk_${idx}`,
+    title: item.title || item.text || item.heading || 'Checklist Item',
+    recommendation: item.recommendation || item.description || item.contextualRationale || 'Review provision with legal professional.',
+    severity: (item.severity === 'red' || item.severity === 'orange') ? item.severity : 'yellow',
+    sourceReference: item.sourceReference || item.source_reference || 'Source Document',
+    checked: !!item.checked,
+  }));
+
+  const rawQuestions = Array.isArray(data?.lawyerQuestions)
+    ? data.lawyerQuestions
+    : Array.isArray((data as any)?.questionsForLawyer)
+    ? (data as any).questionsForLawyer
+    : [];
+  const normalizedQuestions: LawyerQuestionCard[] = rawQuestions.map((q: any, idx: number) => ({
+    id: q.id || `q_${idx}`,
+    document_id: q.document_id || 'doc',
+    question: q.question || q.questionText || 'Question for legal counsel',
+    reason: q.reason || q.contextualRationale || 'Clarify terms and scope.',
+    priority: (q.priority === 'high' || q.priority === 'low') ? q.priority : 'medium',
+    related_finding_id: q.related_finding_id || null,
+    source_reference: q.source_reference || q.sourceReference || 'Source Document',
+    created_at: q.created_at || '2026-01-01T00:00:00.000Z',
+  }));
+
+  const rawTasks = Array.isArray(data?.actionItems) ? data.actionItems : [];
+  const normalizedTasks: ActionTaskCard[] = rawTasks.map((t: any, idx: number) => ({
+    id: t.id || `tsk_${idx}`,
+    action_plan_id: t.action_plan_id || 'ap_1',
+    title: t.title || t.name || 'Task Item',
+    description: t.description || '',
+    priority: (t.priority === 'high' || t.priority === 'low') ? t.priority : 'medium',
+    status: (t.status === 'completed' || t.status === 'in_progress') ? t.status : 'pending',
+    due_date: t.due_date || t.deadline || null,
+    related_finding_id: t.related_finding_id || null,
+    source_reference: t.source_reference || t.sourceReference || 'Source Document',
+    created_at: t.created_at || '2026-01-01T00:00:00.000Z',
+    updated_at: t.updated_at || '2026-01-01T00:00:00.000Z',
+  }));
+
   const [activeTab, setActiveTab] = useState<'checklist' | 'questions' | 'tasks'>('checklist');
-  const [checklist, setChecklist] = useState<BeforeYouSignItem[]>(data.checklist || []);
-  const [tasks, setTasks] = useState<ActionTaskCard[]>(data.actionItems || []);
+  const [checklist, setChecklist] = useState<BeforeYouSignItem[]>(normalizedChecklist);
+  const [tasks, setTasks] = useState<ActionTaskCard[]>(normalizedTasks);
 
   const toggleChecklist = (id: string) => {
     setChecklist(prev =>
@@ -78,7 +119,7 @@ export const ActionPlanViewer: React.FC<ActionPlanViewerProps> = ({ data }) => {
             }`}
           >
             <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
-            Lawyer Questions ({data.lawyerQuestions.length})
+            Lawyer Questions ({normalizedQuestions.length})
           </button>
           <button
             type="button"
@@ -213,12 +254,12 @@ export const ActionPlanViewer: React.FC<ActionPlanViewerProps> = ({ data }) => {
           </div>
 
           <div className="space-y-3">
-            {data.lawyerQuestions.length === 0 ? (
+            {normalizedQuestions.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-xs text-slate-500 dark:text-slate-400">
                 No specific lawyer questions were generated for this document.
               </div>
             ) : (
-              data.lawyerQuestions.map((q, idx) => (
+              normalizedQuestions.map((q, idx) => (
                 <div key={q.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3 shadow-sm">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -232,7 +273,7 @@ export const ActionPlanViewer: React.FC<ActionPlanViewerProps> = ({ data }) => {
                             : 'bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-500/20'
                         }`}
                       >
-                        [{q.priority.toUpperCase()} Priority]
+                        [{(q.priority || 'medium').toUpperCase()} Priority]
                       </span>
                       <h4 className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
                         Q{idx + 1}: {q.question}
@@ -310,7 +351,7 @@ export const ActionPlanViewer: React.FC<ActionPlanViewerProps> = ({ data }) => {
                                 : 'bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-500/20'
                             }`}
                           >
-                            [{task.priority.toUpperCase()} Priority]
+                            [{(task.priority || 'medium').toUpperCase()} Priority]
                           </span>
                           <h4 className={`text-sm font-bold text-slate-900 dark:text-slate-100 ${task.status === 'completed' ? 'line-through text-slate-400 dark:text-slate-400' : ''}`}>
                             {task.title}

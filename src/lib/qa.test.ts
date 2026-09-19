@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runGroundedQAAgent } from './qa/qaAgent';
-import { ChunkItem } from './intelligence/types';
+import { ExtractedChunkItem as ChunkItem } from './intelligence/types';
 import { DOCUMENT_CONFIG } from './config';
 
 describe('Sprint 6 — Grounded Document Q&A & Zero-Hallucination Gate Test Suite', { timeout: 60000 }, () => {
@@ -15,6 +15,7 @@ describe('Sprint 6 — Grounded Document Q&A & Zero-Hallucination Gate Test Suit
       section_id: 'sec_1',
       content: 'This Non-Disclosure Agreement is executed between Acme Corp and Beta LLC on January 15, 2026. Either party may terminate this agreement upon 30 days written notice.',
       chunk_index: 0,
+      embedding_reference: 'emb_1',
       page_start: 1,
       page_end: 1,
       token_count: 35,
@@ -26,6 +27,7 @@ describe('Sprint 6 — Grounded Document Q&A & Zero-Hallucination Gate Test Suit
       section_id: 'sec_2',
       content: 'SECTION 2: INDEMNIFICATION. Each party agrees to indemnify and hold harmless the other from third-party financial claims resulting from contract breach.',
       chunk_index: 1,
+      embedding_reference: 'emb_2',
       page_start: 2,
       page_end: 2,
       token_count: 30,
@@ -72,6 +74,7 @@ describe('Sprint 6 — Grounded Document Q&A & Zero-Hallucination Gate Test Suit
         section_id: 'Section 1: Data Collection & Permissions',
         content: 'We collect device model, crash logs, IP address, browsing activity, and precise GPS location data to personalize services.',
         chunk_index: 0,
+        embedding_reference: 'emb_tos1',
         page_start: 1,
         page_end: 1,
         token_count: 30,
@@ -83,6 +86,7 @@ describe('Sprint 6 — Grounded Document Q&A & Zero-Hallucination Gate Test Suit
         section_id: 'Section 2: Mandatory Arbitration & Jury Waiver',
         content: 'All legal disputes must be resolved through binding individual arbitration. You waive any right to jury trial.',
         chunk_index: 1,
+        embedding_reference: 'emb_tos2',
         page_start: 1,
         page_end: 1,
         token_count: 25,
@@ -94,9 +98,10 @@ describe('Sprint 6 — Grounded Document Q&A & Zero-Hallucination Gate Test Suit
         section_id: 'Section 3: User Obligations & Default Penalties',
         content: 'User obligations include maintaining confidentiality and prompt payment. Failure to adhere triggers immediate suspension penalties and account termination.',
         chunk_index: 2,
+        embedding_reference: 'emb_tos3',
         page_start: 1,
         page_end: 1,
-        token_count: 28,
+        token_count: 25,
       },
     ];
 

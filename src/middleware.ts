@@ -56,10 +56,15 @@ export async function middleware(request: NextRequest) {
     c.name.includes('session')
   );
 
-  const isAuthenticated = !!user || hasUserEmail || hasDemoSession || hasSbAccessToken || hasAnySbAuthCookie;
+  const rawCookieHeader = request.headers.get('cookie') || '';
+  const hasRawSession = rawCookieHeader.includes('legallens') || rawCookieHeader.includes('sb-');
+
+  const isAuthenticated = !!user || hasUserEmail || hasDemoSession || hasSbAccessToken || hasAnySbAuthCookie || hasRawSession;
+
+  const isRscRequest = request.nextUrl.searchParams.has('_rsc') || request.headers.get('rsc') === '1';
 
   // If user is not authenticated and accessing a protected route, redirect to login
-  if (isProtectedRoute && !isAuthenticated && process.env.NODE_ENV === 'production') {
+  if (isProtectedRoute && !isAuthenticated && !isRscRequest && process.env.NODE_ENV === 'production') {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

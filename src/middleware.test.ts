@@ -25,11 +25,11 @@ describe('Middleware & Protected Routes Test Suite', () => {
   const originalEnv = process.env.NODE_ENV;
 
   beforeEach(() => {
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
+    (process.env as any).NODE_ENV = originalEnv;
   });
 
   it('redirects unauthenticated request to /dashboard to /login', async () => {

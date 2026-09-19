@@ -17,11 +17,13 @@ import { DocumentList } from '../components/documents/DocumentList';
 import SettingsPage from '../app/settings/page';
 import { LegalDisclaimerBanner } from '../components/ui/LegalDisclaimerBanner';
 
-import { LegalXRayOverview, DocumentSummary, GlossaryTerm, Document } from '@/types/database';
+import { DocumentSummary, GlossaryTerm, Document } from '@/types/database';
+import { LegalXRayOverview } from '@/lib/xray/types';
 import { ActionPlanResult } from '@/lib/action/types';
 
 // Mock data fixtures for DOM rendering
 const mockXRayData: LegalXRayOverview = {
+  document_id: 'doc_sample_1',
   document_version_id: 'doc_v1',
   high_impact_count: 1,
   attention_area_count: 1,
@@ -32,8 +34,10 @@ const mockXRayData: LegalXRayOverview = {
   findings: [
     {
       id: 'f1',
+      document_id: 'doc_sample_1',
       document_version_id: 'doc_v1',
-      section_label: 'SECTION 3',
+      clause_id: 'cls_1',
+      category: 'Non-Compete',
       finding_kind: 'action_required',
       severity: 'red',
       finding_type: 'recommendation',
@@ -41,14 +45,14 @@ const mockXRayData: LegalXRayOverview = {
       description: 'Restricts employment nationwide for 3 years.',
       source_reference: 'Employee agrees not to engage in competing business nationwide for 36 months.',
       confidence: 0.96,
-      actionable_step: 'Negotiate geographic scope',
-      suggested_question: 'Can scope be limited to 12 months in home state?',
       created_at: '2026-09-14T00:00:00Z',
     },
     {
       id: 'f2',
+      document_id: 'doc_sample_1',
       document_version_id: 'doc_v1',
-      section_label: 'SECTION 5',
+      clause_id: 'cls_2',
+      category: 'Termination',
       finding_kind: 'deadline',
       severity: 'orange',
       finding_type: 'fact',
@@ -56,14 +60,14 @@ const mockXRayData: LegalXRayOverview = {
       description: 'Notice period reduced from 30 days to 14 days.',
       source_reference: 'Either party may terminate upon 14 days written notice.',
       confidence: 0.92,
-      actionable_step: 'Request 30-day notice period',
-      suggested_question: 'Why was the notice period shortened?',
       created_at: '2026-09-14T00:00:00Z',
     },
     {
       id: 'f3',
+      document_id: 'doc_sample_1',
       document_version_id: 'doc_v1',
-      section_label: 'SECTION 1',
+      clause_id: 'cls_3',
+      category: 'Compensation',
       finding_kind: 'informational',
       severity: 'green',
       finding_type: 'fact',
@@ -71,68 +75,81 @@ const mockXRayData: LegalXRayOverview = {
       description: 'Annual salary set at $140,000.',
       source_reference: 'Base salary shall be $140,000 per annum.',
       confidence: 0.98,
-      actionable_step: 'Confirm bonus eligibility',
-      suggested_question: 'When is bonus eligibility evaluated?',
       created_at: '2026-09-14T00:00:00Z',
     },
   ],
 };
 
 const mockActionPlan: ActionPlanResult = {
-  documentId: 'doc_v1',
-  documentTitle: 'Employment_Agreement_2026.pdf',
+  actionPlan: {
+    id: 'ap_1',
+    user_id: 'user_demo',
+    document_id: 'doc_v1',
+    title: 'Action Plan for Employment Agreement',
+    created_at: '2026-09-14T00:00:00Z',
+    updated_at: '2026-09-14T00:00:00Z',
+  },
   checklist: [
     {
       id: 'c1',
       title: 'Clarify Non-Compete Geographic Radius',
-      description: 'Confirm whether nationwide scope applies to remote work.',
+      recommendation: 'Confirm whether nationwide scope applies to remote work.',
       severity: 'red',
       checked: false,
-      source_reference: 'SECTION 3: Non-Compete',
+      sourceReference: 'SECTION 3: Non-Compete',
     },
   ],
   lawyerQuestions: [
     {
       id: 'q1',
-      category: 'Non-Compete',
+      document_id: 'doc_v1',
       question: 'Is a 3-year nationwide non-compete enforceable in California?',
-      context: 'California BPC 16600 generally voids non-competes.',
-      suggested_ask: 'Ask HR to strike section 3 entirely.',
+      reason: 'California BPC 16600 generally voids non-competes.',
+      related_finding_id: 'f1',
       priority: 'high',
       source_reference: 'SECTION 3',
+      created_at: '2026-09-14T00:00:00Z',
     },
   ],
   actionItems: [
     {
       id: 't1',
+      action_plan_id: 'ap_1',
       title: 'Request 30-day written notice amendment',
       description: 'Submit written request to HR prior to signing.',
       priority: 'high',
       status: 'pending',
-      deadline: 'Before Signing',
+      due_date: 'Before Signing',
+      related_finding_id: 'f2',
       source_reference: 'SECTION 5',
+      created_at: '2026-09-14T00:00:00Z',
+      updated_at: '2026-09-14T00:00:00Z',
     },
   ],
 };
 
 const mockInitialSummary: DocumentSummary = {
   id: 'sum_1',
+  document_id: 'doc_v1',
   document_version_id: 'doc_v1',
   complexity_level: 'very_simple',
-  executive_summary: 'This is a clear plain-English summary of your employment agreement.',
+  summary_text: 'This is a clear plain-English summary of your employment agreement.',
   key_takeaways: ['3 year non-compete restriction', '14 days notice required for termination'],
-  what_it_means_for_you: 'You cannot work for a competitor for 3 years after leaving.',
+  obligations_summary: 'You cannot work for a competitor for 3 years after leaving.',
+  confidence: 0.95,
   created_at: '2026-09-14T00:00:00Z',
 };
 
 const mockGlossary: GlossaryTerm[] = [
   {
     id: 'g1',
+    document_id: 'doc_v1',
     document_version_id: 'doc_v1',
     term: 'Non-Compete',
-    plain_definition: 'A clause that stops you from working for a competitor.',
-    context_in_document: 'SECTION 3: Employee agrees not to compete...',
-    confidence: 0.95,
+    plain_language_definition: 'A clause that stops you from working for a competitor.',
+    contextual_meaning: 'SECTION 3: Employee agrees not to compete...',
+    source_reference: 'SECTION 3',
+    created_at: '2026-09-14T00:00:00Z',
   },
 ];
 
@@ -191,6 +208,7 @@ describe('Sprint 11 — Extended 10-Component Rendered DOM Accessibility & WCAG 
           events={[
             {
               id: 'e1',
+              document_id: 'doc_sample_1',
               document_version_id: 'doc_v1',
               event_date: '2026-10-01',
               event_type: 'effective_date',
@@ -198,7 +216,7 @@ describe('Sprint 11 — Extended 10-Component Rendered DOM Accessibility & WCAG 
               description: 'Contract becomes effective.',
               source_reference: 'SECTION 1',
               confidence: 0.95,
-              is_deadline: false,
+              created_at: '2026-09-14T00:00:00Z',
             },
           ]}
         />

@@ -16,25 +16,24 @@ import {
 import { ContractComparisonResult, ComparisonFinding } from '@/lib/comparison/types';
 
 export default function ComparePage() {
-  const [docAId, setDocAId] = useState('doc_emp_2026_v1');
-  const [docBId, setDocBId] = useState('doc_emp_2026_v2');
-  const [docATitle, setDocATitle] = useState('Standard_Employment_Agreement_2026.pdf');
-  const [docBTitle, setDocBTitle] = useState('Revised_Offer_Letter_2026.pdf');
+  const [docAId, setDocAId] = useState('doc_a');
+  const [docBId, setDocBId] = useState('doc_b');
+  const [docATitle, setDocATitle] = useState('Document A (Original)');
+  const [docBTitle, setDocBTitle] = useState('Document B (Revised)');
 
-  const [rawTextA, setRawTextA] = useState(
-    `EMPLOYMENT AGREEMENT (Original Version)
-1. Compensation: Annual salary of $120,000 paid bi-weekly.
-2. Termination Notice: Either party may terminate this agreement upon 30 days written notice.
-3. Non-Compete: Employee agrees not to engage in competing business within 25 miles of San Francisco for 6 months post-employment.`
-  );
+  const [rawTextA, setRawTextA] = useState('');
+  const [rawTextB, setRawTextB] = useState('');
 
-  const [rawTextB, setRawTextB] = useState(
-    `EMPLOYMENT AGREEMENT (Revised Version)
-1. Compensation: Annual salary of $120,000 paid bi-weekly plus target bonus of $15,000.
-2. Termination Notice: Either party may terminate this agreement upon 14 days written notice.
-3. Non-Compete: Employee agrees not to engage in competing business worldwide for 24 months post-employment.
-4. Remote Work: Employee is permitted 2 days per week flexible remote work with manager approval.`
-  );
+  const handleLoadSampleDemo = () => {
+    setDocATitle('Standard_Employment_Agreement_2026.pdf');
+    setDocBTitle('Revised_Offer_Letter_2026.pdf');
+    setRawTextA(
+      `EMPLOYMENT AGREEMENT (Original Version)\n1. Compensation: Annual salary of $120,000 paid bi-weekly.\n2. Termination Notice: Either party may terminate this agreement upon 30 days written notice.\n3. Non-Compete: Employee agrees not to engage in competing business within 25 miles of San Francisco for 6 months post-employment.`
+    );
+    setRawTextB(
+      `EMPLOYMENT AGREEMENT (Revised Version)\n1. Compensation: Annual salary of $120,000 paid bi-weekly plus target bonus of $15,000.\n2. Termination Notice: Either party may terminate this agreement upon 14 days written notice.\n3. Non-Compete: Employee agrees not to engage in competing business worldwide for 24 months post-employment.\n4. Remote Work: Employee is permitted 2 days per week flexible remote work with manager approval.`
+    );
+  };
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -121,25 +120,34 @@ export default function ComparePage() {
             Compare two legal document versions side-by-side to highlight clause modifications, risk alterations, and key differences.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleRunComparison}
-          disabled={isLoading}
-          aria-label="Run side-by-side contract comparison"
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer"
-        >
-          {isLoading ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-              Comparing Contracts...
-            </>
-          ) : (
-            <>
-              <GitCompare className="w-4 h-4" aria-hidden="true" />
-              Run Side-by-Side Comparison
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleLoadSampleDemo}
+            className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+          >
+            Load Demo Contracts
+          </button>
+          <button
+            type="button"
+            onClick={handleRunComparison}
+            disabled={isLoading || (!rawTextA.trim() && !rawTextB.trim())}
+            aria-label="Run side-by-side contract comparison"
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg shadow-lg flex items-center justify-center gap-2 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 cursor-pointer"
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
+                Comparing Contracts...
+              </>
+            ) : (
+              <>
+                <GitCompare className="w-4 h-4" aria-hidden="true" />
+                Run Side-by-Side Comparison
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {errorMsg && (

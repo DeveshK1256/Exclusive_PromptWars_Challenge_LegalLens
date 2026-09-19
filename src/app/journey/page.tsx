@@ -17,10 +17,20 @@ import {
 import { ContextRole, PersonalImpactResult } from '@/lib/impact/types';
 import { LegalXRayDashboard } from '@/components/xray/LegalXRayDashboard';
 import { LegalXRayOverview } from '@/lib/xray/types';
+import { getStoredDocuments } from '@/lib/documentStorage';
 
 export default function JourneyPage() {
   const [activeStep, setActiveStep] = useState<number>(1);
   const [contextRole, setContextRole] = useState<ContextRole>('Employee');
+  const [hasUserDocs, setHasUserDocs] = useState<boolean>(false);
+  const [showDemoSample, setShowDemoSample] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const docs = getStoredDocuments();
+      setHasUserDocs(docs.length > 0);
+    }
+  }, []);
 
   const [sampleFindings] = useState([
     {
@@ -159,6 +169,41 @@ export default function JourneyPage() {
         </div>
       </div>
 
+      {/* Sample Demo Mode Notification Badge */}
+      {showDemoSample && !hasUserDocs && (
+        <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-3 text-xs text-indigo-700 dark:text-indigo-300 flex items-center justify-between">
+          <span className="font-semibold">Sample Demo Mode — Showing sample document journey preview. Upload a document to analyze your real files.</span>
+          <button onClick={() => setShowDemoSample(false)} className="underline font-bold text-xs">Close Demo Preview</button>
+        </div>
+      )}
+
+      {!hasUserDocs && !showDemoSample ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-4 shadow-sm">
+          <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 rounded-2xl flex items-center justify-center mx-auto">
+            <Compass className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">No Legal Documents Uploaded Yet</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+            Upload a legal document to navigate personalized role-based impact analysis, legal X-ray findings, timelines, and pre-signature checklists.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <a
+              href="/documents"
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+            >
+              Upload Your First Document
+            </a>
+            <button
+              type="button"
+              onClick={() => setShowDemoSample(true)}
+              className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer"
+            >
+              Preview Sample Contract Journey
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Degraded / Fallback Banner */}
       {impactResult?.degraded && (
         <div className="bg-amber-500/10 border border-amber-500/40 rounded-xl p-4 text-amber-900 dark:text-amber-200 text-xs flex items-center gap-3" role="alert" aria-live="assertive">
@@ -371,6 +416,8 @@ export default function JourneyPage() {
           Next Step <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
+        </>
+      )}
     </div>
   );
 }

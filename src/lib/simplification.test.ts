@@ -35,7 +35,6 @@ Each party agrees to indemnify the other against third-party claims. This agreem
       finding_kind: 'action_required',
       confidence: 0.95,
       source_reference: 'Page 1, Section 2',
-      created_at: new Date().toISOString(),
     },
   ];
 

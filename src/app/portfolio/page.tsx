@@ -115,6 +115,24 @@ export default function PortfolioPage() {
           <div className="p-8 text-center text-slate-500">
             Calculating portfolio risk metrics...
           </div>
+        ) : report.totalDocuments === 0 ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-4 shadow-sm">
+            <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 rounded-2xl flex items-center justify-center mx-auto">
+              <PieChart className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">No Documents in Portfolio</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+              Upload legal agreements to calculate aggregate risk scores, determine portfolio grades, and monitor obligations across your entire contract portfolio.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/documents"
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all inline-flex items-center gap-2"
+              >
+                Upload Your First Document
+              </Link>
+            </div>
+          </div>
         ) : (
           <>
             {/* Overall Score & Grade Metric Cards */}

@@ -227,7 +227,6 @@ describe('Sprint 12 — AI Evaluation & Zero-Hallucination Benchmark Regression 
           documentId: doc.id,
           documentVersionId: doc.versionId,
           rawText: doc.rawText,
-          findings: xray.findings,
         });
 
         for (const event of timeline.events) {
@@ -250,11 +249,10 @@ describe('Sprint 12 — AI Evaluation & Zero-Hallucination Benchmark Regression 
           documentId: doc.id,
           documentVersionId: doc.versionId,
           rawText: doc.rawText,
-          findings: xray.findings,
         });
 
         for (const event of timeline.events) {
-          const check = checkDateTraceability('timeline', event.date_text || event.event_title || event.title, doc.rawText);
+          const check = checkDateTraceability('timeline', event.event_date || event.title, doc.rawText);
           expect(check.passed).toBe(true);
         }
       }
@@ -274,7 +272,7 @@ describe('Sprint 12 — AI Evaluation & Zero-Hallucination Benchmark Regression 
         const plan = await runActionPlanAgent({
           documentId: doc.id,
           documentVersionId: doc.versionId,
-          findings: xray.findings,
+          findings: xray.findings.map(f => ({ ...f, severity_level: f.severity })),
           rawText: doc.rawText,
         });
 
@@ -343,7 +341,7 @@ describe('Sprint 12 — AI Evaluation & Zero-Hallucination Benchmark Regression 
           documentId: doc.id,
           documentVersionId: doc.versionId,
           contextRole: 'Employee',
-          findings: xray.findings,
+          findings: xray.findings.map(f => ({ ...f, severity_level: f.severity })),
         });
 
         for (const item of impact.roleSpecificImpacts) {
@@ -426,7 +424,7 @@ describe('Sprint 12 — AI Evaluation & Zero-Hallucination Benchmark Regression 
         documentId: doc.id,
         documentVersionId: doc.versionId,
         contextRole: 'Employee',
-        findings: xray.findings,
+        findings: xray.findings.map(f => ({ ...f, severity_level: f.severity })),
       });
 
       const matchingImpact = impact.roleSpecificImpacts.find((i) => i.finding_id === xray.findings[0].id);

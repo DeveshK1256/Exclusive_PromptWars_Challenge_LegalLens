@@ -43,11 +43,21 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
   rawText = '',
   onLevelChange,
 }) => {
-  const [activeLevel, setActiveLevel] = useState<ComplexityLevel>(initialSummary.complexity_level || 'very_simple');
+  const [activeLevel, setActiveLevel] = useState<ComplexityLevel>(initialSummary?.complexity_level || 'very_simple');
   const [viewMode, setViewMode] = useState<'standard' | 'eli5_split'>('eli5_split');
   const [highlightedSnippet, setHighlightedSnippet] = useState<string | null>(null);
 
-  const currentSummary = allSummaries ? allSummaries[activeLevel] : initialSummary;
+  const safeGlossary = Array.isArray(glossary) ? glossary : [];
+  const currentSummary = (allSummaries && allSummaries[activeLevel])
+    ? allSummaries[activeLevel]
+    : (initialSummary || {
+        complexity_level: 'very_simple',
+        summary_text: '',
+        key_takeaways: [],
+        obligations_summary: '',
+        confidence: 1.0,
+      });
+  const takeaways = Array.isArray(currentSummary?.key_takeaways) ? currentSummary.key_takeaways : [];
 
   const handleLevelSelect = (level: ComplexityLevel) => {
     setActiveLevel(level);
@@ -177,7 +187,7 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
                   <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Click-to-Verify Source References
                   </span>
-                  {glossary.map((g, idx) => (
+                  {safeGlossary.map((g, idx) => (
                     <button
                       key={idx}
                       type="button"
@@ -214,7 +224,7 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
             Key Takeaways
           </h3>
           <ul className="space-y-2.5">
-            {currentSummary.key_takeaways.map((takeaway, idx) => (
+            {takeaways.map((takeaway, idx) => (
               <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                 <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-semibold text-[10px] shrink-0 mt-0.5">
                   {idx + 1}
@@ -245,10 +255,10 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
         <h3 className="text-base font-semibold text-slate-900 dark:text-slate-200 flex items-center gap-2">
           <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-          Key Terms Glossary ({glossary.length} defined terms)
+          Key Terms Glossary ({safeGlossary.length} defined terms)
         </h3>
 
-        {glossary.length === 0 ? (
+        {safeGlossary.length === 0 ? (
           <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">No specialized legal terms detected in this document section.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -262,7 +272,7 @@ export const SimplificationViewer: React.FC<SimplificationViewerProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 text-slate-800 dark:text-slate-300">
-                {glossary.map((g) => (
+                {safeGlossary.map((g) => (
                   <tr key={g.id} className="hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors">
                     <td className="py-3 px-3 font-semibold text-indigo-600 dark:text-indigo-300 whitespace-nowrap">{g.term}</td>
                     <td className="py-3 px-3 text-slate-700 dark:text-slate-300 max-w-xs">{g.plain_language_definition}</td>

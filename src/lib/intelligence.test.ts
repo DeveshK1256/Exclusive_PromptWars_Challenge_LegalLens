@@ -156,7 +156,7 @@ Any legal dispute arising under this lease shall be governed by state arbitratio
 
     expect(agentResult.entities.length).toBeGreaterThan(0);
     agentResult.entities.forEach((ent) => {
-      expect(ent.entity_name).toBeDefined();
+      expect(ent.entity_value).toBeDefined();
       expect(ent.source_reference).toBeDefined();
       expect(ent.confidence).toBeGreaterThanOrEqual(0.0);
       expect(ent.confidence).toBeLessThanOrEqual(1.0);

@@ -19,6 +19,11 @@ export const DEFAULT_SAMPLE_DOC: Document = {
   retention_expires_at: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  raw_text: `EMPLOYMENT & NON-COMPETE AGREEMENT
+1. POSITION & DUTIES: Employee agrees to serve as Senior Software Engineer starting October 1, 2026.
+2. COMPENSATION & TERMINATION: Annual salary of $120,000 paid bi-weekly. Either party may terminate employment by providing 30 days advance written notice.
+3. NON-COMPETE COVENANT: Employee agrees not to engage in competing software business nationwide for 36 months post-employment.
+4. GOVERNING LAW: Governed by the laws of California.`,
 };
 
 /**

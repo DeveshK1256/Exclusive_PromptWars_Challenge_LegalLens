@@ -96,7 +96,7 @@ const SAMPLE_DOCS: Record<string, Document> = {
   },
   employment_contract: {
     id: 'doc_sample_employment',
-    user_id: 'user_demo',
+    user_id: 'demo@legallens.ai',
     title: 'Sample Employment & Non-Compete Agreement',
     original_filename: 'Senior_Engineer_Employment_Agreement.pdf',
     mime_type: 'application/pdf',
@@ -119,7 +119,7 @@ const SAMPLE_DOCS: Record<string, Document> = {
   },
   tos_privacy_policy: {
     id: 'doc_sample_tos',
-    user_id: 'user_demo',
+    user_id: 'demo@legallens.ai',
     title: 'Sample App Terms of Service & Privacy Policy',
     original_filename: 'Global_App_Terms_of_Service_2026.pdf',
     mime_type: 'application/pdf',
@@ -141,7 +141,7 @@ const SAMPLE_DOCS: Record<string, Document> = {
   },
   loan_document: {
     id: 'doc_sample_loan',
-    user_id: 'user_demo',
+    user_id: 'demo@legallens.ai',
     title: 'Sample Personal Loan & Credit Agreement',
     original_filename: 'Personal_Loan_Agreement_2026.pdf',
     mime_type: 'application/pdf',
@@ -237,12 +237,17 @@ export default function DashboardPage() {
     setAILoading(prev => ({ ...prev, [cacheKey]: true }));
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+
     try {
       const res = await fetch(`/api/documents/${doc.id}/xray`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawText: doc.raw_text, jurisdiction: doc.jurisdiction }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const json = await res.json();
       if (res.ok && json.success && json.data) {
         setAICache(prev => ({
@@ -253,8 +258,10 @@ export default function DashboardPage() {
         throw new Error(json.error || 'X-Ray API returned an error');
       }
     } catch (err: any) {
+      clearTimeout(timer);
       setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to run X-Ray' }));
     } finally {
+      clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));
       inflightRef.current.delete(cacheKey);
     }
@@ -267,12 +274,17 @@ export default function DashboardPage() {
     setAILoading(prev => ({ ...prev, [cacheKey]: true }));
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+
     try {
       const res = await fetch(`/api/documents/${doc.id}/simplify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawText: doc.raw_text, level: 'very_simple' }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const json = await res.json();
       if (res.ok && json.success) {
         setAICache(prev => ({
@@ -290,8 +302,10 @@ export default function DashboardPage() {
         throw new Error(json.error || 'Simplification API returned an error');
       }
     } catch (err: any) {
+      clearTimeout(timer);
       setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to simplify' }));
     } finally {
+      clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));
       inflightRef.current.delete(cacheKey);
     }
@@ -304,12 +318,17 @@ export default function DashboardPage() {
     setAILoading(prev => ({ ...prev, [cacheKey]: true }));
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+
     try {
       const res = await fetch(`/api/documents/${doc.id}/timeline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawText: doc.raw_text }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const json = await res.json();
       if (res.ok && json.success && json.data) {
         setAICache(prev => ({
@@ -326,8 +345,10 @@ export default function DashboardPage() {
         throw new Error(json.error || 'Timeline API returned an error');
       }
     } catch (err: any) {
+      clearTimeout(timer);
       setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to extract timeline' }));
     } finally {
+      clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));
       inflightRef.current.delete(cacheKey);
     }
@@ -340,12 +361,17 @@ export default function DashboardPage() {
     setAILoading(prev => ({ ...prev, [cacheKey]: true }));
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+
     try {
       const res = await fetch(`/api/documents/${doc.id}/action-plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawText: doc.raw_text }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
       const json = await res.json();
       if (res.ok && json.success && json.data) {
         setAICache(prev => ({
@@ -356,8 +382,10 @@ export default function DashboardPage() {
         throw new Error(json.error || 'Action Plan API returned an error');
       }
     } catch (err: any) {
+      clearTimeout(timer);
       setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to generate action plan' }));
     } finally {
+      clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));
       inflightRef.current.delete(cacheKey);
     }
@@ -365,17 +393,18 @@ export default function DashboardPage() {
 
   // ── Trigger Gemini fetch when tab or document changes ──────────────────
   useEffect(() => {
-    if (!activeDoc?.raw_text) return;
-    const docCache = aiCache[activeDoc.id] || {};
+    if (!activeDoc) return;
+    const docWithText = activeDoc.raw_text ? activeDoc : { ...activeDoc, raw_text: DEFAULT_SAMPLE_DOC.raw_text };
+    const docCache = aiCache[docWithText.id] || {};
 
-    if (activeTab === 'xray' && !docCache.xray && !aiLoading[`${activeDoc.id}:xray`]) {
-      fetchGeminiXRay(activeDoc);
-    } else if (activeTab === 'simplification' && !docCache.simplification && !aiLoading[`${activeDoc.id}:simplification`]) {
-      fetchGeminiSimplification(activeDoc);
-    } else if (activeTab === 'timeline' && !docCache.timeline && !aiLoading[`${activeDoc.id}:timeline`]) {
-      fetchGeminiTimeline(activeDoc);
-    } else if (activeTab === 'action' && !docCache.actionPlan && !aiLoading[`${activeDoc.id}:actionPlan`]) {
-      fetchGeminiActionPlan(activeDoc);
+    if (activeTab === 'xray' && !docCache.xray && !aiLoading[`${docWithText.id}:xray`]) {
+      fetchGeminiXRay(docWithText);
+    } else if (activeTab === 'simplification' && !docCache.simplification && !aiLoading[`${docWithText.id}:simplification`]) {
+      fetchGeminiSimplification(docWithText);
+    } else if (activeTab === 'timeline' && !docCache.timeline && !aiLoading[`${docWithText.id}:timeline`]) {
+      fetchGeminiTimeline(docWithText);
+    } else if (activeTab === 'action' && !docCache.actionPlan && !aiLoading[`${docWithText.id}:actionPlan`]) {
+      fetchGeminiActionPlan(docWithText);
     }
   }, [activeTab, activeDoc?.id]);
 
@@ -551,41 +580,35 @@ export default function DashboardPage() {
               <span>Analyzing: {activeDoc.original_filename}</span>
             </span>
           </div>
+          {aiLoading[`${activeDoc.id}:xray`] && (
+            <GeminiLoadingSpinner feature="Legal X-Ray analysis" />
+          )}
           {aiErrors[`${activeDoc.id}:xray`] && (
             <AIErrorBanner message={aiErrors[`${activeDoc.id}:xray`]} onRetry={() => handleRetry('xray')} />
           )}
-          {aiLoading[`${activeDoc.id}:xray`] ? (
-            <GeminiLoadingSpinner feature="Legal X-Ray clause classification" />
-          ) : xrayData ? (
-            <LegalXRayDashboard
-              overview={xrayData}
-              documentTitle={activeDoc.title}
-              documentType={activeDoc.document_type}
-              jurisdiction={activeDoc.jurisdiction || 'Jurisdiction Neutral'}
-            />
-          ) : (
-            <GeminiLoadingSpinner feature="Legal X-Ray clause classification" />
-          )}
+          <LegalXRayDashboard
+            overview={xrayData || heuristicXRay}
+            documentTitle={activeDoc.title}
+            documentType={activeDoc.document_type}
+            jurisdiction={activeDoc.jurisdiction || 'Jurisdiction Neutral'}
+          />
         </div>
       )}
 
       {activeTab === 'simplification' && activeDoc && (
         <div className="space-y-6">
+          {aiLoading[`${activeDoc.id}:simplification`] && (
+            <GeminiLoadingSpinner feature="multi-level document simplification" />
+          )}
           {aiErrors[`${activeDoc.id}:simplification`] && (
             <AIErrorBanner message={aiErrors[`${activeDoc.id}:simplification`]} onRetry={() => handleRetry('simplification')} />
           )}
-          {aiLoading[`${activeDoc.id}:simplification`] ? (
-            <GeminiLoadingSpinner feature="multi-level document simplification" />
-          ) : simplData ? (
-            <SimplificationViewer
-              initialSummary={simplData.summary}
-              allSummaries={simplData.allSummaries}
-              glossary={simplData.glossary}
-              rawText={activeDoc.raw_text}
-            />
-          ) : (
-            <GeminiLoadingSpinner feature="multi-level document simplification" />
-          )}
+          <SimplificationViewer
+            initialSummary={simplData?.summary || heuristicSummary}
+            allSummaries={simplData?.allSummaries}
+            glossary={simplData?.glossary || heuristicGlossary}
+            rawText={activeDoc.raw_text}
+          />
         </div>
       )}
 
@@ -595,31 +618,28 @@ export default function DashboardPage() {
 
       {activeTab === 'timeline' && activeDoc && (
         <div className="space-y-6">
+          {aiLoading[`${activeDoc.id}:timeline`] && (
+            <GeminiLoadingSpinner feature="legal timeline & deadline extraction" />
+          )}
           {aiErrors[`${activeDoc.id}:timeline`] && (
             <AIErrorBanner message={aiErrors[`${activeDoc.id}:timeline`]} onRetry={() => handleRetry('timeline')} />
           )}
-          {aiLoading[`${activeDoc.id}:timeline`] ? (
-            <GeminiLoadingSpinner feature="legal timeline & deadline extraction" />
-          ) : timelineData ? (
-            <LegalTimelineViewer events={timelineData.events} upcomingDeadlinesCount={timelineData.upcomingDeadlinesCount} />
-          ) : (
-            <GeminiLoadingSpinner feature="legal timeline & deadline extraction" />
-          )}
+          <LegalTimelineViewer
+            events={timelineData?.events || heuristicEvents}
+            upcomingDeadlinesCount={timelineData?.upcomingDeadlinesCount ?? 1}
+          />
         </div>
       )}
 
       {activeTab === 'action' && activeDoc && (
         <div className="space-y-6">
+          {aiLoading[`${activeDoc.id}:actionPlan`] && (
+            <GeminiLoadingSpinner feature="Action Plan & Checklist" />
+          )}
           {aiErrors[`${activeDoc.id}:actionPlan`] && (
             <AIErrorBanner message={aiErrors[`${activeDoc.id}:actionPlan`]} onRetry={() => handleRetry('actionPlan')} />
           )}
-          {aiLoading[`${activeDoc.id}:actionPlan`] ? (
-            <GeminiLoadingSpinner feature="action plan & lawyer questions generation" />
-          ) : actionData ? (
-            <ActionPlanViewer data={actionData} />
-          ) : (
-            <GeminiLoadingSpinner feature="action plan & lawyer questions generation" />
-          )}
+          <ActionPlanViewer data={actionData || heuristicActionPlan} />
         </div>
       )}
     </div>

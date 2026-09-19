@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, Mail, Lock, User, ArrowRight, CheckCircle2, AlertTriangle, RefreshCw, Eye, EyeOff, HelpCircle, X, LogIn } from 'lucide-react';
+import { signInUser, signUpUser } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,10 +33,28 @@ export default function LoginPage() {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
 
-  // Existing registered email simulation (for TC_REG_006)
-  const existingEmails = ['existing@example.com', 'admin@legallens.ai', 'test@example.com'];
+  // Registered account store (persists registered accounts in localStorage for client-side demo auth)
+  const getRegisteredUserStore = (): Record<string, string> => {
+    if (typeof localStorage === 'undefined') return {};
+    try {
+      const raw = localStorage.getItem('legallens_registered_users');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  };
 
-  // --- Password Strength Meter (TC_REG_004) ---
+  const registerUserInStore = (email: string, pass: string) => {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const store = getRegisteredUserStore();
+      store[email.toLowerCase()] = pass;
+      localStorage.setItem('legallens_registered_users', JSON.stringify(store));
+    } catch {
+      // Ignore
+    }
+  };
+
   const calculatePasswordStrength = (pass: string): { label: 'Weak' | 'Medium' | 'Strong'; color: string; percent: number } => {
     if (!pass) return { label: 'Weak', color: 'bg-slate-700', percent: 0 };
     let score = 0;
@@ -51,7 +70,6 @@ export default function LoginPage() {
 
   const passwordStrength = calculatePasswordStrength(regPassword);
 
-  // --- Reset/Clear Registration Form (TC_REG_009) ---
   const handleResetRegistration = () => {
     setRegName('');
     setRegEmail('');
@@ -83,9 +101,9 @@ export default function LoginPage() {
   }, [router]);
 
   // --- Login Handler ---
-  const performLoginRedirect = (userEmail?: string) => {
+  const performLoginRedirect = (userEmail: string) => {
     setIsLoading(true);
-    const emailToSave = userEmail || loginEmail.trim() || 'demo@legallens.ai';
+    const emailToSave = userEmail.trim().toLowerCase();
     const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
     if (typeof document !== 'undefined') {
       document.cookie = `legallens_demo_session=active; path=/; max-age=86400; SameSite=Lax${isSecure}`;
@@ -107,7 +125,7 @@ export default function LoginPage() {
     }, 150);
   };
 
-  const handleLoginSubmit = (e?: React.FormEvent) => {
+  const handleLoginSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setLoginError(null);
 
@@ -118,33 +136,71 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    // Default to demo credentials if empty when clicking Sign In button
-    const emailToUse = loginEmail.trim() || 'demo@legallens.ai';
-    const passwordToUse = loginPassword || 'Password123!';
+    const emailToUse = loginEmail.trim();
+    const passwordToUse = loginPassword;
+
+    if (!emailToUse || !passwordToUse) {
+      setLoginError('Please enter both your email address and password.');
+      setIsLoading(false);
+      return;
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailToUse)) {
-      setLoginError('Please enter a valid email address.');
+      setLoginError('Please enter a valid email address format.');
       setIsLoading(false);
       return;
     }
 
-    if (passwordToUse === 'wrongpass' || emailToUse.includes('invalid')) {
-      const nextFailed = failedLoginCount + 1;
-      setFailedLoginCount(nextFailed);
-      if (nextFailed >= 5) {
-        setIsLockedOut(true);
-        setLoginError('Account locked due to 5 consecutive failed login attempts.');
-      } else {
-        setLoginError(`Invalid email or password. Attempt ${nextFailed} of 5 before temporary lock.`);
+    // 1. Attempt Real Supabase Authentication First
+    try {
+      const authData = await signInUser(emailToUse, passwordToUse);
+      if (authData?.user) {
+        setFailedLoginCount(0);
+        performLoginRedirect(authData.user.email || emailToUse);
+        return;
       }
-      setIsLoading(false);
+    } catch (supabaseError: any) {
+      // Supabase returned an explicit auth error (e.g. invalid credentials)
+      if (supabaseError?.message && !supabaseError.message.includes('FetchError') && !supabaseError.message.includes('Failed to fetch')) {
+        // Handle failed attempt count
+        const nextFailed = failedLoginCount + 1;
+        setFailedLoginCount(nextFailed);
+        if (nextFailed >= 5) {
+          setIsLockedOut(true);
+          setLoginError('Account locked due to 5 consecutive failed login attempts.');
+        } else {
+          setLoginError(`Invalid email or password. Attempt ${nextFailed} of 5 before temporary lock.`);
+        }
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // 2. Client-side Auth Store Check (for local demo mode / newly registered local users)
+    const cleanEmail = emailToUse.toLowerCase();
+    const registeredStore = getRegisteredUserStore();
+
+    // Default valid demo accounts
+    const isDemoAccount = (cleanEmail === 'demo@legallens.ai' || cleanEmail === 'admin@legallens.ai') && passwordToUse === 'Password123!';
+    const isRegisteredAccount = registeredStore[cleanEmail] && registeredStore[cleanEmail] === passwordToUse;
+
+    if (isDemoAccount || isRegisteredAccount) {
+      setFailedLoginCount(0);
+      performLoginRedirect(cleanEmail);
       return;
     }
 
-    // Success
-    setFailedLoginCount(0);
-    performLoginRedirect(emailToUse);
+    // 3. REJECT ALL UNREGISTERED OR INVALID CREDENTIALS!
+    const nextFailed = failedLoginCount + 1;
+    setFailedLoginCount(nextFailed);
+    if (nextFailed >= 5) {
+      setIsLockedOut(true);
+      setLoginError('Account locked due to 5 consecutive failed login attempts.');
+    } else {
+      setLoginError(`Invalid email or password. Attempt ${nextFailed} of 5 before temporary lock.`);
+    }
+    setIsLoading(false);
   };
 
   // --- Registration Handler (Redirects to Login Page after Account Creation) ---
@@ -173,6 +229,7 @@ export default function LoginPage() {
     }
 
     // TC_REG_006: Duplicate email check
+    const existingEmails = ['existing@example.com', 'admin@legallens.ai', 'test@example.com'];
     if (regEmail.trim() && existingEmails.includes(regEmail.toLowerCase())) {
       errors.email = 'An account with this email address already exists. Please sign in or use another email.';
     }
@@ -192,9 +249,15 @@ export default function LoginPage() {
       return;
     }
 
-    // Registration Success: Pre-fill login email & redirect to Login tab!
-    const createdEmail = regEmail;
+    // Registration Success: Register account and pre-fill login email!
+    const createdEmail = regEmail.trim().toLowerCase();
     const createdPassword = regPassword;
+
+    // Register user in store & attempt Supabase signup
+    registerUserInStore(createdEmail, createdPassword);
+    signUpUser(createdEmail, createdPassword, regRole as any).catch(() => {
+      // Supabase registration fallback if local/demo environment
+    });
 
     setRegErrors({});
     handleResetRegistration();
@@ -202,7 +265,7 @@ export default function LoginPage() {
     // Switch to Login tab and populate credentials with success message!
     setLoginEmail(createdEmail);
     setLoginPassword(createdPassword);
-    setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Please click Sign In to continue.`);
+    setLoginSuccessMsg(`Account created successfully for ${createdEmail}! Click Sign In to log into your new workspace.`);
     setActiveTab('login');
   };
 

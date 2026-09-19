@@ -59,6 +59,7 @@ export const Navbar: React.FC = () => {
   const handleSignOut = async () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('legallens_user_email');
+      localStorage.removeItem('legallens_active_document');
     }
     if (typeof document !== 'undefined') {
       document.cookie = "legallens_demo_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";

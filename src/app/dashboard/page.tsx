@@ -166,8 +166,8 @@ const SAMPLE_DOCS: Record<string, Document> = {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('upload');
-  const [documents, setDocuments] = useState<Document[]>([DEFAULT_SAMPLE_DOC]);
-  const [activeDoc, setActiveDoc] = useState<Document>(DEFAULT_SAMPLE_DOC);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [activeDoc, setActiveDoc] = useState<Document | null>(null);
   const [autoDetectedBanner, setAutoDetectedBanner] = useState<string | null>(null);
 
   // AI result cache: keyed by document ID → cached Gemini results per feature
@@ -184,6 +184,8 @@ export default function DashboardPage() {
     setDocuments(storedDocs);
     if (storedDocs.length > 0) {
       setActiveDoc(storedDocs[0]);
+    } else {
+      setActiveDoc(null);
     }
 
     if (typeof window !== 'undefined') {
@@ -378,17 +380,18 @@ export default function DashboardPage() {
   }, [activeTab, activeDoc?.id]);
 
   // ── Heuristic fallback data (used only when API fails) ─────────────────
-  const heuristicXRay = generateRealXRayOverview(activeDoc);
-  const { summary: heuristicSummary, glossary: heuristicGlossary } = generateRealSummary(activeDoc);
-  const heuristicEvents = generateRealTimeline(activeDoc);
-  const heuristicActionPlan = generateRealActionPlan(activeDoc);
+  const targetDoc = activeDoc || DEFAULT_SAMPLE_DOC;
+  const heuristicXRay = generateRealXRayOverview(targetDoc);
+  const { summary: heuristicSummary, glossary: heuristicGlossary } = generateRealSummary(targetDoc);
+  const heuristicEvents = generateRealTimeline(targetDoc);
+  const heuristicActionPlan = generateRealActionPlan(targetDoc);
 
   // ── Resolved data: prefer AI cache, fall back to heuristic on error ────
-  const docCache = aiCache[activeDoc.id] || {};
-  const xrayData = docCache.xray || (aiErrors[`${activeDoc.id}:xray`] ? heuristicXRay : null);
-  const simplData = docCache.simplification || (aiErrors[`${activeDoc.id}:simplification`] ? { summary: heuristicSummary, glossary: heuristicGlossary } : null);
-  const timelineData = docCache.timeline || (aiErrors[`${activeDoc.id}:timeline`] ? { events: heuristicEvents, upcomingDeadlinesCount: 1 } : null);
-  const actionData = docCache.actionPlan || (aiErrors[`${activeDoc.id}:actionPlan`] ? heuristicActionPlan : null);
+  const docCache = activeDoc ? (aiCache[activeDoc.id] || {}) : {};
+  const xrayData = activeDoc ? (docCache.xray || (aiErrors[`${activeDoc.id}:xray`] ? heuristicXRay : null)) : null;
+  const simplData = activeDoc ? (docCache.simplification || (aiErrors[`${activeDoc.id}:simplification`] ? { summary: heuristicSummary, glossary: heuristicGlossary } : null)) : null;
+  const timelineData = activeDoc ? (docCache.timeline || (aiErrors[`${activeDoc.id}:timeline`] ? { events: heuristicEvents, upcomingDeadlinesCount: 1 } : null)) : null;
+  const actionData = activeDoc ? (docCache.actionPlan || (aiErrors[`${activeDoc.id}:actionPlan`] ? heuristicActionPlan : null)) : null;
 
   const handleUploadSuccess = (newDocRecord: Record<string, unknown>) => {
     const uploadedDoc = newDocRecord as unknown as Document;
@@ -401,13 +404,14 @@ export default function DashboardPage() {
   const handleDeleteDocument = (id: string) => {
     const updatedDocs = deleteStoredDocument(id);
     setDocuments(updatedDocs);
-    if (activeDoc.id === id && updatedDocs.length > 0) {
-      setActiveDoc(updatedDocs[0]);
+    if (activeDoc && activeDoc.id === id) {
+      setActiveDoc(updatedDocs.length > 0 ? updatedDocs[0] : null);
     }
   };
 
   // Retry handler: clears cache for this doc+feature so it re-fetches
   const handleRetry = (feature: 'xray' | 'simplification' | 'timeline' | 'actionPlan') => {
+    if (!activeDoc) return;
     const mapKey = feature === 'actionPlan' ? 'actionPlan' : feature;
     const cacheKey = `${activeDoc.id}:${mapKey}`;
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
@@ -488,7 +492,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Feature 1: Upcoming Deadline Reminders Banner */}
-      <DeadlineReminderBanner documents={documents} userId={activeDoc.user_id} onNavigateTab={setActiveTab} />
+      <DeadlineReminderBanner documents={documents} userId={activeDoc?.user_id || 'demo@legallens.ai'} onNavigateTab={setActiveTab} />
 
       {/* Auto-Detection / Demo Banner */}
       {autoDetectedBanner && (
@@ -514,7 +518,23 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {activeTab === 'xray' && (
+      {activeTab !== 'upload' && !activeDoc && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-4 shadow-sm">
+          <FileText className="w-12 h-12 text-indigo-600 dark:text-indigo-400 mx-auto" />
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">No Document Uploaded Yet</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+            Your document workspace is empty. Please upload a PDF, DOCX, or TXT legal document to unlock GenAI Legal X-Ray analysis, simplification, timeline, and action plans.
+          </p>
+          <button
+            onClick={() => setActiveTab('upload')}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-colors"
+          >
+            Upload Document Now
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'xray' && activeDoc && (
         <div className="space-y-6">
           <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex-wrap gap-3 shadow-sm">
             <div>
@@ -549,7 +569,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {activeTab === 'simplification' && (
+      {activeTab === 'simplification' && activeDoc && (
         <div className="space-y-6">
           {aiErrors[`${activeDoc.id}:simplification`] && (
             <AIErrorBanner message={aiErrors[`${activeDoc.id}:simplification`]} onRetry={() => handleRetry('simplification')} />
@@ -569,11 +589,11 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {activeTab === 'qa' && (
+      {activeTab === 'qa' && activeDoc && (
         <DocumentQAChat documentId={activeDoc.id} documentTitle={activeDoc.title} rawText={activeDoc.raw_text} />
       )}
 
-      {activeTab === 'timeline' && (
+      {activeTab === 'timeline' && activeDoc && (
         <div className="space-y-6">
           {aiErrors[`${activeDoc.id}:timeline`] && (
             <AIErrorBanner message={aiErrors[`${activeDoc.id}:timeline`]} onRetry={() => handleRetry('timeline')} />
@@ -588,7 +608,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {activeTab === 'action' && (
+      {activeTab === 'action' && activeDoc && (
         <div className="space-y-6">
           {aiErrors[`${activeDoc.id}:actionPlan`] && (
             <AIErrorBanner message={aiErrors[`${activeDoc.id}:actionPlan`]} onRetry={() => handleRetry('actionPlan')} />

@@ -89,9 +89,12 @@ export async function POST(request: NextRequest) {
       rawText = buffer.toString('utf-8');
     }
 
+    const docUuid = crypto.randomUUID();
+    const verUuid = crypto.randomUUID();
+
     // 3. Document Record Construction matching Section 9.1
     const documentRecord = {
-      id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: docUuid,
       user_id: userId,
       title: safeFilename.replace(/\.[^/.]+$/, ''),
       original_filename: safeFilename,
@@ -111,8 +114,8 @@ export async function POST(request: NextRequest) {
     };
 
     const initialVersion = {
-      id: `ver_1_${Date.now()}`,
-      document_id: documentRecord.id,
+      id: verUuid,
+      document_id: docUuid,
       version_number: 1,
       storage_path: storagePath,
       created_at: new Date().toISOString(),

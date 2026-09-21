@@ -99,9 +99,12 @@ export function getStoredDocuments(userEmail?: string): Document[] {
   */
 export function saveUploadedDocument(doc: Document, userEmail?: string): Document[] {
   const email = (userEmail || getCurrentUserEmail()).toLowerCase();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(doc.id);
+  const validDocId = isUuid ? doc.id : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : doc.id);
 
   const userDoc: Document = {
     ...doc,
+    id: validDocId,
     user_id: email || doc.user_id,
   };
 
@@ -112,7 +115,7 @@ export function saveUploadedDocument(doc: Document, userEmail?: string): Documen
       const authUser = data?.user;
       if (authUser) {
         supabase.from('documents').upsert({
-          id: userDoc.id,
+          id: validDocId,
           user_id: authUser.id,
           title: userDoc.title,
           original_filename: userDoc.original_filename,

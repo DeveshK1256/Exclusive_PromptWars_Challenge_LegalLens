@@ -4,21 +4,32 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DocumentList } from '@/components/documents/DocumentList';
 import { Document } from '@/types/database';
-import { getStoredDocuments, deleteStoredDocument, DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 export default function DocumentsPage() {
   const router = useRouter();
-  const [documents, setDocuments] = useState<Document[]>([DEFAULT_SAMPLE_DOC]);
+  const [documents, setDocuments] = useState<Document[]>([]);
 
   useEffect(() => {
-    setDocuments(getStoredDocuments());
+    async function loadDocs() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: dbDocs } = await supabase.from('documents').select('*');
+        setDocuments((dbDocs as Document[]) || []);
+      } else {
+        setDocuments([]);
+      }
+    }
+    loadDocs();
   }, []);
 
-  const handleDeleteDocument = (id: string) => {
-    const updated = deleteStoredDocument(id);
-    setDocuments(updated);
+  const handleDeleteDocument = async (id: string) => {
+    const supabase = createClient();
+    await supabase.from('documents').delete().eq('id', id);
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
   };
 
   const handleSelectTab = (tab: 'upload' | 'xray' | 'simplification' | 'qa' | 'timeline' | 'action') => {
@@ -36,7 +47,7 @@ export default function DocumentsPage() {
         </div>
 
         <Link
-          href="/dashboard"
+          href="/dashboard?tab=upload"
           className="inline-flex items-center space-x-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check duplicate in server registry
-    const existing = getUserServer(email);
+    const existing = await getUserServer(email);
     if (existing) {
       return NextResponse.json(
         { error: 'An account with this email address already exists. Please sign in or use another email.' },
@@ -44,20 +44,21 @@ export async function POST(request: NextRequest) {
     }
 
     let emailConfirmationRequired = false;
+    let userId: string | undefined = undefined;
 
     // Attempt Supabase Signup
     try {
       const supabaseRes = await signUpUser(email, password, role as any);
       if (supabaseRes?.user) {
-        // Check if email confirmation is required by Supabase
+        userId = supabaseRes.user.id;
         const isConfirmed = Boolean(supabaseRes.user.email_confirmed_at || supabaseRes.session);
         if (!isConfirmed) {
           emailConfirmationRequired = true;
         }
       }
     } catch (sbErr: any) {
-      // Handle Supabase errors e.g. user already registered in Supabase
-      if (sbErr?.message?.toLowerCase().includes('already registered')) {
+      const msg = (sbErr?.message || '').toLowerCase();
+      if (msg.includes('already registered') || msg.includes('user_already_exists')) {
         return NextResponse.json(
           { error: 'An account with this email address already exists. Please sign in or use another email.' },
           { status: 400 }
@@ -65,17 +66,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Register user in server registry
-    await registerUserServer(email, password, name, role, !emailConfirmationRequired);
+    // Register user profile in database profiles table & Supabase Auth
+    await registerUserServer(email, password, name, role, true);
 
     return NextResponse.json(
       {
         success: true,
-        emailConfirmationRequired,
+        emailConfirmationRequired: false,
         email,
-        message: emailConfirmationRequired
-          ? `Account created! We've sent a verification link to ${email}. Please check your inbox and verify your email before signing in.`
-          : 'Account created successfully! You can now sign in with your credentials.',
+        message: 'Account created successfully! You can now sign in with your credentials.',
       },
       { status: 201 }
     );

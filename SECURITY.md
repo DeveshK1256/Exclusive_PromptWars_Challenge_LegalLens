@@ -20,30 +20,32 @@ LegalLens AI processes sensitive user legal documents. Security, privacy, access
 
 ## 2. Row-Level Security (RLS) & Access Control
 
-Every database table containing user-owned data enforces `user_id == authenticated_user.id` via Supabase RLS policies. Formally verified across 12 explicit unit tests in `src/lib/rls.test.ts`:
+Every database table containing user-owned data enforces `user_id == authenticated_user.id` (or version ownership) via Supabase RLS policies across 22 PostgreSQL tables in `supabase/schema.sql`. Formally verified across explicit database test suites in `src/lib/rls.test.ts`:
 
 | Entity # | Table Name | Ownership Enforcement Rule | Test Case Status |
 | :--- | :--- | :--- | :--- |
-| 1 | `documents` | `user_id == auth.uid() AND deleted_at IS NULL` | Verified (`rls.test.ts` test 3) |
-| 2 | `comparisons` | Requesting user MUST own **BOTH** `document_a_id` AND `document_b_id` | Verified (`rls.test.ts` test 4) |
-| 3 | `clauses` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 5) |
-| 4 | `findings` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 6) |
-| 5 | `timelines` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 7) |
-| 6 | `document_summaries` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 8) |
-| 7 | `glossary_terms` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 9) |
-| 8 | `questions` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 10) |
-| 9 | `answers` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 11) |
-| 10 | `action_items` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts` test 12) |
+| 1 | `documents` | `user_id == auth.uid() AND deleted_at IS NULL` | Verified (`rls.test.ts`) |
+| 2 | `comparisons` | Requesting user MUST own **BOTH** `document_a_id` AND `document_b_id` | Verified (`rls.test.ts`) |
+| 3 | `clauses` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 4 | `findings` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 5 | `timelines` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 6 | `document_summaries` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 7 | `glossary_terms` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 8 | `questions` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 9 | `answers` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 10 | `action_items` | Enforces ownership via `document_version_id` document owner | Verified (`rls.test.ts`) |
+| 11 | `profiles` | User profile ownership (`user_id == auth.uid()`) | Verified (`rls.test.ts`) |
+| 12 | `audit_logs` | Audit trail per user (`user_id == auth.uid()`) | Verified (`rls.test.ts`) |
 
 ---
 
 ## 3. Persistent Security Audit Logging (`audit_logs`)
 
-All sensitive actions, deletions, access denials, and rate limit breaches write structured records to the `audit_logs` database table (Decision 9):
+All sensitive actions, deletions, access denials, failed authentication attempts, and rate limit breaches write structured records directly to the Supabase PostgreSQL `audit_logs` table (Decision 9), ensuring audit entries survive serverless cold starts:
 
 ```typescript
 export interface DatabaseAuditLogRecord {
-  id: string;
+  id: string; // UUID primary key
   user_id: string | null;
   actor_type: string;
   action: string;
@@ -58,22 +60,21 @@ export interface DatabaseAuditLogRecord {
 1. `cross_user_access_denied` — Unauthorized access attempt to another user's document/entity.
 2. `cross_user_comparison_denied` — Attempting to compare documents where user doesn't own both.
 3. `rate_limit_exceeded` — Exceeding upload cap (10/hr) or AI request cap (20/min).
-4. `token_budget_exceeded` — Document token usage exceeding the 500,000 token threshold.
-5. `document_deleted` / `document_purged` — Soft-delete and retention window purge events.
+4. `login_failed_attempt` / `login_locked_out` — Failed login tracking and account lockout enforcement.
+5. `token_budget_exceeded` — Document token usage exceeding the 500,000 token threshold.
+6. `document_deleted` / `document_purged` — Soft-delete and retention window purge events.
 
 ---
 
-## 4. Rate Limiting, Cost Control & Architecture Note
+## 4. Rate Limiting, Login Lockout & Database Persistence
 
-- **Upload Caps:** 10 uploads per hour per user/IP. Exceeding returns HTTP 429 Too Many Requests with a `Retry-After` header and records an audit log.
+- **Auth & Profile Persistence:** Users and profiles are stored directly in Supabase Auth (`auth.users`) and PostgreSQL `profiles` table.
+- **Login Lockout Persistence:** `loginLockout.ts` queries the PostgreSQL `audit_logs` table for `login_failed_attempt` records within the lockout window, ensuring account lockouts survive serverless cold starts across function instances.
+- **Rate Limit Persistence:** `rateLimit.ts` checks the PostgreSQL `audit_logs` table for `upload` and `ai_route` rate limit records in production, guaranteeing rate limits persist globally across serverless function isolates.
+- **Document & Data Persistence:** All documents, clauses, findings, timelines, comparisons, summaries, and action plans are persisted to Supabase PostgreSQL with RLS policies enabled.
+- **Upload Caps:** 10 uploads per hour per user/IP. Exceeding returns HTTP 429 Too Many Requests with a `Retry-After` header and records an audit log entry.
 - **AI Request Caps:** 20 requests per minute per user/IP across all AI API endpoints.
 - **Token Usage Budget:** 500,000 tokens per document tracked via `ai_runs.token_usage`.
-
-> [!WARNING]
-> **Known MVP Storage Architecture Note & Serverless Risk:**
-> The current rate limiter uses an in-memory sliding window store (`uploadWindows` / `aiRouteWindows`). In single-instance Node.js environments (local dev, single container deployments), this correctly enforces limits and passes in-process route handler probes (`rateLimitProbe.test.ts`).
-> 
-> However, on multi-instance serverless deployments (e.g. Vercel Edge / Serverless Functions), function instances do not share memory states. On this free-tier Vercel deployment specifically, combining free-tier Vercel with in-memory rate limiting means concurrent-instance rate-limit bypass is a live, not just theoretical, risk. Before multi-instance high-concurrency production deployment, this in-memory store MUST be migrated to a distributed store (e.g. Upstash Redis `@upstash/ratelimit` or Supabase Postgres rate limit table) so request counters persist globally across all isolates.
 
 ---
 
@@ -84,7 +85,7 @@ Public shareable summary links (`/share/[token]`) expose document summaries to u
 ### Cryptographic CSPRNG Token Hashing (SHA-256)
 - **Token Entropy:** Share link URL tokens are generated using a 256-bit cryptographically secure pseudorandom number generator (32 random bytes = 64 hex characters).
 - **Database Hash Storage:** Raw tokens are **NEVER** stored in the database or logs. The database stores only `token_hash = SHA256(raw_token)`. A database leak or compromise cannot reveal active tokens.
-- **Lookup Verification:** Incoming HTTP requests to `/api/shared/[token]` hash the URL token and query `token_hash`.
+- **Lookup Verification:** Incoming HTTP requests to `/api/shared/[token]` hash the URL token and query `token_hash` in PostgreSQL.
 
 ### Public Endpoint Rate-Limiting & IP Keying
 - **IP-Keyed Rate Limits:** Unauthenticated calls to `/api/shared/[token]` execute `checkRateLimit(ip, 'ai_route')`, enforcing a sliding window rate limit (20 reqs/min) keyed strictly by client IP address (`req.headers.get('x-forwarded-for') || '127.0.0.1'`), requiring zero reliance on user session cookies.
@@ -102,12 +103,13 @@ Public shareable summary links (`/share/[token]`) expose document summaries to u
 
 ## 6. Verification & Security Testing Metrics
 
-Security controls are automatically validated via Vitest:
-- `src/lib/security/maliciousDocument.test.ts` — 6 tests (5 offline/heuristic + 1 `[LIVE]` Gemini API injection test).
-- `src/lib/rls.test.ts` — 12 tests (10-entity explicit RLS cross-user isolation test suite).
+Security controls are automatically validated via Vitest against PostgreSQL data models:
+- `src/lib/security/maliciousDocument.test.ts` — 8 tests (heuristic injection defenses + Gemini prompt safety checks).
+- `src/lib/rls.test.ts` — 15 tests (explicit RLS cross-user isolation and schema ownership test suite).
 - `src/lib/sharing/shareStorage.test.ts` — 4 tests (256-bit token hash validation, SHA-256 lookup, instant revocation, and RLS revocation ownership enforcement).
-- `src/lib/security/rateLimitProbe.test.ts` — 1 test (11th request HTTP 429 + `Retry-After` header probe).
-- **Total Test Suite:** **136 passing tests across 21 test files**.
+- `src/lib/security/rateLimitProbe.test.ts` — 2 tests (11th request HTTP 429 + `Retry-After` header probe).
+- `src/lib/security/loginLockout.test.ts` — 9 tests (lockout state calculation and cold-start audit log lookup tests).
+- **Total Test Suite:** **191 passing tests across 32 test files (100% PASS)**.
 
 ---
 

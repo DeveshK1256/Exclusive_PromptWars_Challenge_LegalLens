@@ -3,6 +3,8 @@ import { runPersonalImpactAgent } from '@/lib/impact/personalImpactAgent';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import { ContextRole } from '@/lib/impact/types';
 
+export const maxDuration = 60;
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }

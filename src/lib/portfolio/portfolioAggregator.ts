@@ -39,10 +39,11 @@ export function calculateDocumentRiskScore(findings: Finding[]): {
   let greenCount = 0;
 
   for (const finding of findings) {
-    if (finding.severity === 'red') redCount++;
-    else if (finding.severity === 'orange') orangeCount++;
-    else if (finding.severity === 'yellow') yellowCount++;
-    else if (finding.severity === 'green') greenCount++;
+    const sev = (finding as any).severity_level || finding.severity;
+    if (sev === 'red') redCount++;
+    else if (sev === 'orange') orangeCount++;
+    else if (sev === 'yellow') yellowCount++;
+    else if (sev === 'green') greenCount++;
   }
 
   const score = redCount * 15 + orangeCount * 7 + yellowCount * 2 + greenCount * 0;

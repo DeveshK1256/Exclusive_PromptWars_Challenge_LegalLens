@@ -6,9 +6,10 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { DocumentRedlineViewer } from '@/components/diff/DocumentRedlineViewer';
 import { computeDocumentDiff, DocumentDiffResult } from '@/lib/diff/documentDiff';
-import { getStoredDocuments, DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
+import { createClient } from '@/lib/supabase/client';
+import { DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
 import { Document } from '@/types/database';
-import { FileCode, ArrowLeft, GitCompare } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function DocumentDiffPage() {
   const params = useParams();
@@ -19,21 +20,25 @@ export default function DocumentDiffPage() {
   const [diffResult, setDiffResult] = useState<DocumentDiffResult | null>(null);
 
   useEffect(() => {
-    const docs = getStoredDocuments();
-    const target = docs.find((d) => d.id === docId) || DEFAULT_SAMPLE_DOC;
-    setDoc(target);
+    async function loadDiffDoc() {
+      const supabase = createClient();
+      const { data: dbDoc } = await supabase.from('documents').select('*').eq('id', docId).single();
+      const target = (dbDoc as Document) || DEFAULT_SAMPLE_DOC;
+      setDoc(target);
 
-    // Compute diff against simulated prior version v1
-    const textV1 = target.raw_text || `RESIDENTIAL LEASE AGREEMENT
+      // Compute diff against simulated prior version v1
+      const textV1 = target.raw_text || `RESIDENTIAL LEASE AGREEMENT
 1. PARTIES: Landlord John Smith leases to Tenant Jane Doe.
 2. RENT: Monthly rent is $2,400 due on 1st of month.
 3. NOTICE: 30 days written notice required prior to termination.`;
 
-    const textV2 = (target.raw_text || textV1) + `\n4. PETS: No unauthorized pets allowed.
+      const textV2 = (target.raw_text || textV1) + `\n4. PETS: No unauthorized pets allowed.
 5. GOVERNING LAW: Governed by California Law.`;
 
-    const diff = computeDocumentDiff(textV1, textV2, 1, 2);
-    setDiffResult(diff);
+      const diff = computeDocumentDiff(textV1, textV2, 1, 2);
+      setDiffResult(diff);
+    }
+    loadDiffDoc();
   }, [docId]);
 
   return (

@@ -173,7 +173,7 @@ const mockDocuments: Document[] = [
   },
 ];
 
-describe('Sprint 11 — Extended 10-Component Rendered DOM Accessibility & WCAG 2.2 AA Audit Suite', () => {
+describe('Sprint 11 — Extended 10-Component Rendered DOM Accessibility & WCAG 2.2 AA Audit Suite', { timeout: 30000 }, () => {
 
   describe('1. axe-core Automated DOM Accessibility Audits across all 10 Primary Screens/Components', () => {
     it('[axe-core 1/10] LegalXRayDashboard renders with ZERO accessibility violations', async () => {

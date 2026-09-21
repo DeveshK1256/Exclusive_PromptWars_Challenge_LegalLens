@@ -9,8 +9,16 @@ import { RentalAndLoanScorecard } from '@/components/xray/RentalAndLoanScorecard
 import { EmploymentHeatmap } from '@/components/xray/EmploymentHeatmap';
 import { EmailCounterOfferModal } from '@/components/action/EmailCounterOfferModal';
 import { AttorneyPrepSheet } from '@/components/action/AttorneyPrepSheet';
-import { DocumentSpatial3DMap } from '@/components/3d/DocumentSpatial3DMap';
+import dynamic from 'next/dynamic';
 import { NegotiationStatusBadge } from '@/components/xray/NegotiationStatusBadge';
+
+const DocumentSpatial3DMap = dynamic(
+  () => import('@/components/3d/DocumentSpatial3DMap').then((m) => m.DocumentSpatial3DMap),
+  {
+    ssr: false,
+    loading: () => <div className="p-6 text-center text-slate-400 text-sm animate-pulse">Loading Spatial 3D Map...</div>,
+  }
+);
 
 interface LegalXRayDashboardProps {
   overview: LegalXRayOverview;

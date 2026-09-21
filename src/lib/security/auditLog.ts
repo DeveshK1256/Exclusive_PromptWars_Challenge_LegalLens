@@ -1,4 +1,5 @@
-import { createClient } from '../supabase/client';
+import { createAdminClient } from '../supabase/admin';
+import { randomUUID } from 'crypto';
 
 export interface DatabaseAuditLogRecord {
   id: string;
@@ -11,8 +12,8 @@ export interface DatabaseAuditLogRecord {
   created_at: string;
 }
 
-// Persistent database table storage matching Supabase schema.sql audit_logs table
-const databaseAuditLogsTable: DatabaseAuditLogRecord[] = [];
+// In-memory fallback array for isolated unit testing environment
+const inMemoryAuditLogsFallback: DatabaseAuditLogRecord[] = [];
 
 /**
  * Security Audit Log Recorder (Decision 9 / Schema Table `audit_logs`)
@@ -26,7 +27,7 @@ export async function recordSecurityAuditLog(
   resourceId?: string
 ): Promise<DatabaseAuditLogRecord> {
   const record: DatabaseAuditLogRecord = {
-    id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    id: randomUUID(),
     user_id: userId,
     actor_type: 'user',
     action,
@@ -36,26 +37,22 @@ export async function recordSecurityAuditLog(
     created_at: new Date().toISOString(),
   };
 
-  // Write to in-memory database table storage
-  databaseAuditLogsTable.push(record);
+  inMemoryAuditLogsFallback.push(record);
 
-  // Attempt Supabase postgres insert if client is available
   try {
-    const supabase = createClient();
-    if (supabase && typeof (supabase as any).from === 'function') {
-      await (supabase as any).from('audit_logs').insert({
-        id: record.id,
-        user_id: record.user_id,
-        actor_type: record.actor_type,
-        action: record.action,
-        resource_type: record.resource_type,
-        resource_id: record.resource_id,
-        metadata: record.metadata,
-        created_at: record.created_at,
-      });
-    }
+    const admin = createAdminClient();
+    await admin.from('audit_logs').insert({
+      id: record.id,
+      user_id: record.user_id,
+      actor_type: record.actor_type,
+      action: record.action,
+      resource_type: record.resource_type,
+      resource_id: record.resource_id,
+      metadata: record.metadata,
+      created_at: record.created_at,
+    });
   } catch {
-    // Fallback to database table storage
+    // Fallback retains inMemoryAuditLogsFallback
   }
 
   return record;
@@ -65,15 +62,31 @@ export async function recordSecurityAuditLog(
  * Queries records directly from the persistent `audit_logs` database table
  */
 export async function readAuditLogsFromDatabase(userId?: string): Promise<DatabaseAuditLogRecord[]> {
-  if (userId) {
-    return databaseAuditLogsTable.filter((row) => row.user_id === userId);
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const admin = createAdminClient();
+      let query = admin.from('audit_logs').select('*').order('created_at', { ascending: false });
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        return data as DatabaseAuditLogRecord[];
+      }
+    } catch {
+      // Fallback to in-memory array if database query fails
+    }
   }
-  return [...databaseAuditLogsTable];
+
+  if (userId) {
+    return inMemoryAuditLogsFallback.filter((row) => row.user_id === userId);
+  }
+  return [...inMemoryAuditLogsFallback];
 }
 
 /**
  * Clears the audit logs table (useful for isolated testing)
  */
 export function clearAuditLogsForTesting(): void {
-  databaseAuditLogsTable.length = 0;
+  inMemoryAuditLogsFallback.length = 0;
 }

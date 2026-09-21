@@ -4,17 +4,25 @@ import React from 'react';
 import { ActionPlanViewer } from '@/components/action/ActionPlanViewer';
 import { ActionPlanResult } from '@/lib/action/types';
 import { ListCheck } from 'lucide-react';
-import { getStoredDocuments } from '@/lib/documentStorage';
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 export default function ActionPlansPage() {
   const [hasUserDocs, setHasUserDocs] = React.useState<boolean>(false);
   const [showSampleDemo, setShowSampleDemo] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const docs = getStoredDocuments();
-      setHasUserDocs(docs.length > 0);
+    async function checkUserDocs() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: dbDocs } = await supabase.from('documents').select('id');
+        setHasUserDocs(dbDocs ? dbDocs.length > 0 : false);
+      } else {
+        setHasUserDocs(false);
+      }
     }
+    checkUserDocs();
   }, []);
 
   const sampleActionPlan: ActionPlanResult = {
@@ -118,12 +126,12 @@ export default function ActionPlansPage() {
             Upload a legal contract to automatically extract pre-signature review checklists, questions for legal counsel, and post-signing task trackers.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <a
-              href="/documents"
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+            <Link
+              href="/dashboard?tab=upload"
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all inline-flex items-center gap-2"
             >
               Upload Your First Document
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => setShowSampleDemo(true)}

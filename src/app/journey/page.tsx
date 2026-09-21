@@ -17,7 +17,8 @@ import {
 import { ContextRole, PersonalImpactResult } from '@/lib/impact/types';
 import { LegalXRayDashboard } from '@/components/xray/LegalXRayDashboard';
 import { LegalXRayOverview } from '@/lib/xray/types';
-import { getStoredDocuments } from '@/lib/documentStorage';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 export default function JourneyPage() {
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -26,10 +27,17 @@ export default function JourneyPage() {
   const [showDemoSample, setShowDemoSample] = useState<boolean>(false);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const docs = getStoredDocuments();
-      setHasUserDocs(docs.length > 0);
+    async function checkUserDocs() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: dbDocs } = await supabase.from('documents').select('id');
+        setHasUserDocs(dbDocs ? dbDocs.length > 0 : false);
+      } else {
+        setHasUserDocs(false);
+      }
     }
+    checkUserDocs();
   }, []);
 
   const [sampleFindings] = useState([
@@ -187,16 +195,16 @@ export default function JourneyPage() {
             Upload a legal document to navigate personalized role-based impact analysis, legal X-ray findings, timelines, and pre-signature checklists.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <a
-              href="/documents"
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+            <Link
+              href="/dashboard?tab=upload"
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all inline-flex items-center gap-2"
             >
               Upload Your First Document
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => setShowDemoSample(true)}
-              className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer"
+              className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               Preview Sample Contract Journey
             </button>

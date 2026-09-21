@@ -33,11 +33,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Attempt Authentication
+    // 2. Attempt Authentication via Supabase Auth & server fallback
     let isAuthenticated = false;
     let isEmailNotConfirmed = false;
 
-    // First try Supabase authentication
     try {
       const authRes = await signInUser(cleanEmail, password);
       if (authRes?.user) {
@@ -50,9 +49,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fallback: Verify against server-side user registry if Supabase didn't authenticate
     if (!isAuthenticated && !isEmailNotConfirmed) {
-      const verifyRes = verifyUserCredentialsServer(cleanEmail, password);
+      const verifyRes = await verifyUserCredentialsServer(cleanEmail, password);
       if (verifyRes.valid) {
         isAuthenticated = true;
       } else if (verifyRes.reason === 'email_not_confirmed') {

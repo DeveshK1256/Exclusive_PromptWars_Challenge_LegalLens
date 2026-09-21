@@ -1,6 +1,8 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { runLegalXRayAgent } from "../../../../../lib/xray/legalXRayAgent";
 import { checkRateLimit } from "../../../../../lib/security/rateLimit";
+
+export const maxDuration = 60;
 
 /**
  * POST /api/documents/[id]/xray

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runLegalTimelineAgent } from '../../../../../lib/timeline/timelineAgent';
 import { checkRateLimit } from '../../../../../lib/security/rateLimit';
 
+export const maxDuration = 60;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

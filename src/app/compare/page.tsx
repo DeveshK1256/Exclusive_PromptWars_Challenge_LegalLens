@@ -272,11 +272,11 @@ export default function ComparePage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-6">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <GitCompare className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              Semantic Clause Differences ({comparisonResult.findings.length} Items Found)
+              Semantic Clause Differences ({(comparisonResult.findings || []).length} Items Found)
             </h3>
 
             <div className="space-y-4">
-              {comparisonResult.findings.map((f, idx) => (
+              {(comparisonResult.findings || []).map((f, idx) => (
                 <div
                   key={f.id || idx}
                   className={`bg-slate-50 dark:bg-slate-950 border rounded-xl p-4 space-y-3 ${
@@ -326,7 +326,7 @@ export default function ComparePage() {
                 Questions for a Legal Professional
               </h3>
               <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-                {comparisonResult.questionsForLawyer.map((q, idx) => (
+                {(comparisonResult.questionsForLawyer || []).map((q, idx) => (
                   <li key={idx} className="bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex items-start gap-2">
                     <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0">{idx + 1}.</span>
                     <span>{q}</span>
@@ -342,7 +342,7 @@ export default function ComparePage() {
                 Recommended Action Items
               </h3>
               <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-                {comparisonResult.recommendedActionItems.map((item, idx) => (
+                {(comparisonResult.recommendedActionItems || []).map((item, idx) => (
                   <li key={idx} className="bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                     <span>{item}</span>

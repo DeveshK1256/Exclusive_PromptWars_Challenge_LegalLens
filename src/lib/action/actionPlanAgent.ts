@@ -135,7 +135,7 @@ ${UNTRUSTED_DOC_END}`;
   return {
     actionPlan: {
       id: actionPlanId,
-      user_id: 'user_demo',
+      user_id: options.userId || 'authenticated_user',
       document_id: options.documentId,
       title: 'Action & Preparation Plan',
       created_at: new Date().toISOString(),

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, Shield, Hash, Calendar, Trash2, AlertTriangle, X, BookOpen, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
+import { FileText, Shield, Hash, Calendar, Trash2, AlertTriangle, X, BookOpen, MessageSquare, Plus } from 'lucide-react';
 import { Document } from '@/types/database';
 
 interface DocumentListProps {
@@ -16,12 +17,21 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDeleteD
 
   if (documents.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center space-y-3">
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
         <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
         <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">No Documents Uploaded</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-          Upload your first legal document above to view plain-language analysis, Legal X-Ray findings, and timelines.
+          Upload your legal document to view plain-language analysis, Legal X-Ray findings, timelines, and action plans.
         </p>
+        <div className="pt-1">
+          <Link
+            href="/dashboard?tab=upload"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Upload Document Now</span>
+          </Link>
+        </div>
       </div>
     );
   }

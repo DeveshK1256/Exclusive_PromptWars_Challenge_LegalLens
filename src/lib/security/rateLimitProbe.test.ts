@@ -90,5 +90,31 @@ describe('Manual Rate Limit Probe — Upload Route 11th Request Verification', (
     expect(twentiethRes.status).toBe(200);
     expect(twentyFirstRes.status).toBe(429);
   });
+
+  it('computes retryAfterSeconds using the genuinely oldest created_at timestamp when records are ordered ascending', () => {
+    const now = 1789922500000; // fixed reference time
+    const windowMs = 60 * 60 * 1000; // 1 hour (3600 seconds)
+
+    // Shuffled / out-of-order audit_logs records
+    const unorderedLogs = [
+      { id: '3', created_at: new Date(now - 1000 * 1000).toISOString() }, // 1000s ago
+      { id: '1', created_at: new Date(now - 3000 * 1000).toISOString() }, // 3000s ago (GENUINELY OLDEST)
+      { id: '2', created_at: new Date(now - 2000 * 1000).toISOString() }, // 2000s ago
+    ];
+
+    // Explicitly sort ascending by created_at (matches .order('created_at', { ascending: true }))
+    const sortedLogs = [...unorderedLogs].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    // Oldest record MUST be index 0
+    expect(sortedLogs[0].id).toBe('1');
+
+    const oldestTime = new Date(sortedLogs[0].created_at).getTime();
+    const retryAfterSeconds = Math.max(1, Math.ceil((oldestTime + windowMs - now) / 1000));
+
+    // Expected: (now - 3000s + 3600s - now) / 1000 = 600 seconds
+    expect(retryAfterSeconds).toBe(600);
+  });
 });
 

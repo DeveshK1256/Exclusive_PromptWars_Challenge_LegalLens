@@ -3,6 +3,8 @@ import { runSimplificationAgent } from '../../../../../lib/simplification/simpli
 import { checkRateLimit } from '../../../../../lib/security/rateLimit';
 import { ComplexityLevel } from '../../../../../types/database';
 
+export const maxDuration = 60;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

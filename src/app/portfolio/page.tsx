@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Document, Finding } from '@/types/database';
-import { getStoredDocuments, DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
+import { getCurrentUserEmail, DEFAULT_SAMPLE_DOC } from '@/lib/documentStorage';
 import { generateRealXRayOverview } from '@/lib/documentAnalysis';
 import {
   generatePortfolioReport,
@@ -20,14 +20,32 @@ const GRADE_COLORS: Record<PortfolioGrade, { bg: string; text: string; border: s
   F: { bg: 'bg-rose-100 dark:bg-rose-950/60', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-300 dark:border-rose-800' },
 };
 
+import { createClient } from '@/lib/supabase/client';
+
 export default function PortfolioPage() {
   const [report, setReport] = useState<PortfolioRiskReport | null>(null);
   const [sortField, setSortField] = useState<'score' | 'title' | 'redCount'>('score');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    const userId = 'user_demo';
-    const docs = getStoredDocuments();
+    async function loadPortfolio() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email || getCurrentUserEmail();
+      const userId = user?.id || userEmail;
+
+      if (!userEmail && !user) {
+        setReport(generatePortfolioReport('anonymous', [], []));
+        return;
+      }
+
+      let docs: Document[] = [];
+      if (user) {
+        const { data: dbDocs } = await supabase.from('documents').select('*');
+        if (dbDocs) {
+          docs = dbDocs as Document[];
+        }
+      }
 
     // Collect all findings across user documents
     const allFindings: Finding[] = [];
@@ -52,8 +70,11 @@ export default function PortfolioPage() {
       });
     });
 
-    const generated = generatePortfolioReport(userId, docs, allFindings);
-    setReport(generated);
+      const generated = generatePortfolioReport(userId, docs, allFindings);
+      setReport(generated);
+    }
+
+    loadPortfolio();
   }, []);
 
   const sortedSummaries = React.useMemo(() => {
@@ -126,7 +147,7 @@ export default function PortfolioPage() {
             </p>
             <div className="pt-2">
               <Link
-                href="/documents"
+                href="/dashboard?tab=upload"
                 className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all inline-flex items-center gap-2"
               >
                 Upload Your First Document

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runGroundedQAAgent } from '../../../../../lib/qa/qaAgent';
 import { checkRateLimit } from '../../../../../lib/security/rateLimit';
 
+export const maxDuration = 60;
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }

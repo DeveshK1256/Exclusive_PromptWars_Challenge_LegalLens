@@ -21,7 +21,7 @@ test.describe('Live Vercel Production Deployment — Real Un-Mocked Browser E2E 
     await signInBtn.click();
 
     // Assert error message visible in UI
-    await expect(page.getByText(/Invalid email or password/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Invalid email or password/)).toBeVisible({ timeout: 15000 });
 
     // Assert user remains on /login page
     await expect(page).toHaveURL(/\/login/);

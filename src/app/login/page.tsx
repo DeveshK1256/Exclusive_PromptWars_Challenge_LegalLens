@@ -1,5 +1,6 @@
 'use client';
 
+import { createClient } from '@/lib/supabase/client';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -158,35 +159,20 @@ export default function LoginPage() {
 
   // --- Auto-Redirect if Already Logged In ---
   React.useEffect(() => {
-    const storedEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('legallens_user_email') : null;
-    const hasCookies = typeof document !== 'undefined' && (
-      document.cookie.includes('legallens_user_email') ||
-      document.cookie.includes('legallens_demo_session') ||
-      document.cookie.includes('sb-access-token')
-    );
-
-    if (storedEmail || hasCookies) {
-      const emailToSave = storedEmail || 'demo@legallens.ai';
-      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
-      if (typeof document !== 'undefined') {
-        document.cookie = `legallens_demo_session=active; path=/; max-age=86400; SameSite=Lax${isSecure}`;
-        document.cookie = `sb-access-token=valid_user_jwt; path=/; max-age=86400; SameSite=Lax${isSecure}`;
-        document.cookie = `legallens_user_email=${encodeURIComponent(emailToSave)}; path=/; max-age=86400; SameSite=Lax${isSecure}`;
+    async function checkExistingSession() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        router.push('/dashboard');
       }
-      router.push('/dashboard');
     }
+    checkExistingSession();
   }, [router]);
 
   // --- Login Handler ---
   const performLoginRedirect = (userEmail: string) => {
     setIsLoading(true);
     const emailToSave = userEmail.trim().toLowerCase();
-    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
-    if (typeof document !== 'undefined') {
-      document.cookie = `legallens_demo_session=active; path=/; max-age=86400; SameSite=Lax${isSecure}`;
-      document.cookie = `sb-access-token=valid_user_jwt; path=/; max-age=86400; SameSite=Lax${isSecure}`;
-      document.cookie = `legallens_user_email=${encodeURIComponent(emailToSave)}; path=/; max-age=86400; SameSite=Lax${isSecure}`;
-    }
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('legallens_user_email', emailToSave);
     }
@@ -248,6 +234,13 @@ export default function LoginPage() {
         setFailedLoginCount(0);
         setIsLockedOut(false);
         setLockedUntil(null);
+
+        try {
+          await signInUser(emailToUse, passwordToUse);
+        } catch {
+          // Ignore offline/test error
+        }
+
         performLoginRedirect(emailToUse);
         return;
       }

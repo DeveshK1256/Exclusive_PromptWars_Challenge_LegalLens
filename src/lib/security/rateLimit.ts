@@ -44,6 +44,43 @@ export async function checkRateLimit(
   // Filter timestamps within the sliding window
   entry.timestamps = entry.timestamps.filter((ts) => now - ts < windowMs);
 
+  // Database query for multi-instance serverless persistence in non-test environments
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const { createAdminClient } = await import('../supabase/admin');
+      const admin = createAdminClient();
+      const windowStart = new Date(now - windowMs).toISOString();
+      const { data: dbLogs } = await admin
+        .from('audit_logs')
+        .select('id, created_at')
+        .eq('resource_type', limitType)
+        .eq('user_id', identifier)
+        .eq('action', 'rate_limit_hit')
+        .gte('created_at', windowStart)
+        .order('created_at', { ascending: true });
+
+      if (dbLogs && dbLogs.length >= maxAllowed) {
+        const oldestTime = new Date(dbLogs[0].created_at).getTime();
+        const retryAfterSeconds = Math.max(1, Math.ceil((oldestTime + windowMs - now) / 1000));
+
+        await recordSecurityAuditLog(identifier, 'rate_limit_exceeded', limitType, {
+          identifier,
+          limitType,
+          attemptsInWindow: dbLogs.length,
+          retryAfterSeconds,
+        });
+
+        return {
+          allowed: false,
+          remaining: 0,
+          retryAfterSeconds,
+        };
+      }
+    } catch {
+      // Fallback to in-memory window tracking if DB query fails
+    }
+  }
+
   if (entry.timestamps.length >= maxAllowed) {
     const oldestTimestamp = entry.timestamps[0];
     const retryAfterSeconds = Math.max(1, Math.ceil((oldestTimestamp + windowMs - now) / 1000));
@@ -63,9 +100,17 @@ export async function checkRateLimit(
     };
   }
 
-  // Record this hit
+  // Record this hit (in-memory + database persistent audit log for cold starts)
   entry.timestamps.push(now);
   const remaining = maxAllowed - entry.timestamps.length;
+
+  if (process.env.NODE_ENV !== 'test') {
+    await recordSecurityAuditLog(identifier, 'rate_limit_hit', limitType, {
+      identifier,
+      limitType,
+      requestCountInWindow: entry.timestamps.length,
+    });
+  }
 
   return {
     allowed: true,

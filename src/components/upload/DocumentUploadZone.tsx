@@ -6,6 +6,7 @@ import { validateFileMetadata } from '@/lib/config';
 import { DocumentType, ContextRole } from '@/types/database';
 import { detectDocumentType, DocTypeDetectionResult } from '@/lib/intelligence/docTypeDetector';
 import { BENCHMARK_NDA, BENCHMARK_EMPLOYMENT, BENCHMARK_LEASE } from '@/lib/ai/benchmark/fixtures';
+import { getCurrentUserEmail } from '@/lib/documentStorage';
 
 interface DocumentUploadZoneProps {
   onUploadSuccess?: (document: Record<string, unknown>) => void;
@@ -116,7 +117,7 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
   const loadDemoBenchmarkDoc = (fixture: typeof BENCHMARK_NDA, type: DocumentType) => {
     const demoDoc = {
       id: fixture.id,
-      user_id: 'user_demo',
+      user_id: getCurrentUserEmail() || 'authenticated_user',
       title: fixture.title,
       original_filename: `${fixture.title.replace(/\s+/g, '_')}.pdf`,
       mime_type: 'application/pdf',

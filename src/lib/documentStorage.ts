@@ -1,4 +1,5 @@
 import { Document } from '@/types/database';
+import { createClient } from '@/lib/supabase/client';
 
 const BASE_STORAGE_KEY = 'legallens_user_documents';
 const ACTIVE_DOC_KEY = 'legallens_active_document';
@@ -30,7 +31,7 @@ export const DEFAULT_SAMPLE_DOC: Document = {
   * Resolves current user email identifier from localStorage or cookies
   */
 export function getCurrentUserEmail(): string {
-  if (typeof window === 'undefined') return 'demo@legallens.ai';
+  if (typeof window === 'undefined') return '';
 
   if (typeof localStorage !== 'undefined') {
     const stored = localStorage.getItem('legallens_user_email');
@@ -49,7 +50,7 @@ export function getCurrentUserEmail(): string {
     }
   }
 
-  return 'demo@legallens.ai';
+  return '';
 }
 
 /**
@@ -62,7 +63,7 @@ function getUserKey(userEmail?: string): string {
 
 /**
   * Retrieves documents owned STRICTLY by the current user.
-  * Demo account gets sample doc, new registered users start with [] (0 docs).
+  * Fresh accounts start with 0 documents ([]).
   */
 export function getStoredDocuments(userEmail?: string): Document[] {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
@@ -70,13 +71,14 @@ export function getStoredDocuments(userEmail?: string): Document[] {
   }
 
   const email = (userEmail || getCurrentUserEmail()).toLowerCase();
+  if (!email) return [];
+
   const key = getUserKey(email);
 
   try {
     const raw = localStorage.getItem(key);
 
     if (!raw) {
-      // Demo account gets default sample doc. All other user accounts start EMPTY!
       if (email === 'demo@legallens.ai' || email === 'admin@legallens.ai') {
         return [DEFAULT_SAMPLE_DOC];
       }
@@ -86,7 +88,6 @@ export function getStoredDocuments(userEmail?: string): Document[] {
     const docs: Document[] = JSON.parse(raw);
     if (!Array.isArray(docs)) return [];
 
-    // Enforce strict multi-tenant isolation: filter out any doc not owned by this user
     return docs.filter((d) => d.user_id?.toLowerCase() === email || (email === 'demo@legallens.ai' && d.user_id === 'user_demo'));
   } catch {
     return email === 'demo@legallens.ai' ? [DEFAULT_SAMPLE_DOC] : [];
@@ -94,21 +95,50 @@ export function getStoredDocuments(userEmail?: string): Document[] {
 }
 
 /**
-  * Saves an uploaded document under the current user's isolated storage bucket.
+  * Saves an uploaded document under the current user's isolated storage bucket & PostgreSQL database.
   */
 export function saveUploadedDocument(doc: Document, userEmail?: string): Document[] {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return [doc];
-  }
-
   const email = (userEmail || getCurrentUserEmail()).toLowerCase();
-  const key = getUserKey(email);
 
-  // Bind document ownership to current user
   const userDoc: Document = {
     ...doc,
-    user_id: email,
+    user_id: email || doc.user_id,
   };
+
+  // Attempt async sync to Supabase PostgreSQL documents table using authentic auth.users UUID
+  try {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      const authUser = data?.user;
+      if (authUser) {
+        supabase.from('documents').upsert({
+          id: userDoc.id,
+          user_id: authUser.id,
+          title: userDoc.title,
+          original_filename: userDoc.original_filename,
+          mime_type: userDoc.mime_type,
+          file_size: userDoc.file_size,
+          file_hash: userDoc.file_hash,
+          storage_path: userDoc.storage_path,
+          document_type: userDoc.document_type,
+          jurisdiction: userDoc.jurisdiction,
+          status: userDoc.status,
+          created_at: userDoc.created_at,
+          updated_at: userDoc.updated_at,
+        }).then(({ error }) => {
+          if (error) console.error('Supabase documents upsert error:', error.message);
+        });
+      }
+    });
+  } catch {
+    // Ignore async network error
+  }
+
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return [userDoc];
+  }
+
+  const key = getUserKey(email);
 
   try {
     const current = getStoredDocuments(email);
@@ -124,14 +154,22 @@ export function saveUploadedDocument(doc: Document, userEmail?: string): Documen
 }
 
 /**
-  * Deletes a document strictly from the current user's isolated storage bucket.
+  * Deletes a document strictly from the current user's isolated storage bucket & PostgreSQL.
   */
 export function deleteStoredDocument(id: string, userEmail?: string): Document[] {
+  const email = (userEmail || getCurrentUserEmail()).toLowerCase();
+
+  try {
+    const supabase = createClient();
+    supabase.from('documents').delete().eq('id', id).then(() => {});
+  } catch {
+    // Ignore
+  }
+
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
     return [];
   }
 
-  const email = (userEmail || getCurrentUserEmail()).toLowerCase();
   const key = getUserKey(email);
 
   try {
@@ -139,7 +177,6 @@ export function deleteStoredDocument(id: string, userEmail?: string): Document[]
     const updated = current.filter((d) => d.id !== id);
     localStorage.setItem(key, JSON.stringify(updated));
 
-    // Clear active doc if it was the deleted doc
     const rawActive = localStorage.getItem(ACTIVE_DOC_KEY);
     if (rawActive) {
       const activeDoc = JSON.parse(rawActive);

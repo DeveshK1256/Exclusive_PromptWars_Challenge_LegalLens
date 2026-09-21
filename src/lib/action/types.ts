@@ -8,6 +8,7 @@ export interface ActionPlanOptions {
   rawText: string;
   clauses?: ExtractedClauseItem[];
   findings?: XRayFindingCard[];
+  userId?: string;
 }
 
 export interface BeforeYouSignItem {

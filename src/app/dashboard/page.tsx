@@ -1,5 +1,6 @@
 'use client';
 
+import { createClient } from '@/lib/supabase/client';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DocumentUploadZone } from '@/components/upload/DocumentUploadZone';
 import { DocumentList } from '@/components/documents/DocumentList';
@@ -180,13 +181,21 @@ export default function DashboardPage() {
   const inflightRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    const storedDocs = getStoredDocuments();
-    setDocuments(storedDocs);
-    if (storedDocs.length > 0) {
-      setActiveDoc(storedDocs[0]);
-    } else {
-      setActiveDoc(null);
+    async function loadDashboardDocs() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: dbDocs } = await supabase.from('documents').select('*');
+        const docs = (dbDocs as Document[]) || [];
+        setDocuments(docs);
+        setActiveDoc(docs.length > 0 ? docs[0] : null);
+      } else {
+        const storedDocs = getStoredDocuments();
+        setDocuments(storedDocs);
+        setActiveDoc(storedDocs.length > 0 ? storedDocs[0] : null);
+      }
     }
+    loadDashboardDocs();
 
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -238,7 +247,7 @@ export default function DashboardPage() {
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
+    const timer = setTimeout(() => controller.abort(new Error('Legal X-Ray analysis timed out after 45 seconds.')), 45000);
 
     try {
       const res = await fetch(`/api/documents/${doc.id}/xray`, {
@@ -259,7 +268,10 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       clearTimeout(timer);
-      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to run X-Ray' }));
+      const msg = err?.name === 'AbortError' || (err?.message && err.message.includes('aborted'))
+        ? 'Legal X-Ray request timed out after 45 seconds.'
+        : err?.message || 'Failed to run X-Ray';
+      setAIErrors(prev => ({ ...prev, [cacheKey]: msg }));
     } finally {
       clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));
@@ -275,7 +287,7 @@ export default function DashboardPage() {
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
+    const timer = setTimeout(() => controller.abort(new Error('Simplification request timed out after 45 seconds.')), 45000);
 
     try {
       const res = await fetch(`/api/documents/${doc.id}/simplify`, {
@@ -303,7 +315,10 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       clearTimeout(timer);
-      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to simplify' }));
+      const msg = err?.name === 'AbortError' || (err?.message && err.message.includes('aborted'))
+        ? 'Simplification request timed out after 45 seconds.'
+        : err?.message || 'Failed to simplify';
+      setAIErrors(prev => ({ ...prev, [cacheKey]: msg }));
     } finally {
       clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));
@@ -319,7 +334,7 @@ export default function DashboardPage() {
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
+    const timer = setTimeout(() => controller.abort(new Error('Timeline extraction timed out after 45 seconds.')), 45000);
 
     try {
       const res = await fetch(`/api/documents/${doc.id}/timeline`, {
@@ -346,7 +361,10 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       clearTimeout(timer);
-      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to extract timeline' }));
+      const msg = err?.name === 'AbortError' || (err?.message && err.message.includes('aborted'))
+        ? 'Timeline extraction timed out after 45 seconds.'
+        : err?.message || 'Failed to extract timeline';
+      setAIErrors(prev => ({ ...prev, [cacheKey]: msg }));
     } finally {
       clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));
@@ -362,7 +380,7 @@ export default function DashboardPage() {
     setAIErrors(prev => { const n = { ...prev }; delete n[cacheKey]; return n; });
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
+    const timer = setTimeout(() => controller.abort(new Error('Action plan request timed out after 45 seconds.')), 45000);
 
     try {
       const res = await fetch(`/api/documents/${doc.id}/action-plan`, {
@@ -383,7 +401,10 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       clearTimeout(timer);
-      setAIErrors(prev => ({ ...prev, [cacheKey]: err?.message || 'Failed to generate action plan' }));
+      const msg = err?.name === 'AbortError' || (err?.message && err.message.includes('aborted'))
+        ? 'Action Plan request timed out after 45 seconds.'
+        : err?.message || 'Failed to generate action plan';
+      setAIErrors(prev => ({ ...prev, [cacheKey]: msg }));
     } finally {
       clearTimeout(timer);
       setAILoading(prev => ({ ...prev, [cacheKey]: false }));

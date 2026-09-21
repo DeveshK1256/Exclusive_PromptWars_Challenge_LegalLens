@@ -45,26 +45,13 @@ export async function middleware(request: NextRequest) {
                            request.nextUrl.pathname.startsWith('/action-plans') ||
                            request.nextUrl.pathname.startsWith('/settings');
 
-  // Comprehensive session detection across demo mode, local auth, and Supabase cookies
-  const allCookies = request.cookies.getAll();
-  const hasUserEmail = request.cookies.has('legallens_user_email');
-  const hasDemoSession = request.cookies.has('legallens_demo_session');
-  const hasSbAccessToken = request.cookies.has('sb-access-token');
-  const hasAnySbAuthCookie = allCookies.some(c =>
-    c.name.startsWith('sb-') ||
-    c.name.includes('auth-token') ||
-    c.name.includes('session')
-  );
-
-  const rawCookieHeader = request.headers.get('cookie') || '';
-  const hasRawSession = rawCookieHeader.includes('legallens') || rawCookieHeader.includes('sb-');
-
-  const isAuthenticated = !!user || hasUserEmail || hasDemoSession || hasSbAccessToken || hasAnySbAuthCookie || hasRawSession;
+  // Authentication MUST be strictly determined by validated Supabase Auth session token
+  const isAuthenticated = !!user;
 
   const isRscRequest = request.nextUrl.searchParams.has('_rsc') || request.headers.get('rsc') === '1';
 
-  // If user is not authenticated and accessing a protected route, redirect to login
-  if (isProtectedRoute && !isAuthenticated && !isRscRequest && process.env.NODE_ENV === 'production') {
+  // If user is not authenticated and accessing a protected route, redirect to /login across all environments
+  if (isProtectedRoute && !isAuthenticated && !isRscRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

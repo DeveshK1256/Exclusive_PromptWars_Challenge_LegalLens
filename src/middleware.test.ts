@@ -75,4 +75,16 @@ describe('Middleware & Protected Routes Test Suite', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('location')).toBeNull();
   });
+
+  it('BLOCKS requests containing unvalidated legallens_user_email cookie without valid Supabase session', async () => {
+    const req = new NextRequest('https://legallens.app/dashboard', {
+      headers: {
+        cookie: 'legallens_user_email=fake@hacker.com',
+      },
+    });
+    const res = await middleware(req);
+
+    expect(res.status).toBe(307); // Redirected to /login
+    expect(res.headers.get('location')).toBe('https://legallens.app/login');
+  });
 });

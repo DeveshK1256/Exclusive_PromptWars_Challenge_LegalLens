@@ -148,7 +148,7 @@ describe('Server-Side User Registry & New Account Verification Suite', () => {
     await registerUserServer(newEmail, newPass, 'Test User', 'Employee', true);
 
     // Verify credentials immediately
-    const verifyResult = verifyUserCredentialsServer(newEmail, newPass);
+    const verifyResult = await verifyUserCredentialsServer(newEmail, newPass);
     expect(verifyResult.valid).toBe(true);
     expect(verifyResult.user?.email).toBe(newEmail);
   });
@@ -160,7 +160,7 @@ describe('Server-Side User Registry & New Account Verification Suite', () => {
     await registerUserServer(emailWithSpaces, password, 'Case User', 'Employee', true);
 
     // Attempt signin with lowercase / trimmed variant
-    const verifyResult = verifyUserCredentialsServer('newaccountcasetest@example.com', password);
+    const verifyResult = await verifyUserCredentialsServer('newaccountcasetest@example.com', password);
     expect(verifyResult.valid).toBe(true);
   });
 
@@ -171,7 +171,7 @@ describe('Server-Side User Registry & New Account Verification Suite', () => {
     // Register user with isConfirmed = false
     await registerUserServer(unconfirmedEmail, password, 'Unconfirmed User', 'Tenant', false);
 
-    const verifyResult = verifyUserCredentialsServer(unconfirmedEmail, password);
+    const verifyResult = await verifyUserCredentialsServer(unconfirmedEmail, password);
     expect(verifyResult.valid).toBe(false);
     expect(verifyResult.reason).toBe('email_not_confirmed');
   });

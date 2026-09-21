@@ -86,6 +86,7 @@ export const DocumentUploadZone: React.FC<DocumentUploadZoneProps> = ({ onUpload
       formData.append('document_type', documentType);
       formData.append('jurisdiction', jurisdiction);
       formData.append('context_role', contextRole);
+      formData.append('user_email', getCurrentUserEmail());
 
       const res = await fetch('/api/documents/upload', {
         method: 'POST',

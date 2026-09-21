@@ -29,29 +29,14 @@ export async function POST(request: NextRequest) {
     const { data: authData } = await supabase.auth.getUser();
     const authenticatedUser = authData?.user;
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
-    const documentType = (formData.get('document_type') as DocumentType) || 'other';
-    const jurisdiction = (formData.get('jurisdiction') as string) || null;
-    const contextRole = (formData.get('context_role') as ContextRole) || null;
-    const userEmail = (formData.get('user_email') as string) || request.cookies.get('legallens_user_email')?.value || '';
+    if (!authenticatedUser) {
+      return NextResponse.json(
+        { error: 'Unauthorized: A valid authenticated Supabase session is required to upload documents.' },
+        { status: 401 }
+      );
+    }
 
-    let userId = authenticatedUser?.id || request.headers.get('x-user-id');
-    if (!userId && userEmail && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      try {
-        const admin = createAdminClient();
-        const { data: usersData } = await admin.auth.admin.listUsers();
-        const matched = usersData?.users?.find((u) => u.email?.toLowerCase() === userEmail.trim().toLowerCase());
-        if (matched) {
-          userId = matched.id;
-        }
-      } catch {
-        // Fallback
-      }
-    }
-    if (!userId) {
-      userId = 'demo_user_id';
-    }
+    const userId = authenticatedUser.id;
 
     // 0. Rate Limiting Check (Upload cap per hour)
     const rateLimit = await checkRateLimit(userId, 'upload');
@@ -64,6 +49,12 @@ export async function POST(request: NextRequest) {
         }
       );
     }
+
+    const formData = await request.formData();
+    const file = formData.get('file') as File | null;
+    const documentType = (formData.get('document_type') as DocumentType) || 'other';
+    const jurisdiction = (formData.get('jurisdiction') as string) || null;
+    const contextRole = (formData.get('context_role') as ContextRole) || null;
 
     if (!file) {
       return NextResponse.json(

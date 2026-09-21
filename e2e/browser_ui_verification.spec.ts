@@ -66,7 +66,11 @@ test('REAL UI-DRIVEN VERIFICATION: Registration, Document Upload, Portfolio & Si
   // ---------------------------------------------------------------------------
   // STEP 2: DOCUMENT UPLOAD & PORTFOLIO VERIFICATION
   // ---------------------------------------------------------------------------
-  console.log('\n[Step 2.1] Uploading document file through real file picker UI...');
+  console.log('\n[Step 2.1] Navigating to /dashboard?tab=upload to open file upload zone UI...');
+  await page.goto(`${LIVE_URL}/dashboard?tab=upload`);
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(dummyDocPath);
   await page.waitForTimeout(500);

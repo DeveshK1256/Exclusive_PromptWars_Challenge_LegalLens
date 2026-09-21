@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkLockoutStatus, recordFailedLoginAttempt, recordSuccessfulLoginAttempt } from '@/lib/security/loginLockout';
 import { verifyUserCredentialsServer, normalizeEmail } from '@/lib/security/userRegistry';
-import { signInUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,25 +36,11 @@ export async function POST(request: NextRequest) {
     let isAuthenticated = false;
     let isEmailNotConfirmed = false;
 
-    try {
-      const authRes = await signInUser(cleanEmail, password);
-      if (authRes?.user) {
-        isAuthenticated = true;
-      }
-    } catch (sbErr: any) {
-      const msg = (sbErr?.message || '').toLowerCase();
-      if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
-        isEmailNotConfirmed = true;
-      }
-    }
-
-    if (!isAuthenticated && !isEmailNotConfirmed) {
-      const verifyRes = await verifyUserCredentialsServer(cleanEmail, password);
-      if (verifyRes.valid) {
-        isAuthenticated = true;
-      } else if (verifyRes.reason === 'email_not_confirmed') {
-        isEmailNotConfirmed = true;
-      }
+    const verifyRes = await verifyUserCredentialsServer(cleanEmail, password);
+    if (verifyRes.valid) {
+      isAuthenticated = true;
+    } else if (verifyRes.reason === 'email_not_confirmed') {
+      isEmailNotConfirmed = true;
     }
 
     // Handle Unconfirmed Email State cleanly (HTTP 403)
